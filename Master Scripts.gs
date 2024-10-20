@@ -5,31 +5,6 @@ const MASTER_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MASTER
 const SEMESTER_CODE_MAP = new Map();
 const ALL_SEMESTERS = ['Fall 2024', 'Summer 2024', 'Winter 2024'];
 
-// Columns numbers
-const MASTER = {
-  EMAIL: 1,
-  FIRST_NAME: 2,
-  LAST_NAME: 3,
-  PREFERRED_NAME: 4,
-  YEAR: 5,
-  PROGRAM: 6,
-  WAIVER: 7,
-  MEMBER_DESCR: 8,
-  REFERRAL: 9,
-  LAST_REGISTRATION: 10,
-  LAST_REG_CODE: 11,
-  REGISTRATION_HIST: 12,
-  EMPTY: 13,
-  FEE_STATUS: 14,
-  FEE_EXPIRATION: 15,
-  COLLECTED_BY: 16,
-  COLLECTION_DATE: 17,
-  GIVEN_TO_INTERNAL: 18,
-  PAYMENT_HIST: 19,
-  COMMENTS: 20,
-  ATTENDANCE_STATUS: 21,
-  MEMBER_ID: 22,
-};
 
 // Index of processed semester data arrays (0-indexed)
 const PROCESSED_ARR = {
@@ -185,9 +160,7 @@ function consolidateMemberData() {
   });
   
   // Output sorted unique data to another sheet or range
-  var masterColSize = 22;
-  Logger.log(selectedData[0].length);
-  MASTER_SHEET.getRange(2, 1, selectedData.length, masterColSize).setValues(selectedData);
+  MASTER_SHEET.getRange(2, 1, selectedData.length, selectedData[0].length).setValues(selectedData);
 }
 
 
