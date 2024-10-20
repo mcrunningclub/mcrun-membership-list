@@ -4,21 +4,6 @@ const MAIN_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NA
 const TIMEZONE = getUserTimeZone();
 
 
-/* COLUMN CONSTANTS ~ Please update any changes made in active sheet */
-const REGISTRATION_DATE_COL = 1;      // Column 'A'
-const EMAIL_COL = 2;                  // Column 'B'
-const FIRST_NAME_COL = 3;             // Column 'C'
-const PAYMENT_COL = 11;               // Column 'K'
-const INTERACT_REF_COL = 12;          // Column 'L'
-const IS_FEE_PAID_COL = 14;           // Column 'N'
-const COLLECTION_DATE_COL = 15;       // Column 'O'
-const COLLECTION_PERSON_COL = 16;       // Column 'P'
-const IS_INTERNAL_COLLECTED_COL = 17;   // Column 'Q'
-const MEMBER_ID_COL = 20;               // Column 'T'
-
-//Found in `Internal Fee Collection` sheet
-const INTERAC_ITEM_COL = 'A3'
-
 function getUserTimeZone() {
   return Session.getScriptTimeZone();
 }
@@ -328,7 +313,7 @@ function getReferenceNumberFromEmail() {
   const sheet = MAIN_SHEET;
   const lastRow = sheet.getLastRow();
   
-  const isInterac = MAIN_SHEET.getRange(lastRow, PAYMENT_COL).getValue();
+  const isInterac = MAIN_SHEET.getRange(lastRow, PAYMENT_METHOD_COL).getValue();
   if ( !(String(isInterac).includes('Interac')) ) return;   // Exit if Interac is not chosen
 
   // If payment by Interac, allow Interac email confirmation to arrive to inbox

@@ -7,29 +7,28 @@ const ALL_SEMESTERS = ['Fall 2024', 'Summer 2024', 'Winter 2024'];
 
 // Columns numbers
 const MASTER = {
-  TIMESTAMP : 0,
   EMAIL: 1,
   FIRST_NAME: 2,
-  LAST_NAME : 3,
-  PREFERRED_NAME : 4,
-  YEAR : 5,
+  LAST_NAME: 3,
+  PREFERRED_NAME: 4,
+  YEAR: 5,
   PROGRAM: 6,
-  MEMBER_DESCR: 7,
-  REFERRAL: 8,
-  WAIVER: 9,
-  MEMBER_FEE: 10,
-  INTERAC_REF: 11,
-  EMPTY: 12,
-  IS_FEE_PAID: 13,
-  COLLECTION_DATE: 14,
-  COLLECTED_BY: 15,
-  GIVEN_TO_INTERNAL: 16,
-  COMMENTS: 17,
-  ATTENDANCE_STATUS: 18,
-  MEMBER_ID: 19,
-  PASSKIT_URL: 20,
-  LAST_REGISTRATION: 21,
-  REGISTRATION_HIST : 22
+  WAIVER: 7,
+  MEMBER_DESCR: 8,
+  REFERRAL: 9,
+  LAST_REGISTRATION: 10,
+  LAST_REG_CODE: 11,
+  REGISTATION_HIST: 12,
+  EMPTY: 13,
+  FEE_STATUS: 14,
+  FEE_EXPIRATION: 15,
+  COLLECTED_BY: 16,
+  COLLECTION_DATE: 17,
+  GIVEN_TO_INTERNAL: 18,
+  PAYMENT_HIST: 19,
+  COMMENTS: 20,
+  ATTENDANCE_STATUS: 21,
+  MEMBER_ID: 22,
 };
 
 function createMaster() {
@@ -65,7 +64,7 @@ function consolidateMemberData() {
       memberMap[email][MASTER.MEMBER_DESCR] = memberMap[email][MASTER.MEMBER_DESCR] + '\n' + (row[MASTER.MEMBER_DESCR] || "");
       memberMap[email][MASTER.REFERRAL] += '\n' + (row[MASTER.REFERRAL] || "");
       memberMap[email][MASTER.COMMENTS] += '\n' + (row[MASTER.COMMENTS] || "");
-      memberMap[email][MASTER.REGISTRATION_HIST] += getSemesterCode(row[MASTER.LAST_REGISTRATION]) + " ";
+      memberMap[email][MASTER.REG_CODE] += getSemesterCode(row[MASTER.LAST_REGISTRATION]) + " ";
 
       if(row[MASTER.IS_FEE_PAID]) memberMap[email][MASTER.IS_FEE_PAID] += " " + row[MASTER.IS_FEE_PAID];
     }
@@ -92,9 +91,9 @@ function consolidateMemberData() {
     row[MASTER.YEAR], 
     row[MASTER.PROGRAM], 
     row[MASTER.WAIVER], 
-    row[MASTER.TIMESTAMP], 
+    row[MASTER.LASTEST_REG], 
     row[MASTER.LAST_REGISTRATION], 
-    row[MASTER.REGISTRATION_HIST], 
+    row[MASTER.REG_CODE], 
     row[MASTER.MEMBER_DESCR], 
     row[MASTER.COMMENTS], 
     row[MASTER.IS_FEE_PAID],
