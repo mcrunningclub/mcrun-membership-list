@@ -18,7 +18,7 @@ const MASTER = {
   REFERRAL: 9,
   LAST_REGISTRATION: 10,
   LAST_REG_CODE: 11,
-  REGISTATION_HIST: 12,
+  REGISTRATION_HIST: 12,
   EMPTY: 13,
   FEE_STATUS: 14,
   FEE_EXPIRATION: 15,
@@ -31,8 +31,68 @@ const MASTER = {
   MEMBER_ID: 22,
 };
 
+// Index of processed semester data arrays (0-indexed)
+const PROCESSED_ARR = {
+  LAST_REGISTRATION: 0,
+  EMAIL: 1,
+  FIRST_NAME: 2,
+  LAST_NAME: 3,
+  PREFERRED_NAME: 4,
+  YEAR: 5,
+  PROGRAM: 6,
+  MEMBER_DESCR: 7,
+  REFERRAL: 8,
+  WAIVER: 9,
+  EMPTY: 12,
+  IS_FEE_PAID: 13,
+  COLLECTION_DATE: 14,
+  COLLECTED_BY: 15,
+  GIVEN_TO_INTERNAL: 16,
+  COMMENTS: 17,
+  ATTENDANCE_STATUS: 18,
+  MEMBER_ID: 19,
+  LAST_REG_CODE: 20,
+  REGISTATION_HIST: 21
+};
+
 function createMaster() {
   consolidateMemberData();
+}
+
+// Helper Function
+function processSemesterData(sheetName) {
+  const semesterSheetRange = 'A2:T';
+  const SPREADSHEET = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetData = SPREADSHEET.getSheetByName(sheetName).getRange(semesterSheetRange).getValues();
+  var semesterCode = getSemesterCode(sheetName); // Get the semester code based on the sheet name
+  
+  const processedData = sheetData.map(function(row) {
+    // Append semester code if entries are non-empty
+    var index;
+
+    index = PROCESSED_ARR.MEMBER_DESCR;
+    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
+
+    index = PROCESSED_ARR.REFERRAL;
+    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
+
+    index = PROCESSED_ARR.COMMENTS;
+    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
+
+    // Append semester code to payment history
+    index = PROCESSED_ARR.IS_FEE_PAID;
+    row[index] = row[index] ? semesterCode : "";
+    
+    // Append row with semester code for MASTER.LAST_REG_CODE
+    row.push(semesterCode);
+
+    // Append row with semester code for MASTER.REGISTRATION_HIST
+    row.push("");
+    
+    return row;
+  });
+  
+  return processedData;
 }
 
 
@@ -61,12 +121,27 @@ function consolidateMemberData() {
       memberMap[email] = row;
     } else {
       // Concatenate the relevant columns if the email already added
-      memberMap[email][MASTER.MEMBER_DESCR] = memberMap[email][MASTER.MEMBER_DESCR] + '\n' + (row[MASTER.MEMBER_DESCR] || "");
-      memberMap[email][MASTER.REFERRAL] += '\n' + (row[MASTER.REFERRAL] || "");
-      memberMap[email][MASTER.COMMENTS] += '\n' + (row[MASTER.COMMENTS] || "");
-      memberMap[email][MASTER.REG_CODE] += getSemesterCode(row[MASTER.LAST_REGISTRATION]) + " ";
+      // Access memberMap is 0-indexed according to semester sheet
+      var index, regHistory, semesterCode;
+      
+      index = PROCESSED_ARR.MEMBER_DESCR;
+      if(row[index]) memberMap[email][index] += "\n" + row[index];
+      
+      index = PROCESSED_ARR.REFERRAL;
+      if(row[index]) memberMap[email][index] += "\n" + row[index];
 
-      if(row[MASTER.IS_FEE_PAID]) memberMap[email][MASTER.IS_FEE_PAID] += " " + row[MASTER.IS_FEE_PAID];
+      index = PROCESSED_ARR.COMMENTS;
+      if(row[index]) memberMap[email][index] += "\n" + row[index];
+      
+      // Append registration history using semester code
+      index = PROCESSED_ARR.REGISTATION_HIST;
+      semesterCode = row[PROCESSED_ARR.LAST_REG_CODE];
+      regHistory = memberMap[email][index] ? " " + semesterCode : semesterCode;
+      memberMap[email][index] += regHistory;
+
+      // Append payment history
+      index = PROCESSED_ARR.IS_FEE_PAID;
+      if(row[index]) memberMap[email][index] += " " + row[index];
     }
   });
 
@@ -84,53 +159,39 @@ function consolidateMemberData() {
   // Select specific columns
   var selectedData = resultData.map(function(row) {
     return [ 
-    row[MASTER.EMAIL], 
-    row[MASTER.FIRST_NAME], 
-    row[MASTER.LAST_NAME], 
-    row[MASTER.PREFERRED_NAME], 
-    row[MASTER.YEAR], 
-    row[MASTER.PROGRAM], 
-    row[MASTER.WAIVER], 
-    row[MASTER.LASTEST_REG], 
-    row[MASTER.LAST_REGISTRATION], 
-    row[MASTER.REG_CODE], 
-    row[MASTER.MEMBER_DESCR], 
-    row[MASTER.COMMENTS], 
-    row[MASTER.IS_FEE_PAID],
-    row[MASTER.COLLECTED_BY],
-    row[MASTER.GIVEN_TO_INTERNAL]];
+    row[PROCESSED_ARR.EMAIL],
+    row[PROCESSED_ARR.FIRST_NAME],
+    row[PROCESSED_ARR.LAST_NAME],
+    row[PROCESSED_ARR.PREFERRED_NAME],
+    row[PROCESSED_ARR.YEAR],
+    row[PROCESSED_ARR.PROGRAM], 
+    row[PROCESSED_ARR.WAIVER],
+    row[PROCESSED_ARR.MEMBER_DESCR],
+    row[PROCESSED_ARR.REFERRAL],
+    row[PROCESSED_ARR.LAST_REGISTRATION],
+    row[PROCESSED_ARR.LAST_REG_CODE],
+    row[PROCESSED_ARR.REGISTATION_HIST],
+    row[PROCESSED_ARR.EMPTY],
+    row[PROCESSED_ARR.EMPTY],
+    row[PROCESSED_ARR.EMPTY],
+    row[PROCESSED_ARR.COLLECTED_BY],
+    row[PROCESSED_ARR.COLLECTION_DATE],
+    row[PROCESSED_ARR.GIVEN_TO_INTERNAL], 
+    row[PROCESSED_ARR.IS_FEE_PAID],
+    row[PROCESSED_ARR.COMMENTS],
+    row[PROCESSED_ARR.EMPTY],
+    row[PROCESSED_ARR.MEMBER_ID]
+    ]
   });
   
   // Output sorted unique data to another sheet or range
-  MASTER_SHEET.getRange(2, 1, selectedData.length, selectedData[0].length).setValues(selectedData);
+  var masterColSize = 22;
+  Logger.log(selectedData[0].length);
+  MASTER_SHEET.getRange(2, 1, selectedData.length, masterColSize).setValues(selectedData);
 }
 
 
-// Helper Function
-function processSemesterData(sheetName) {
-  const rangeA1Notation = 'A2:U';
-  const SPREADSHEET = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetData = SPREADSHEET.getSheetByName(sheetName).getRange(rangeA1Notation).getValues();
-  var semesterCode = getSemesterCode(sheetName); // Get the semester code based on the sheet name
-  
-  const processedData = sheetData.map(function(row) {
-    // Append semester code if entries are non-empty
-    row[MASTER.MEMBER_DESCR] = row[MASTER.MEMBER_DESCR] ? "(" + semesterCode + ") " + row[MASTER.MEMBER_DESCR] : "";
-    row[MASTER.REFERRAL] = row[MASTER.REFERRAL] ? "(" + semesterCode + ") " + row[MASTER.REFERRAL] : "";
-    row[MASTER.COMMENTS] = row[MASTER.COMMENTS] ? "(" + semesterCode + ") " + row[MASTER.COMMENTS] : "";
 
-    // Append semester code to payment history
-    row[MASTER.IS_FEE_PAID] = row[MASTER.IS_FEE_PAID] ? semesterCode : "";
-    
-    // Append the sheet name to the row and empty entry to add registration history
-    row.push(sheetName);
-    row.push("");
-    
-    return row;
-  });
-  
-  return processedData;
-}
 
 // Helper Function
 function getSemesterCode(semester) {
