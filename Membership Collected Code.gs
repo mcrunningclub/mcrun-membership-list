@@ -222,9 +222,9 @@ function getLastSubmission() {
 /**
  * @author: Andrey S Gonzalez
  * @date: Oct 9, 2023
- * @update: Sept 1, 2024
+ * @update: Oct 20, 2024
  * 
- * Modified MD5 hash function to define member_id from registration date and email.
+ * Modified MD5 hash function to define member_id from email *only*.
  * Changed `sheet.getLastRow()` to user-defined `getLastSubmission()`
  */
 
@@ -233,27 +233,22 @@ function encodeLastRow() {
   //const sheet = BACKUP_SHEET;
   const newSubmissionRow = getLastSubmission();
   
-  var registrationDate = sheet.getRange(newSubmissionRow, REGISTRATION_DATE_COL).getValue();
-  registrationDate = Utilities.formatDate(registrationDate, TIMEZONE, "yyyy-MM-dd kk:mm:ss");
   const email = sheet.getRange(newSubmissionRow, EMAIL_COL).getValue();
-  
-  const member_id = MD5(email + registrationDate);
+  const member_id = MD5(email);
   sheet.getRange(newSubmissionRow, MEMBER_ID_COL).setValue(member_id);
 }
 
 
 function encodeWholeList() {
   var sheet = MAIN_SHEET;
-  var i, email, registrationDate;
+  var i, email;
 
   // Start at row 2 (1-indexed)
-  for (i = 2; i < sheet.getMaxRows(); i++) {
+  for (i = 2; i <= sheet.getMaxRows(); i++) {
     email = sheet.getRange(i, EMAIL_COL).getValue();
     if (email === "") return;   // check for invalid row
 
-    registrationDate = Utilities.formatDate(sheet.getRange(i, REGISTRATION_DATE_COL).getValue(),TIMEZONE, "yyyy-MM-dd kk:mm:ss");
-
-    var member_id = MD5(email + registrationDate);
+    var member_id = MD5(email);
     sheet.getRange(i, MEMBER_ID_COL).setValue(member_id);
   }
 }
