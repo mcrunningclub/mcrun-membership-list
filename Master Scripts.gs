@@ -38,41 +38,87 @@ function addLastSubmissionToMaster() {
   //consolidateMemberData();
 }
 
+/**
+ * @author: Andrey S Gonzalez
+ * @date: Oct 21, 2024
+ * @update: Oct 21, 2024
+ * 
+ * Process last submission from semester sheet
+ * @RETURN string[]
+ * 
+ */
 function processLastSubmission() {
-  const semesterSheetRange = 'A2:T';
-  const lastRowNum = getLastSubmission();
-  var lastSubmission = MAIN_SHEET.getRange(lastRowNum, semesterSheetRange).getValues();
+  const columnSize = 20;   // Range 'A:T';
+  const lastRowNum = getLastSubmission();     // Last row num from 'MAIN_SHEET'
+
+  var lastSubmission = MAIN_SHEET.getRange(lastRowNum, 1, 1, columnSize).getValues()[0];
   var semesterCode = getSemesterCode(SHEET_NAME); // Get the semester code based on the sheet name
-
-  const processedData = lastSubmission.map(function(row) {
-    // Append semester code if entries are non-empty
-    var index;
-
-    index = PROCESSED_ARR.MEMBER_DESCR;
-    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
-
-    index = PROCESSED_ARR.REFERRAL;
-    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
-
-    index = PROCESSED_ARR.COMMENTS;
-    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
-
-    // Append semester code to payment history
-    index = PROCESSED_ARR.IS_FEE_PAID;
-    row[index] = row[index] ? semesterCode : "";
-    
-    // Append row with semester code for MASTER.LAST_REG_CODE
-    row.push(semesterCode);
-
-    // Append row with semester code for MASTER.REGISTRATION_HIST
-    row.push("");
-    
-    return row;
-  });
   
-  return processedData;
+  const indicesToProcess = [PROCESSED_ARR.MEMBER_DESCR, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
+
+  // Loop over the relevant indices and append semester code to non-empty fields
+  indicesToProcess.forEach(index => {
+    if (lastSubmission[index]) {
+      lastSubmission[index] = `(${semesterCode}) ${lastSubmission[index]}`;
+    }
+  });
+
+  // Append semester code to IS_FEE_PAID column
+  if (lastSubmission[PROCESSED_ARR.IS_FEE_PAID]) {
+    lastSubmission[PROCESSED_ARR.IS_FEE_PAID] = semesterCode;
+  }
+
+  // Add semester code for MASTER.LAST_REG_CODE and MASTER.REGISTRATION_HIST
+  lastSubmission.push(semesterCode);  // For MASTER.LAST_REG_CODE column
+  lastSubmission.push("");            // For MASTER.REGISTRATION_HIST column
+
+
+  return lastSubmission;
 }
 
+
+function consolidateLastSubmission() {
+  var processedLastSubmission = processLastSubmission();
+  const lastEmail = processedLastSubmission[1];
+  const indexSubmission = findSubmissionFromEmail(lastEmail);   // Returns null if not found
+
+  if (indexSubmission == null) {
+    const columnSize = 0;
+  }
+
+  // Select specific columns
+  const indicesToSelect = [
+    PROCESSED_ARR.EMAIL,
+    PROCESSED_ARR.FIRST_NAME,
+    PROCESSED_ARR.LAST_NAME,
+    PROCESSED_ARR.PREFERRED_NAME,
+    PROCESSED_ARR.YEAR,
+    PROCESSED_ARR.PROGRAM,
+    PROCESSED_ARR.WAIVER,
+    PROCESSED_ARR.MEMBER_DESCR,
+    PROCESSED_ARR.REFERRAL,
+    PROCESSED_ARR.LAST_REGISTRATION,
+    PROCESSED_ARR.LAST_REG_CODE,
+    PROCESSED_ARR.REGISTATION_HIST,
+    PROCESSED_ARR.EMPTY,  // Repeated empty values can be handled better, see below
+    PROCESSED_ARR.EMPTY,
+    PROCESSED_ARR.EMPTY,
+    PROCESSED_ARR.COLLECTED_BY,
+    PROCESSED_ARR.COLLECTION_DATE,
+    PROCESSED_ARR.GIVEN_TO_INTERNAL,
+    PROCESSED_ARR.IS_FEE_PAID,
+    PROCESSED_ARR.COMMENTS,
+    PROCESSED_ARR.EMPTY,
+    PROCESSED_ARR.MEMBER_ID
+  ];
+
+  // Store selected data in new array
+  var selectedData = indicesToSelect.map(index => processedLastSubmission[index] || "");
+  
+  // Output selected data to 'MASTER'
+  const newRowIndex = MASTER_SHEET.getLastRow() + 1;
+  MASTER_SHEET.getRange(newRowIndex, 1, 1, selectedData.length).setValues([selectedData]);
+}
 
 
 // Helper Function
@@ -129,13 +175,14 @@ function findSubmissionFromEmail(emailToFind) {
   const MASTER_ROW_SIZE = MASTER_SHEET.getLastRow();
   const emailArr = MASTER_SHEET.getRange(1, MASTER_EMAIL_COL, MASTER_ROW_SIZE).getValues();
 
-  var index = 0;
+  var index = 1;
+
   while(emailArr[index][0] != emailToFind) {
     index++;
-    if(index > MASTER_ROW_SIZE) return null;
+    if(index >= MASTER_ROW_SIZE) return null;
   }
 
-  return index;
+  return index + 1;   // GSheet is (1-indexed)
 }
 
 
