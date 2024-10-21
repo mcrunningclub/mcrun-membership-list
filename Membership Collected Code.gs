@@ -120,10 +120,6 @@ function copyNewMemberToPointsLedger() {
   return;
 }
 
-function getRegEx(targetSubstring) {
-  return RegExp(targetSubstring, 'g');
-}
-
 
 /** 
  * @author: Andrey S Gonzalez
@@ -184,40 +180,23 @@ function trimWhitespace() {
  * @date: Sept 1, 2024
  * @update: Sept 1, 2024
  * 
- * Recursive function to find lastest submission using divide-and-conquer approach.
+ * Find last submission using while loop.
  * Used to prevent native `sheet.getLastRow()` from returning empty row.
  * 
- * @RETURN Integer
+ * @RETURN int
  */
 
 function getLastSubmission() {
   const sheet = MAIN_SHEET;
   const lastRow = sheet.getLastRow();
 
-  // Lambda recursive function for divide-and-conquer
-  var findValidLastRow = function(startRow, endRow) {
-    if (startRow > endRow) {
-      return endRow; // Base case: when the search range is invalid
-    }
+  while (sheet.getRange(lastRow, REGISTRATION_DATE_COL).getValue() == "") {
+    lastRow = lastRow - 1;
+  }
 
-    var middleRow = Math.floor((startRow + endRow) / 2);
-    var cellValue = sheet.getRange(middleRow, REGISTRATION_DATE_COL).getValue();
+  return lastRow;
 
-    if (cellValue !== "") {
-      // If the middle row is not empty, search in the upper half
-      return findValidLastRow(middleRow + 1, endRow);
-    
-    } else {
-      // If the middle row is empty, search in the lower half
-      return findValidLastRow(startRow, middleRow - 1);
-    }
-
-  };
-
-  // Call Lambda with initial parameters
-  return findValidLastRow(1, lastRow);
 }
-
 
 /**
  * @author: Andrey S Gonzalez
@@ -227,7 +206,6 @@ function getLastSubmission() {
  * Modified MD5 hash function to define member_id from email *only*.
  * Changed `sheet.getLastRow()` to user-defined `getLastSubmission()`
  */
-
 function encodeLastRow() {
   const sheet = MAIN_SHEET;
   //const sheet = BACKUP_SHEET;
@@ -365,6 +343,19 @@ function getReferenceNumberFromEmail() {
       break;      //exit for-loop
     }
   }
+}
+
+
+/**
+ * @author: Andrey S Gonzalez
+ * @date: Oct 8, 2023
+ * Returns regex expression for target string
+ * 
+ * @returns {string} 
+ */
+
+function getRegEx(targetSubstring) {
+  return RegExp(targetSubstring, 'g');
 }
 
 
