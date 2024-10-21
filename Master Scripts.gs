@@ -34,12 +34,53 @@ function createMaster() {
   consolidateMemberData();
 }
 
+function addLastSubmissionToMaster() {
+  //consolidateMemberData();
+}
+
+function processLastSubmission() {
+  const semesterSheetRange = 'A2:T';
+  const lastRowNum = getLastSubmission();
+  var lastSubmission = MAIN_SHEET.getRange(lastRowNum, semesterSheetRange).getValues();
+  var semesterCode = getSemesterCode(SHEET_NAME); // Get the semester code based on the sheet name
+
+  const processedData = lastSubmission.map(function(row) {
+    // Append semester code if entries are non-empty
+    var index;
+
+    index = PROCESSED_ARR.MEMBER_DESCR;
+    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
+
+    index = PROCESSED_ARR.REFERRAL;
+    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
+
+    index = PROCESSED_ARR.COMMENTS;
+    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
+
+    // Append semester code to payment history
+    index = PROCESSED_ARR.IS_FEE_PAID;
+    row[index] = row[index] ? semesterCode : "";
+    
+    // Append row with semester code for MASTER.LAST_REG_CODE
+    row.push(semesterCode);
+
+    // Append row with semester code for MASTER.REGISTRATION_HIST
+    row.push("");
+    
+    return row;
+  });
+  
+  return processedData;
+}
+
+
+
 // Helper Function
 function processSemesterData(sheetName) {
   const semesterSheetRange = 'A2:T';
   const SPREADSHEET = SpreadsheetApp.getActiveSpreadsheet();
   var sheetData = SPREADSHEET.getSheetByName(sheetName).getRange(semesterSheetRange).getValues();
-  var semesterCode = getSemesterCode(sheetName); // Get the semester code based on the sheet name
+  const semesterCode = getSemesterCode(sheetName); // Get the semester code based on the sheet name
   
   const processedData = sheetData.map(function(row) {
     // Append semester code if entries are non-empty
@@ -68,6 +109,33 @@ function processSemesterData(sheetName) {
   });
   
   return processedData;
+}
+
+
+/**
+ * @author: Andrey S Gonzalez
+ * @date: Oct 21, 2024
+ * @update: Oct 21, 2024
+ * 
+ * Recursive function to find submission in MASTER using email string.
+ * Return null if not found.
+ * 
+ * @RETURN row index (1-indexed)
+ * 
+ */
+
+function findSubmissionFromEmail(emailToFind) {
+  const MASTER_EMAIL_COL = 1;
+  const MASTER_ROW_SIZE = MASTER_SHEET.getLastRow();
+  const emailArr = MASTER_SHEET.getRange(1, MASTER_EMAIL_COL, MASTER_ROW_SIZE).getValues();
+
+  var index = 0;
+  while(emailArr[index][0] != emailToFind) {
+    index++;
+    if(index > MASTER_ROW_SIZE) return null;
+  }
+
+  return index;
 }
 
 

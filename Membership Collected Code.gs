@@ -183,7 +183,7 @@ function trimWhitespace() {
  * Find last submission using while loop.
  * Used to prevent native `sheet.getLastRow()` from returning empty row.
  * 
- * @RETURN int
+ * @RETURN integer
  */
 
 function getLastSubmission() {
