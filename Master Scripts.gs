@@ -124,23 +124,21 @@ function consolidateLastSubmission() {
 
 // Helper Function
 function processSemesterData(sheetName) {
-  const semesterSheetRange = 'A2:T';
   const SPREADSHEET = SpreadsheetApp.getActiveSpreadsheet();
+  const semesterSheetRange = 'A2:T';
+  
   var sheetData = SPREADSHEET.getSheetByName(sheetName).getRange(semesterSheetRange).getValues();
   const semesterCode = getSemesterCode(sheetName); // Get the semester code based on the sheet name
 
   const processedData = sheetData.map(function (row) {
-    // Append semester code if entries are non-empty
-    var index;
-
-    index = PROCESSED_ARR.MEMBER_DESCR;
-    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
-
-    index = PROCESSED_ARR.REFERRAL;
-    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
-
-    index = PROCESSED_ARR.COMMENTS;
-    row[index] = row[index] ? "(" + semesterCode + ") " + row[index] : "";
+    // Append semester code if entries are non-empty by looping over selected indices
+    const indicesToProcess = [PROCESSED_ARR.MEMBER_DESCR, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
+  
+    indicesToProcess.forEach(index => {
+      if (lastSubmission[index]) {
+        lastSubmission[index] = `(${semesterCode}) ${lastSubmission[index]}`;
+      }
+    });
 
     // Append semester code to payment history
     index = PROCESSED_ARR.IS_FEE_PAID;
@@ -160,30 +158,52 @@ function processSemesterData(sheetName) {
 
 
 /**
- * @author: Andrey S Gonzalez
+ * findSubmissionFromEmail
+ * 
+ * @author: Andrey S Gonzalez & ChatGPT
  * @date: Oct 21, 2024
- * @update: Oct 21, 2024
+ * @update: Oct 23, 2024
  * 
- * Recursive function to find submission in MASTER using email string.
- * Return null if not found.
+ * Recursive function to search for an email in `MASTER` sheet using binary search.
+ * Returns email's row index in GSheet (1-indexed), or null if not found.
  * 
- * @RETURN row index (1-indexed)
+ * @param {string} emailToFind - The email address to search for in the sheet.
+ * @param {number} [start=1] - The starting row index for the search (1-indexed). Defaults to 1 (the first row).
+ * @param {number} [end=MASTER_SHEET.getLastRow()] - The ending row index for the search. Defaults to the last row in the sheet.
+ * 
+ * @return {number|null} - Returns the 1-indexed row number where the email is found, 
+ *                         or `null` if the email is not found.
  * 
  */
 
-function findSubmissionFromEmail(emailToFind) {
+function findSubmissionFromEmail(emailToFind, start=1, end=MASTER_SHEET.getLastRow()) {
   const MASTER_EMAIL_COL = 1;
-  const MASTER_ROW_SIZE = MASTER_SHEET.getLastRow();
-  const emailArr = MASTER_SHEET.getRange(1, MASTER_EMAIL_COL, MASTER_ROW_SIZE).getValues();
-
-  var index = 1;
-
-  while (emailArr[index][0] != emailToFind) {
-    index++;
-    if (index >= MASTER_ROW_SIZE) return null;
+ 
+  // Base case: If start index exceeds the end index, the email is not found
+  if (start > end) {
+    return null;
   }
 
-  return index + 1;   // GSheet is (1-indexed)
+  // Find the middle point between the start and end indexes
+  const mid = Math.floor((start + end) / 2);
+
+  // Get the email value at the middle row
+  const emailAtMid = MASTER_SHEET.getRange(mid, MASTER_EMAIL_COL).getValue();
+
+
+  // Compare the target email with the middle email
+  if (emailAtMid === emailToFind) {
+    return mid;  // If the email matches, return the row index (1-indexed)
+  
+   // If the email at the middle row is alphabetically smaller, search the right half
+  } else if (emailAtMid < emailToFind) {
+    return findSubmissionFromEmail(emailToFind, mid + 1, end);
+  
+  // If the email at the middle row is alphabetically larger, search the left half
+  } else {
+    return findSubmissionFromEmail(emailToFind, start, mid - 1);
+  }
+
 }
 
 
