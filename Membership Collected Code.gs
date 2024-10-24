@@ -277,10 +277,12 @@ function formatSpecificColumns() {
 /**
  * @author: Andrey S Gonzalez
  * @date: Oct 1, 2023
- * @update: Oct 18, 2023
+ * @update: Oct 24, 2024
  * 
  * Look for new emails from Interac starting today (form trigger date) and extract ref number
- * Triggered by new member registration. Creates error notification email if no ref number found
+ * Triggered by new member registration. Creates error notification email if no ref number found.
+ * 
+ * Interac email address either "catch@payments.interac.ca" or "notify@payments.interac.ca"
  */
 
 function getReferenceNumberFromEmail() {
@@ -293,8 +295,8 @@ function getReferenceNumberFromEmail() {
   // If payment by Interac, allow Interac email confirmation to arrive to inbox
   Utilities.sleep(1 * 60 * 1000);   // 1 minute
   const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy/MM/dd');
-  const threads = GmailApp.search('from:notify@payments.interac.ca "Reference Number" "label:inbox" after:' + currentDate, 0, 10);
-  //const threads = GmailApp.search('from:notify@payments.interac.ca "INTERAC" after:2024/05/31', 0, 5); // TEST
+  const threads = GmailApp.search('from:payments.interac.ca "Reference Number" "label:inbox" after:' + currentDate, 0, 10);
+  //const threads = GmailApp.search('from:payments.interac.ca "INTERAC" after:2024/10/20', 0, 5); // TEST
 
   if (threads.length < 1) return;    // if no results, then interac email has not arrived
   var firstThread = threads[0];
@@ -305,7 +307,7 @@ function getReferenceNumberFromEmail() {
     threads[i].addLabel(GmailApp.getUserLabelByName("Interac Emails"));   // Label as `Interac Emails`
 
     var searchString = "Reference Number:";
-    var searchStringFR = "Numero de reference :";
+    var searchStringFR = "Numero de reference :";  // Accents not required
 
     // Try searching in English
     var startIndex = emailBody.indexOf(searchString) + searchString.length + 1;
