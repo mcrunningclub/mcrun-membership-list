@@ -47,7 +47,6 @@ function copyToBackup() {
  */
 
 function onEditPasskitURL() { 
-  var BACKUP_SHEET;
   return;
   var sheet = BACKUP_SHEET;
   checkURLFromIndex(sheet.getLastRow());
