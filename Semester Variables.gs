@@ -20,5 +20,5 @@ const COMMENTS_COL = 18;                // Column 'R'
 const ATTENDANCE_STATUS = 19;           // Column 'S'
 const MEMBER_ID_COL = 20;               // Column 'T'
 
-//Found in `Internal Fee Collection` sheet
+// Found in `Internal Fee Collection` sheet
 const INTERAC_ITEM_COL = 'A3'

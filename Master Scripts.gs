@@ -30,30 +30,45 @@ const PROCESSED_ARR = {
   REGISTATION_HIST: 21
 };
 
+
+/**
+ * Creates the master sheet by consolidating member data from selected semester sheets.
+ * Calls `consolidateMemberData` to fetch, process, and output data to the `MASTER` sheet.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Oct , 2024
+ *
+ */
+
 function createMaster() {
   consolidateMemberData();
 }
 
 function addLastSubmissionToMaster() {
-  //consolidateMemberData();
+  consolidateMemberData();
 }
 
+
 /**
- * @author: Andrey S Gonzalez
- * @date: Oct 21, 2024
- * @update: Oct 21, 2024
+ * Processes the last submitted row from the `MAIN_SHEET`, adding semester codes
+ * to relevant fields like `MEMBER_DESCR`, `REFERRAL`, `COMMENTS`, and payment history.
+ *
+ * @return {string[]} Array of processed values for the last submission.
  * 
- * Process last submission from semester sheet
- * @RETURN string[]
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Oct , 2024
  * 
+ * ```javascript
+ * // Sample Script : Storing processed submission.
+ * const processedData = processLastSubmission();
+ * ```
  */
 function processLastSubmission() {
   const columnSize = 20;   // Range 'A:T';
   const lastRowNum = getLastSubmission();     // Last row num from 'MAIN_SHEET'
-
+  const semesterCode = getSemesterCode(SHEET_NAME); // Get the semester code based on the sheet name
   var lastSubmission = MAIN_SHEET.getRange(lastRowNum, 1, 1, columnSize).getValues()[0];
-  var semesterCode = getSemesterCode(SHEET_NAME); // Get the semester code based on the sheet name
-
+  
   const indicesToProcess = [PROCESSED_ARR.MEMBER_DESCR, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
 
   // Loop over the relevant indices and append semester code to non-empty fields
@@ -76,6 +91,17 @@ function processLastSubmission() {
   return lastSubmission;
 }
 
+/**
+ * Consolidates the last submitted row from `MAIN` into `MASTER`.
+ * Checks if an existing entry with the same email exists in the MASTER sheet:
+ *   - If found, updates specific fields with concatenated data from both entries.
+ *   - If not found, appends the new data as a fresh row.
+ *
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Oct , 2024
+ * 
+ * @todo complete case 1 (member in sheet already).
+ */
 
 function consolidateLastSubmission() {
   var processedLastSubmission = processLastSubmission();
@@ -122,7 +148,17 @@ function consolidateLastSubmission() {
 }
 
 
-// Helper Function
+/**
+ * Processes data for a given semester sheet, adding semester codes to selected
+ * fields and returning the formatted data.
+ * 
+ * Helper function for `consolidateMemberData()`.
+ *
+ * @param {string} sheetName  The name of the semester sheet to process (e.g., 'Fall 2024').
+ * @return {Array<Array>}  Returns an array of processed row data for the given semester.
+ *
+ * @example `const processedData = processSemesterData('Fall 2024');`
+ */
 function processSemesterData(sheetName) {
   const SPREADSHEET = SpreadsheetApp.getActiveSpreadsheet();
   const semesterSheetRange = 'A2:T';
@@ -156,24 +192,24 @@ function processSemesterData(sheetName) {
   return processedData;
 }
 
-
 /**
- * findSubmissionFromEmail
- * 
- * @author: Andrey S Gonzalez & ChatGPT
- * @date: Oct 21, 2024
- * @update: Oct 23, 2024
- * 
- * Recursive function to search for an email in `MASTER` sheet using binary search.
+ * Recursive function to search for entry by email in `MASTER` sheet using binary search.
  * Returns email's row index in GSheet (1-indexed), or null if not found.
  * 
- * @param {string} emailToFind - The email address to search for in the sheet.
- * @param {number} [start=1] - The starting row index for the search (1-indexed). Defaults to 1 (the first row).
- * @param {number} [end=MASTER_SHEET.getLastRow()] - The ending row index for the search. Defaults to the last row in the sheet.
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
+ * @date  Oct 21, 2024
+ * @update  Oct 23, 2024
  * 
- * @return {number|null} - Returns the 1-indexed row number where the email is found, 
- *                         or `null` if the email is not found.
+ * @param {string} emailToFind  The email address to search for in the sheet.
+ * @param {number} [start=1]  The starting row index for the search (1-indexed). 
+ *                            Defaults to 1 (the first row).
+ * @param {number} [end=MASTER_SHEET.getLastRow()]  The ending row index for the search. 
+ *                                                  Defaults to the last row in the sheet.
  * 
+ * @return {number|null}  Returns the 1-indexed row number where the email is found, 
+ *                        or `null` if the email is not found.
+ * 
+ * @example `const submissionRowNumber = findSubmissionFromEmail('example@mail.com');`
  */
 
 function findSubmissionFromEmail(emailToFind, start=1, end=MASTER_SHEET.getLastRow()) {

@@ -23,7 +23,7 @@ function onFormSubmit() {
   
   //copyToBackup();   // transfer info to `BACKUP` for Zapier Automation. PassKit URL copied back to `main`
   //copyNewMemberToPointsLedger();  // copy new member to `Points Ledger`
-  consolidateLastSubmission();
+  addLastSubmissionToMaster();
 
   formatSpecificColumns();
   getReferenceNumberFromEmail();
