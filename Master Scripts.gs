@@ -30,7 +30,6 @@ const PROCESSED_ARR = {
   REGISTRATION_HIST: 21
 };
 
-
 /**
  * Creates the master sheet by consolidating member data from selected semester sheets.
  * Calls `consolidateMemberData` to fetch, process, and output data to the `MASTER` sheet.
@@ -46,6 +45,29 @@ function createMaster() {
 
 function addLastSubmissionToMaster() {
   consolidateLastSubmission();
+  sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
+}
+
+/**
+ * Sorts `MASTER` by email instead of first name.
+ * Required to ensure `findSubmissionByEmail` works properly.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Oct 27, 2024
+ *
+ */
+
+function sortMasterByEmail() {
+  const sheet = MASTER_SHEET;
+  const numRows = sheet.getLastRow() - 1;
+  const numCols = sheet.getLastColumn();
+    
+  // Sort all the way to the last row, without the header row
+  const range = sheet.getRange(2, 1, numRows, numCols);
+    
+  // Sorts values by email
+  range.sort([{column: 1, ascending: true}]);
+  return;
 }
 
 
@@ -63,6 +85,7 @@ function addLastSubmissionToMaster() {
  * const processedData = processLastSubmission();
  * ```
  */
+
 function processLastSubmission() {
   const lastRowNum = getLastSubmission();     // Last row num from 'MAIN_SHEET'
   const semesterCode = getSemesterCode(SHEET_NAME); // Get the semester code based on the sheet name
@@ -188,24 +211,16 @@ function consolidateLastSubmission() {
   if (indexSubmission != null) {
     sheet.getRange(indexSubmission, 1, 1, selectedData.length).setValues([selectedData]);
   }
-  // CASE 2: User does not exist in 'MASTER' -> add new entry & sort
+  // CASE 2: User does not exist in 'MASTER' -> add new entry to the bottom of sheet
   else {
     var lastRow = sheet.getLastRow();
     sheet.getRange(lastRow, 1, 1, selectedData.length).setValues([selectedData]);
-
-    // Sort 'MASTER' by email once member entry added
-    const numRows = lastRow;
-    const numCols = sheet.getLastColumn();
-    
-    // Sort all the way to the last row, without the header row
-    const range = sheet.getRange(2, 1, numRows, numCols);
-    
-    // Sorts values by email
-    range.sort([{column: 1, ascending: true}]);
   }
 
   return;
 }
+
+
 
 
 /**

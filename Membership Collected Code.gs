@@ -23,11 +23,13 @@ function onFormSubmit() {
   
   //copyToBackup();   // transfer info to `BACKUP` for Zapier Automation. PassKit URL copied back to `main`
   //copyNewMemberToPointsLedger();  // copy new member to `Points Ledger`
-  addLastSubmissionToMaster();
 
   formatSpecificColumns();
   getReferenceNumberFromEmail();
-  sortNameByAscending();    // must sort AFTER getting Interac info and copying
+  
+  // Must add and sort AFTER getting Interac info and copying
+  addLastSubmissionToMaster();
+  sortNameByAscending();
 }
 
 
@@ -244,6 +246,7 @@ function encodeWholeList() {
 function formatSpecificColumns() {
   var sheet = MAIN_SHEET;
 
+  const rangeRegistration = sheet.getRange('A2:A');  // Range for Preferred Name/Pronouns
   const rangePreferredName = sheet.getRange('E2:E');  // Range for Preferred Name/Pronouns
   const rangeWaiver = sheet.getRange('J2:J');         // Range for Waiver
   const rangePaymentChoice = sheet.getRange('K2:K');  // Range for Payment Preferrence
@@ -253,6 +256,7 @@ function formatSpecificColumns() {
   const rangeURL = sheet.getRange('U2:U');            // Range for PassKit URL
 
   // Set ranges to Bold
+  rangeRegistration.setFontWeight('bold');
   rangePreferredName.setFontWeight('bold');
   rangePaymentChoice.setFontWeight('bold');
   rangeInteracRef.setFontWeight('bold');
