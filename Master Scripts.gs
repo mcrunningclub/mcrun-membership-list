@@ -222,7 +222,6 @@ function consolidateLastSubmission() {
 
 
 
-
 /**
  * Processes data for a given semester sheet, adding semester codes to selected
  * fields and returning the formatted data.
@@ -320,7 +319,54 @@ function findSubmissionFromEmail(emailToFind, start=1, end=MASTER_SHEET.getLastR
 }
 
 
+/**
+ * Requires user validation to consolidate member registration.
+ * Prevent unwanted data overwrite in `MASTER` sheet
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Oct 28, 2024
+ * 
+ * @returns {boolean}  Returns user choice as a boolean.
+ *
+ * @example `const userChoice = confirmMasterOverwrite();`
+ */
+
+function confirmMasterOverwrite() {
+  const ui = SpreadsheetApp.getUi();
+  const headerMsg = "Do you want to consolidate member registrations?";
+  const textMsg = "This action will overwrite present data in MASTER. Ensure that data has been copied beforehand.";
+
+  var choice = ui.alert(
+    headerMsg,
+    textMsg,
+    ui.ButtonSet.YES_NO,
+  );
+
+  const result = (choice == ui.Button.YES);
+
+  // Process the user's response.
+  if (result) {
+    // User clicked "Yes".
+    ui.alert("Confirmation received. Starting data consolidation...");
+  } else {
+    // User clicked "No" or X in the title bar.
+    ui.alert("Process cancelled.");
+  }
+
+  return result;
+}
+
+
 function consolidateMemberData() {
+  // Verify if data overwrite wanted
+  if(!confirmMasterOverwrite()) {
+    return;
+  }
+
+  // Prevent data overwrite for now
+  Logger.log("Currently preventing consolidateMemberData() from running. Remove return statement from code to continue.");
+  return;
+
   // Get processed semester data
   var fall2024 = processSemesterData('Fall 2024');
   var summer2024 = processSemesterData('Summer 2024');
