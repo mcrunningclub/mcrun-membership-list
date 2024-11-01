@@ -49,6 +49,26 @@ function addLastSubmissionToMaster() {
 }
 
 /**
+ * Runs specific functions on new in-app member registration.
+ * 
+ * 1. Formats newest member registration in `MASTER`.
+ * 
+ * 2. Sends a email reminder to complete SSMU waiver.
+ * 
+ * 3. Sorts `MASTER` by email afterwards.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Nov 1, 2024
+ * 
+ * CURRENTLY IN REVIEW (nov-1)
+ */
+
+function onAppMemberRegistration() {
+  sortMasterByEmail();
+}
+
+
+/**
  * Sorts `MASTER` by email instead of first name.
  * Required to ensure `findSubmissionByEmail` works properly.
  * 
@@ -59,7 +79,7 @@ function addLastSubmissionToMaster() {
 
 function sortMasterByEmail() {
   const sheet = MASTER_SHEET;
-  const numRows = sheet.getLastRow() - 1;
+  const numRows = sheet.getLastRow() - 1;   // Remove Header from count
   const numCols = sheet.getLastColumn();
     
   // Sort all the way to the last row, without the header row
@@ -137,10 +157,10 @@ function consolidateLastSubmission() {
 
     // Data to append in latest registration: 
     const indicesToAppend = {
-      [PROCESSED_ARR.MEMBER_DESCR]: existingEntry[7],   // Describe Yourself 'H'
-      [PROCESSED_ARR.REFERRAL]: existingEntry[8],   // Referral 'I'
-      [PROCESSED_ARR.FEE_PAID_HIST]: existingEntry[18],   // Payment History 'S'
-      [PROCESSED_ARR.COMMENTS]: existingEntry[19]   // Comments 'T'
+      [PROCESSED_ARR.MEMBER_DESCR]: existingEntry[7],    // Describe Yourself 'H'
+      [PROCESSED_ARR.REFERRAL]: existingEntry[8],        // Referral 'I'
+      [PROCESSED_ARR.FEE_PAID_HIST]: existingEntry[18],  // Payment History 'S'
+      [PROCESSED_ARR.COMMENTS]: existingEntry[19]        // Comments 'T'
     };
 
     // Only append if existingEntry[i] non-empty
@@ -205,6 +225,7 @@ function consolidateLastSubmission() {
 
   // Store selected data in new array
   var selectedData = indicesToSelect.map(index => processedLastSubmission[index] || "");
+  var lastRow = sheet.getLastRow();
 
   // Output data to 'MASTER'
   // CASE 1 : User exists -> replace previous entry
@@ -213,13 +234,16 @@ function consolidateLastSubmission() {
   }
   // CASE 2: User does not exist in 'MASTER' -> add new entry to the bottom of sheet
   else {
-    var lastRow = sheet.getLastRow();
     sheet.getRange(lastRow, 1, 1, selectedData.length).setValues([selectedData]);
   }
 
+  // Add formula for `Fee Paid` col
+  // IS_FEE_PAID_COL for `MASTER` matches index for `MASTER`
+  const isFeePaidCell = sheet.getRange(lastRow, IS_FEE_PAID_COL);
+  isFeePaidCell.setFormula(isFeePaidFormula);
+
   return;
 }
-
 
 
 /**

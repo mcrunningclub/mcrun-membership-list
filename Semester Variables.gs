@@ -22,3 +22,15 @@ const MEMBER_ID_COL = 20;               // Column 'T'
 
 // Found in `Internal Fee Collection` sheet
 const INTERAC_ITEM_COL = 'A3'
+
+// GSheet formula for IS_FEE_PAID_COL in `MASTER`
+const isFeePaidFormula =`
+  LET(row, ROW(),
+      last_payment_sem, GET_FEE_EXPIRATION_DATE(INDIRECT("S" & row)), 
+      expiration_date, SEMESTER_TO_DATE(last_payment_sem),
+      IFS(INDIRECT("A" & row) = "", "", 
+          INDIRECT("P" & row) = "(Fee Waived)", "Paid", 
+          INDIRECT("S" & row) = "", "Unpaid", 
+          expiration_date >= TODAY(), "Paid", 
+          expiration_date < TODAY(), "Expired" )
+)`;

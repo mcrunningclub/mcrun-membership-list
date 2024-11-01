@@ -18,14 +18,14 @@ function getUserTimeZone() {
  * CURRENTLY IN REVIEW (may-28)
  */
 function onFormSubmit() {
-  trimWhitespace();
+  trimWhitespace_();
   encodeLastRow();   // create unique member ID
   
   //copyToBackup();   // transfer info to `BACKUP` for Zapier Automation. PassKit URL copied back to `main`
   //copyNewMemberToPointsLedger();  // copy new member to `Points Ledger`
 
   formatSpecificColumns();
-  getReferenceNumberFromEmail();
+  getReferenceNumberFromEmail_();
   
   // Must add and sort AFTER getting Interac info and copying
   addLastSubmissionToMaster();
@@ -105,7 +105,7 @@ function copyNewMemberToPointsLedger() {
   const PASS_SAVED_FORMULA_COL = 7;
 
   // e.g. `=SUM(E123:AA123)` & need a regEx to replace all instances of `{row}`
-  const totalPointsFormula = "=SUM(E{row}:AA{row})".replace( getRegEx('{row}'), pasteRowNum );
+  const totalPointsFormula = "=SUM(E{row}:AA{row})".replace( getRegEx_('{row}'), pasteRowNum );
   pasteSheet.getRange(pasteRowNum, TPOINTS_FORMULA_COL).setValue(totalPointsFormula);
 
   const registrationFormula = "=pointsMemberRegistration";
@@ -135,7 +135,7 @@ function copyNewMemberToPointsLedger() {
  * Must have the new submission in the last row to work.
  */
 
-function checkInteracRef(emailInteracRef) {
+function checkInteracRef_(emailInteracRef) {
   const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
   const sheet = MAIN_SHEET;
 
@@ -167,7 +167,7 @@ function checkInteracRef(emailInteracRef) {
  * Trigger: new form submission
  */
 
-function trimWhitespace() {
+function trimWhitespace_() {
   const sheet = MAIN_SHEET;
   
   const lastRow = sheet.getLastRow();
@@ -289,7 +289,7 @@ function formatSpecificColumns() {
  * Interac email address either "catch@payments.interac.ca" or "notify@payments.interac.ca"
  */
 
-function getReferenceNumberFromEmail() {
+function getReferenceNumberFromEmail_() {
   const sheet = MAIN_SHEET;
   const lastRow = sheet.getLastRow();
   
@@ -327,7 +327,7 @@ function getReferenceNumberFromEmail() {
     var newlineIndex = referenceNumberString.indexOf('\n', 1);
     
     referenceNumberString = (referenceNumberString.substring(0, newlineIndex)).trim(); // trim everything after newline
-    var errorCode = checkInteracRef(referenceNumberString); // confirm number with newest entry in membership list
+    var errorCode = checkInteracRef_(referenceNumberString); // confirm number with newest entry in membership list
 
     // Error Handling
     if (errorCode != 0) { 
@@ -361,7 +361,7 @@ function getReferenceNumberFromEmail() {
  * @returns {string} 
  */
 
-function getRegEx(targetSubstring) {
+function getRegEx_(targetSubstring) {
   return RegExp(targetSubstring, 'g');
 }
 
@@ -401,7 +401,7 @@ function MD5(input) {
  * Check if PassKit URL is entered.
  */
 
-function isPasskitURL() {
+function isPasskitURL_() {
   return;
   const sheet = MAIN_SHEET;
   const newSubmissionRow = sheet.getLastRow();
@@ -414,7 +414,7 @@ function isPasskitURL() {
 
 /* DEPRICATED OR JUNK FUNCTIONS */
 
-function drafts() {
+function drafts_() {
   return;
 
   /**
