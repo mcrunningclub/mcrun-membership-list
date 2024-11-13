@@ -1,11 +1,3 @@
-/* SHEET CONSTANTS */
-const MASTER_NAME = 'MASTER';
-const MASTER_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MASTER_NAME);
-
-const SEMESTER_CODE_MAP = new Map();
-const ALL_SEMESTERS = ['Fall 2024', 'Summer 2024', 'Winter 2024'];
-const COLUMN_SIZE = 20;   // Range 'A:T' in 'MASTER'
-
 // Index of processed semester data arrays (0-indexed)
 const PROCESSED_ARR = {
   LAST_REGISTRATION: 0,
@@ -35,7 +27,7 @@ const PROCESSED_ARR = {
  * Calls `consolidateMemberData` to fetch, process, and output data to the `MASTER` sheet.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
- * @date  Oct , 2024
+ * @date  Oct 23, 2024
  *
  */
 
@@ -48,48 +40,6 @@ function addLastSubmissionToMaster() {
   sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
 }
 
-/**
- * Runs specific functions on new in-app member registration.
- * 
- * 1. Formats newest member registration in `MASTER`.
- * 
- * 2. Sends a email reminder to complete SSMU waiver.
- * 
- * 3. Sorts `MASTER` by email afterwards.
- * 
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
- * @date  Nov 1, 2024
- * 
- * CURRENTLY IN REVIEW (nov-1)
- */
-
-function onAppMemberRegistration() {
-  sortMasterByEmail();
-}
-
-
-/**
- * Sorts `MASTER` by email instead of first name.
- * Required to ensure `findSubmissionByEmail` works properly.
- * 
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
- * @date  Oct 27, 2024
- *
- */
-
-function sortMasterByEmail() {
-  const sheet = MASTER_SHEET;
-  const numRows = sheet.getLastRow() - 1;   // Remove Header from count
-  const numCols = sheet.getLastColumn();
-    
-  // Sort all the way to the last row, without the header row
-  const range = sheet.getRange(2, 1, numRows, numCols);
-    
-  // Sorts values by email
-  range.sort([{column: 1, ascending: true}]);
-  return;
-}
-
 
 /**
  * Processes the last submitted row from the `MAIN_SHEET`, adding semester codes
@@ -98,7 +48,7 @@ function sortMasterByEmail() {
  * @return {string[]} Array of processed values for the last submission.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
- * @date  Oct , 2024
+ * @date  Oct 21, 2024
  * 
  * ```javascript
  * // Sample Script ➜ Storing processed submission.
@@ -109,7 +59,7 @@ function sortMasterByEmail() {
 function processLastSubmission() {
   const lastRowNum = getLastSubmission();     // Last row num from 'MAIN_SHEET'
   const semesterCode = getSemesterCode(SHEET_NAME); // Get the semester code based on the sheet name
-  var lastSubmission = MAIN_SHEET.getRange(lastRowNum, 1, 1, COLUMN_SIZE).getValues()[0];
+  var lastSubmission = MAIN_SHEET.getRange(lastRowNum, 1, 1, MASTER_COL_SIZE).getValues()[0];
   
   const indicesToProcess = [PROCESSED_ARR.MEMBER_DESCR, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
 
@@ -133,6 +83,7 @@ function processLastSubmission() {
   return lastSubmission;
 }
 
+
 /**
  * Consolidates the last submitted row from `MAIN` into `MASTER`.
  * Checks if an existing entry with the same email exists in the MASTER sheet:
@@ -153,7 +104,7 @@ function consolidateLastSubmission() {
   
   // Check if user already exists
   if (indexSubmission != null) {
-    var existingEntry = sheet.getRange(indexSubmission, 1, 1, COLUMN_SIZE).getValues()[0];
+    var existingEntry = sheet.getRange(indexSubmission, 1, 1, MASTER_COL_SIZE).getValues()[0];
 
     // Data to append in latest registration: 
     const indicesToAppend = {
@@ -290,6 +241,7 @@ function processSemesterData(sheetName) {
 
   return processedData;
 }
+
 
 /**
  * Recursive function to search for entry by email in `MASTER` sheet using binary search.
@@ -556,55 +508,4 @@ function sortUniqueData() {
 
   //MASTER_SHEET.getRange(2, 1, uniqueData.length, uniqueData[0].length).setValues(uniqueData);
 
-}
-
-/**
- * @author: Andrey S Gonzalez
- * @date: Oct 23, 2024
- * @update: Oct 23, 2024
- * 
- * Recursive function to find submission in MASTER using email string.
- * Return null if not found.
- * @PARAM rowNumber (1-indexed according to GSheet)
- * 
- */
-
-// Create single Member ID using row number from 'MASTER' sheet
-function encodeByRow(rowNumber) {
-  var sheet = MASTER_SHEET;
-  const MASTER_EMAIL_COL = 1;
-  const MASTER_MEMBER_ID_COL = 22;
-
-  const email = sheet.getRange(rowNumber, MASTER_EMAIL_COL).getValue();
-  if (email === "") throw RangeError("Invalid index access");   // check for invalid index
-
-  const member_id = MD5(email);
-  sheet.getRange(i, MASTER_MEMBER_ID_COL).setValue(member_id);
-}
-
-
-/**
- * @author: Andrey S Gonzalez
- * @date: Oct 20, 2024
- * @update: Oct 23, 2024
- * 
- * Encode whole list in 'MASTER' sheet using MD5 algorithm
- * 
- */
-
-// Create Member ID using email
-function encodeMasterList() {
-  var sheet = MASTER_SHEET;
-  const MASTER_EMAIL_COL = 1;
-  const MASTER_MEMBER_ID_COL = 22;
-  var i, email;
-
-  // Start at row 2 (1-indexed)
-  for (i = 221; i <= sheet.getMaxRows(); i++) {
-    email = sheet.getRange(i, MASTER_EMAIL_COL).getValue();
-    if (email === "") return;   // check for invalid row
-
-    var member_id = MD5(email);
-    sheet.getRange(i, MASTER_MEMBER_ID_COL).setValue(member_id);
-  }
 }

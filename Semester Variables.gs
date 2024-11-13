@@ -1,4 +1,11 @@
-/* COLUMN CONSTANTS ~ Please update any changes made in active sheet */
+// SHEET CONSTANTS
+const SHEET_NAME = 'Fall 2024';       // MUST UPDATE EVERY SEMESTER!
+const MAIN_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME)
+
+const TIMEZONE = getUserTimeZone_();
+
+// LIST OF COLUMNS IN SHEET_NAME
+// Please update any changes made in active sheet
 const REGISTRATION_DATE_COL = 1;      // Column 'A'
 const EMAIL_COL = 2;                  // Column 'B'
 const FIRST_NAME_COL = 3;             // Column 'C'
@@ -20,8 +27,21 @@ const COMMENTS_COL = 18;                // Column 'R'
 const ATTENDANCE_STATUS = 19;           // Column 'S'
 const MEMBER_ID_COL = 20;               // Column 'T'
 
+
+// MASTER SHEET CONSTANTS
+const MASTER_NAME = 'MASTER';
+const MASTER_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MASTER_NAME);
+const MASTER_EMAIL_COL = 1;
+const MASTER_MEMBER_ID_COL = 22;
+
+const SEMESTER_CODE_MAP = new Map();
+const ALL_SEMESTERS = ['Fall 2024', 'Summer 2024', 'Winter 2024'];
+const MASTER_COL_SIZE = 20;   // Range 'A:T' in 'MASTER'
+
+
 // Found in `Internal Fee Collection` sheet
 const INTERAC_ITEM_COL = 'A3'
+
 
 // GSheet formula for IS_FEE_PAID_COL in `MASTER`
 const isFeePaidFormula =`
@@ -34,3 +54,16 @@ const isFeePaidFormula =`
           expiration_date >= TODAY(), "Paid", 
           expiration_date < TODAY(), "Expired" )
 )`;
+
+
+/**
+ * Returns timezone for currently running script.
+ * 
+ * Prevents incorrect time formatting during time changes like Daylight Savings Time.
+ *
+ * @return {string}  Timezone as geographical location (e.g.`'America/Montreal'`).
+ */
+
+function getUserTimeZone_() {
+  return Session.getScriptTimeZone();
+}
