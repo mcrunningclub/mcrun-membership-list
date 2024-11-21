@@ -67,3 +67,17 @@ const isFeePaidFormula =`
 function getUserTimeZone_() {
   return Session.getScriptTimeZone();
 }
+
+
+/**
+ * Returns email of current user executing Google Apps Script functions.
+ * 
+ * Prevents incorrect account executing Google automations (e.g. McRUN bot.)
+ * 
+ * @return {string}  Email of current user.
+ */
+
+function getCurrentUserEmail_() {
+  return Session.getActiveUser();
+}
+

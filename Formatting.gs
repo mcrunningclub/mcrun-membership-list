@@ -193,6 +193,8 @@ function encodeByRow(sheet, rowNumber) {
 /**
  * Retrieves column indices of email and member id in GSheet.
  * 
+ * Helper for encoding functions (i.e. `encodeList`, `encodeByRow`)
+ * 
  * @input {SpreadsheetApp.Sheet} sheet  Sheet reference to encode
  * @return {{emailCol, memberIdCol}}  Returns col indices for `sheet`.
  *  
