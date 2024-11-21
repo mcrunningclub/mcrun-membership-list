@@ -1,6 +1,6 @@
 // SHEET CONSTANTS
 const SHEET_NAME = 'Fall 2024';       // MUST UPDATE EVERY SEMESTER!
-const MAIN_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME)
+const MAIN_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
 
 const TIMEZONE = getUserTimeZone_();
 
@@ -80,4 +80,3 @@ function getUserTimeZone_() {
 function getCurrentUserEmail_() {
   return Session.getActiveUser();
 }
-

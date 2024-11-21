@@ -2,7 +2,6 @@
  * Users authorized to use the McRUN menu.
  * 
  * Prevents unwanted data overwrite in Gsheet.
- * 
  */
 const PERM_USER_ = [
   'mcrunningclub@ssmu.ca', 
@@ -12,8 +11,43 @@ const PERM_USER_ = [
   'thecharlesvillegas@gmail.com',
 ];
 
+
+/**
+ * Logs user attempting to use custom McRUN menu.
+ * 
+ * @trigger User choice in custom menu.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Nov 21, 2024
+ * @update  Nov 21, 2024
+ */
+
+function logMenuAttempt_() {
+  const userEmail = getCurrentUserEmail_().toString();
+  Logger.log(`McRUN menu access attempt by: ${userEmail}`);
+}
+
+/**
+ * Activate the sheet `sheetName` in Google Spreadsheet.
+ * 
+ * Changes view to `sheetName`.
+ * 
+ * @input {string}  sheetName  Name of target sheet.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Nov 21, 2024
+ * @update  Nov 21, 2024
+ */
+
+function changeSheetView_(sheetName) {
+  SpreadsheetApp.getActive().getSheetByName(sheetName).activate();
+}
+
+
 /**
  * Creates custom menu to run frequently used scripts in Google App Script.
+ * 
+ * @trigger Open Google Spreadsheet.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 21, 2024
@@ -27,7 +61,9 @@ function onOpen() {
   // Check if authorized user to prevent illegal execution
   if (!PERM_USER_.includes(userEmail)) return;
 
-  ui.createMenu('McRUN Menu')
+  ui.createMenu('🏃‍♂️ McRUN Menu')
+    .addItem('📢 Custom menu. Click for help.', 'helpUI_')
+    .addSeparator()
 
     .addSubMenu(ui.createMenu('Main Scripts')
       .addItem('Sort by Name', 'sortByNameUI_')
@@ -48,9 +84,34 @@ function onOpen() {
 
 
 /**
+ * Displays a help message for the custom McRUN menu.
+ * 
+ * Accessible only to authorized members.
+ */
+
+function helpUI_() {
+  const ui = SpreadsheetApp.getUi();
+  
+  const helpMessage = `
+    📋 McRUN Menu Help
+
+    This menu is only accessible to selected members.
+
+    - Scripts are applied to the sheet via the submenu.
+    - To view or modify authorized users, open the Google Apps Script editor.
+
+    Please contact the admin if you need access or assistance.
+  `;
+
+  // Display the help message
+  ui.alert("McRUN Menu Help", helpMessage.trim(), ui.ButtonSet.OK);
+}
+
+
+/**
  * Boiler plate function to display custom UI to run scripts.
  * 
- * @trigger User choice in custom menu
+ * @trigger User choice in custom menu.
  * 
  * @input {string}  functionName  Name of function to execute.
  * @input {string}  sheetName  Name of sheet where `functionName` will run.
@@ -62,20 +123,31 @@ function onOpen() {
 
 function confirmAndRunUserChoice_(functionName, sheetName) {
   const ui = SpreadsheetApp.getUi();
-  const message = `⚙️ Now executing ${functionName} in ${sheetName}. Press cancel to stop.`;
+  const message = `
+    ⚙️ Now executing ${functionName} in ${sheetName}.
+  
+    🚨 Press cancel to stop.
+  `;
 
   const response = ui.alert(message, ui.ButtonSet.OK_CANCEL);
 
   if(response == ui.Button.OK) {
-    this[functionName]();   // executing function with name `functionName`;
+    this[functionName]();   // executing function with name `functionName`
   }
   else {
     ui.alert('Execution cancelled...');
   }
+
+  // Change view to target sheet
+  changeSheetView_(sheetName);
+
+  // Log attempt in console using active user email
+  logMenuAttempt_();  
 }
 
+
 /** 
- *  Scripts for MAIN_SHEET submenu.
+ *  Scripts for `MAIN_SHEET` menu items.
  */
 
 function sortByNameUI_() {
@@ -104,7 +176,7 @@ function encodeLastRowUI_() {
 
 
 /** 
- *  Scripts for MASTER_SHEET submenu.
+ *  Scripts for `MASTER_SHEET` menu items.
  */
 
 function createMasterUI_() {
@@ -125,6 +197,7 @@ function createMasterUI_() {
     ui.alert("Execution cancelled...");
   }
   
+  logMenuAttempt_();    // log attempt
 }
 
 function addLastSubmissionToMasterUI_() {
