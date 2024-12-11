@@ -32,11 +32,22 @@ const MEMBER_ID_COL = 20;               // Column 'T'
 const MASTER_NAME = 'MASTER';
 const MASTER_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MASTER_NAME);
 const MASTER_EMAIL_COL = 1;
+const MASTER_FIRST_NAME_COL = 2;
+const MASTER_LAST_REG_SEM = 11;
+const MASTER_FEE_STATUS = 14;
+const MASTER_COLLECTION_DATE = 17;
+const MASTER_PAYMENT_HIST = 19;
 const MASTER_MEMBER_ID_COL = 22;
 
 const SEMESTER_CODE_MAP = new Map();
 const ALL_SEMESTERS = ['Fall 2024', 'Summer 2024', 'Winter 2024'];
 const MASTER_COL_SIZE = 20;   // Range 'A:T' in 'MASTER'
+
+const FEE_STATUS_ENUM = [
+  "Paid",
+  "Unpaid",
+  "Expired"
+];
 
 
 // Found in `Internal Fee Collection` sheet
@@ -78,5 +89,5 @@ function getUserTimeZone_() {
  */
 
 function getCurrentUserEmail_() {
-  return Session.getActiveUser();
+  return Session.getActiveUser().toString();
 }

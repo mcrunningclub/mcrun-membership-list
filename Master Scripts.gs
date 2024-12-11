@@ -40,6 +40,13 @@ function addLastSubmissionToMaster() {
   sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
 }
 
+function onMemberAddedByApp() {
+  cleanMasterRegistration();
+  encodeByRow(MASTER_SHEET);
+  insertRegistrationSem();
+  sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
+}
+
 
 /**
  * Processes the last submitted row from the `MAIN_SHEET`, adding semester codes
@@ -57,8 +64,8 @@ function addLastSubmissionToMaster() {
  */
 
 function processLastSubmission() {
-  const lastRowNum = getLastSubmission();     // Last row num from 'MAIN_SHEET'
-  const semesterCode = getSemesterCode(SHEET_NAME); // Get the semester code based on the sheet name
+  const lastRowNum = getLastSubmissionInMain();     // Last row num from 'MAIN_SHEET'
+  const semesterCode = getSemesterCode_(SHEET_NAME); // Get the semester code based on the sheet name
   var lastSubmission = MAIN_SHEET.getRange(lastRowNum, 1, 1, MASTER_COL_SIZE).getValues()[0];
   
   const indicesToProcess = [PROCESSED_ARR.MEMBER_DESCR, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
@@ -123,7 +130,7 @@ function consolidateLastSubmission() {
       }
     }
 
-    // Data to keep if latest registration empty: 
+    // Data to keep if latest registration empty:
     const indicesToKeep = {
       [PROCESSED_ARR.COLLECTED_BY]: existingEntry[16],     // Collected By 'P'
       [PROCESSED_ARR.COLLECTION_DATE]: existingEntry[17],   // Collection Date 'Q'
@@ -176,7 +183,7 @@ function consolidateLastSubmission() {
 
   // Store selected data in new array
   var selectedData = indicesToSelect.map(index => processedLastSubmission[index] || "");
-  var lastRow = sheet.getLastRow();
+  var newEntryRow = sheet.getLastRow() + 1;
 
   // Output data to 'MASTER'
   // CASE 1 : User exists -> replace previous entry
@@ -185,12 +192,11 @@ function consolidateLastSubmission() {
   }
   // CASE 2: User does not exist in 'MASTER' -> add new entry to the bottom of sheet
   else {
-    sheet.getRange(lastRow, 1, 1, selectedData.length).setValues([selectedData]);
+    sheet.getRange(newEntryRow, 1, 1, selectedData.length).setValues([selectedData]);
   }
 
   // Add formula for `Fee Paid` col
-  // IS_FEE_PAID_COL for `MASTER` matches index for `MASTER`
-  const isFeePaidCell = sheet.getRange(lastRow, IS_FEE_PAID_COL);
+  const isFeePaidCell = sheet.getRange(newEntryRow, MASTER_FEE_STATUS);
   isFeePaidCell.setFormula(isFeePaidFormula);
 
   return;
@@ -214,7 +220,7 @@ function processSemesterData(sheetName) {
   const semesterSheetRange = 'A2:T';
   
   var sheetData = SPREADSHEET.getSheetByName(sheetName).getRange(semesterSheetRange).getValues();
-  const semesterCode = getSemesterCode(sheetName); // Get the semester code based on the sheet name
+  const semesterCode = getSemesterCode_(sheetName); // Get the semester code based on the sheet name
 
   const processedData = sheetData.map(function (row) {
     // Append semester code if entries are non-empty by looping over selected indices
@@ -398,7 +404,7 @@ function consolidateMemberData() {
 
 
 // Helper Function
-function getSemesterCode(semester) {
+function getSemesterCode_(semester) {
   // Return semester code if already in map
   if (semester in SEMESTER_CODE_MAP) {
     return SEMESTER_CODE_MAP.get(semester)
@@ -414,6 +420,24 @@ function getSemesterCode(semester) {
 
   return code;
 }
+
+function getSemesterCodeFromDate_(date) {
+  // Return semester code if already in map
+  if (semester in SEMESTER_CODE_MAP) {
+    return SEMESTER_CODE_MAP.get(semester)
+  }
+
+  // Extract the first letter of the string and last two char representing the year
+  const semesterType = semester.charAt(0);
+  const semesterYear = semester.slice(-2);
+  const code = semesterType + semesterYear;
+
+  // Same key-value in map
+  SEMESTER_CODE_MAP.set(semester, code);
+
+  return code;
+}
+
 
 
 function sortUniqueData() {

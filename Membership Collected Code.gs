@@ -15,17 +15,17 @@
 
 function onFormSubmit() {
   trimWhitespace_();
+  fixLetterCaseInRow_();
+
   encodeLastRow();   // create unique member ID
-  
-  //copyToBackup();   // transfer info to `BACKUP` for Zapier Automation. PassKit URL copied back to `main`
   //copyNewMemberToPointsLedger();  // copy new member to `Points Ledger`
 
-  formatSpecificColumns();
-  getReferenceNumberFromEmail_();
+  formatMainView();
+  //getReferenceNumberFromEmail_();
   
   // Must add and sort AFTER getting Interac info and copying
   addLastSubmissionToMaster();
-  sortMainByName();
+  //sortMainByName();
 }
 
 
@@ -34,14 +34,14 @@ function onFormSubmit() {
  * 
  * Used to prevent native `sheet.getLastRow()` from returning empty row.
  * 
- * @return {int}  Returns 1-index of last row in GSheet.
+ * @return {integer}  Returns 1-index of last row in GSheet.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Sept 1, 2024
  * @update  Sept 1, 2024
  */
 
-function getLastSubmission() {
+function getLastSubmissionInMain() {
   const sheet = MAIN_SHEET;
   const lastRow = sheet.getLastRow();
 
@@ -87,12 +87,12 @@ function MD5(input) {
 /**
  * Checks if new submission paid using Interac e-Transfer and completes collection info.
  * 
- * Must have the new submission in the last row to work.
+ * Must have the new member submission in the last row to work.
  * 
  * Helper function for getReferenceNumberFromEmail_()
  * 
  * @param {string} emailInteracRef  The Interac e-Transfer reference found in email.
- * @return {int}  Returns status code.
+ * @return {integer}  Returns status code.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
