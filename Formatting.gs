@@ -74,7 +74,7 @@ function sortMainByName() {
 function formatMainView() {
   var sheet = MAIN_SHEET;
 
-  const rangeRegistration = sheet.getRange('A2:A');  // Range for Preferred Name/Pronouns
+  const rangeRegistration = sheet.getRange('A2:A');   // Range for Registration Timestamp
   const rangePreferredName = sheet.getRange('E2:E');  // Range for Preferred Name/Pronouns
   const rangeWaiver = sheet.getRange('J2:J');         // Range for Waiver
   const rangePaymentChoice = sheet.getRange('K2:K');  // Range for Payment Preferrence
@@ -180,6 +180,74 @@ function sortMasterByEmail() {
 
 function formatMasterView() {
   var sheet = MASTER_SHEET;
+
+  // Set Text to Bold
+  const rangeListToBold = sheet.getRangeList(['K2:K']);   // Latest Reg Semester
+  rangeListToBold.setFontWeight('bold');
+
+  // Reduce Font to 9
+  const rangeListReduceFont = sheet.getRangeList([
+    'H2:H',   // Member Description
+    'I2:I',   // Referral
+    'J2:J',   // Latest Registration Timestamp
+    'L2:L',   // Registration History
+    'N2:N',   // Fee Paid
+    'Q2:Q',   // Collection Date
+    'R2:R',   // Given to Internal
+    'S2:S',   // Payment History
+    'T2:T',   // Comments
+    'U2:U',   // Attendance Status
+    'V2:V',   // Member ID
+  ]);
+  rangeListReduceFont.setFontSize(9).set;
+
+  // Change Font Family to 'Google Sans Mono'
+  const rangeListToGoogleSansMono = sheet.getRangeList([
+    'L2:L',   // Registration History
+    'N2:N',   // Fee Paid
+    'S2:S',   // Payment History
+    'V2:V',   // Member ID
+  ]);
+  rangeListToGoogleSansMono.setFontFamily('Google Sans Mono');
+
+  // Change Font Family to Helvetica
+  const rangeListToHelvetica = sheet.getRangeList([
+    'H2:H',   // Member Description
+    'O2:O',   // Fee Expiration
+    'P2:P',   // Collected By
+    'T2:T',   // Comments
+  ]);
+  rangeListToHelvetica.setFontFamily('Helvetica');
+
+  // Change to Clip Wrap
+  const rangeListToClipWrap = sheet.getRangeList([
+    'E2:E',   // Year
+    'F2:F',   // Program
+    'G2:G',   // Waiver
+    'H2:H',   // Member Description
+  ]);
+  rangeListToClipWrap.setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+
+  // Modify to Middle-Centre Alignment
+  const rangeListToCenter = sheet.getRangeList([
+    'J2:J',   // Latest Registration Timestamp
+    'K2:K',   // Latest Registration Code
+    'L2:L',   // Registration History
+    'N2:N',   // Fee Paid
+    'O2:O',   // Fee Expiration
+    'P2:P',   // Collected By
+    'Q2:Q',   // Collection Date
+    'R2:R',   // Given to Internal
+    'S2:S',   // Payment History
+    'U2:U',   // Attendance Status
+    'V2:V',   // Member ID
+  ]);
+  rangeListToCenter.setHorizontalAlignment('center');
+  rangeListToCenter.setVerticalAlignment('middle');
+
+  // Show Hyperlink for Waivers
+  const rangeListShowHyperlink = sheet.getRangeList(['G2:G']);
+  rangeListShowHyperlink.setShowHyperlink(true);
   
 }
 

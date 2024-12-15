@@ -74,15 +74,16 @@ function onOpen() {
     .addSubMenu(ui.createMenu('Main Scripts')
       .addItem('Sort by Name', sortByNameUI_.name)
       .addItem('Submit Form', onFormSubmitUI_.name)
-      .addItem('Format Sheet', formatSpecificColumnsUI_.name)
+      .addItem('Prettify Main Sheet', prettifyMainUI_.name)
       .addItem('Encode Text from Input', createMemberIDFromInputUI_.name)
       .addItem('Create ID for Last Member', encodeLastRowUI_.name)
       )
 
     .addSubMenu(ui.createMenu('Master Scripts')
       .addItem('Create Master', createMasterUI_.name)
-      .addItem('Add Last Submission from Main', addLastSubmissionToMasterUI_.name)
       .addItem('Sort by Email', sortMasterByEmailUI_.name)
+      .addItem('Prettify Master Sheet', prettifyMasterUI_.name )
+      .addItem('Add Last Submission from Main', addLastSubmissionToMasterUI_.name)
       .addItem('Add Specific Sheet Submission (draft)', addMemberFromSheetInRowUI_.name)
     )
     .addToUi()
@@ -184,7 +185,7 @@ function onFormSubmitUI_() {
   confirmAndRunUserChoice_(functionName, sheetName);
 }
 
-function formatSpecificColumnsUI_() {
+function prettifyMainUI_() {
   const functionName = formatMainView.name;
   const sheetName = SHEET_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
@@ -248,6 +249,12 @@ function createMasterUI_() {
   }
   
   logMenuAttempt_();    // log attempt
+}
+
+function prettifyMasterUI_() {
+  const functionName = formatMasterView.name;
+  const sheetName = MASTER_NAME;
+  confirmAndRunUserChoice_(functionName, sheetName);
 }
 
 function addLastSubmissionToMasterUI_() {
