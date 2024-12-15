@@ -75,17 +75,18 @@ function onOpen() {
       .addItem('Sort by Name', sortByNameUI_.name)
       .addItem('Submit Form', onFormSubmitUI_.name)
       .addItem('Format Sheet', formatSpecificColumnsUI_.name)
+      .addItem('Encode Text from Input', createMemberIDFromInputUI_.name)
       .addItem('Create ID for Last Member', encodeLastRowUI_.name)
       )
-    .addSeparator()
 
     .addSubMenu(ui.createMenu('Master Scripts')
       .addItem('Create Master', createMasterUI_.name)
       .addItem('Add Last Submission from Main', addLastSubmissionToMasterUI_.name)
       .addItem('Sort by Email', sortMasterByEmailUI_.name)
-      .addItem('Process Last Submission', processLastSubmissionUI_.name)
+      .addItem('Add Specific Sheet Submission (draft)', addMemberFromSheetInRowUI_.name)
     )
-    .addToUi();
+    .addToUi()
+  ;
 }
 
 
@@ -195,6 +196,32 @@ function encodeLastRowUI_() {
   confirmAndRunUserChoice_(functionName, sheetName);
 }
 
+function createMemberIDFromInputUI_() {
+  const ui = SpreadsheetApp.getUi();
+  const headerMsg = "Enter the text to encode";
+  const textMsg = "";
+
+  var response = ui.prompt(headerMsg, textMsg, ui.ButtonSet.OK_CANCEL);
+  const responseText = response.getResponseText().trim();
+  const responseButton = response.getSelectedButton();
+
+  // Process the user's response.
+  if(responseText === "") {
+    ui.alert("INVALID INPUT", "Please enter a non-empty string", ui.ButtonSet.OK);
+  }
+  else if(responseButton == ui.Button.OK){
+    // User clicked "OK" and response non-empty.
+    const encoded = encodeFromInput(responseText);
+    ui.alert("Here is the encoded text:", encoded, ui.ButtonSet.OK);
+  }  
+  else {
+    // User clicked "Canceled" or X in the title bar.
+    ui.alert('Execution cancelled...');
+  }
+  
+  logMenuAttempt_();    // log attempt
+}
+
 
 /** 
  * Scripts for `MASTER_SHEET` menu items.
@@ -235,9 +262,7 @@ function sortMasterByEmailUI_() {
   confirmAndRunUserChoice_(functionName, sheetName);
 }
 
-function processLastSubmissionUI_() {
-  const functionName = processLastSubmission.name;
-  const sheetName = MASTER_NAME;
-  confirmAndRunUserChoice_(functionName, sheetName);
+function addMemberFromSheetInRowUI_() {
+  const functionName = addMemberFromSheetInRow.name;
 }
 

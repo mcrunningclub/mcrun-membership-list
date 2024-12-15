@@ -47,6 +47,10 @@ function onMemberAddedByApp() {
   sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
 }
 
+function addMemberFromSheetInRow(sheet, row) {
+
+}
+
 
 /**
  * Processes the last submitted row from the `MAIN_SHEET`, adding semester codes
@@ -93,6 +97,7 @@ function processLastSubmission() {
 
 /**
  * Consolidates the last submitted row from `MAIN` into `MASTER`.
+ * 
  * Checks if an existing entry with the same email exists in the MASTER sheet:
  *   - If found, updates specific fields with concatenated data from both entries.
  *   - If not found, appends the new data as a fresh row.

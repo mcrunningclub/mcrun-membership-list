@@ -285,6 +285,18 @@ function insertRegistrationSem(row=MASTER_SHEET.getLastRow()) {
 ///  👉 FUNCTIONS FOR MEMBER ID ENCODING 👈  \\\
 
 /**
+ * Create Member ID from input.
+ *  
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Dec 15, 2024
+ * @update  Dec 15, 2024
+ */
+
+function encodeFromInput(input) {
+  return MD5(input);
+}
+
+/**
  * Create Member ID in last row of `MAIN_SHEET`.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
