@@ -48,7 +48,28 @@ function sample() {
  */
 
 
+function getFunctionNames_() {
+  const allKeys = Object.keys(this); // Get all properties in the global scope
+  const functionNames = allKeys.filter(key => typeof this[key] === "function"); // Filter out only functions
+  return functionNames;
+}
 
+// Test
+function printFunctions() {
+  Logger.log(getFunctionNames_());
+}
+
+function extractFeeStatus() {
+  const rangeFeeStatus = sheet.getRange(lastRow, MASTER_FEE_STATUS);
+  const feeStatus = rangeFeeStatus.getValue();
+
+  // Create a regular expression from `FEE_STATUS_ENUM` array
+  const regex = new RegExp(FEE_STATUS_ENUM.join("|"), "i"); // Case insensitive
+  
+  // Find and replace match in `feeStatus`
+  const match = feeStatus.match(regex)[0];
+  rangeFeeStatus.setValue(match);
+}
 
 
 /* DEPRICATED OR JUNK FUNCTIONS */
@@ -195,4 +216,33 @@ function drafts_() {
     return out
   }
 
+  function getSheetRangeFromA1(a1Notation, sheet) {
+    // Helper function to convert column letters to numeric index
+    function columnToIndex(column) {
+      let index = 0;
+      for (let i = 0; i < column.length; i++) {
+        index = index * 26 + (column.charCodeAt(i) - 'A'.charCodeAt(0) + 1);
+      }
+      return index;
+    }
+
+    // Parse A1 notation
+    const rangeMatch = a1Notation.match(/^([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?$/i);
+    if (!rangeMatch) return null; // Default for invalid input
+
+    const [_, col1, row1, col2, row2] = rangeMatch;
+
+    // Convert start and end columns/rows
+    const startColumn = columnToIndex(col1);
+    const startRow = parseInt(row1, 10);
+
+    const endColumn = col2 ? columnToIndex(col2) : startColumn; // If no range, end = start
+    const endRow = row2 ? parseInt(row2, 10) : startRow;
+
+    // Calculate number of rows and columns
+    const numRows = endRow - startRow + 1;
+    const numCols = endColumn - startColumn + 1;
+
+    return sheet.getRange(startRow, startColumn, numRows, numCols);
+  }
 }

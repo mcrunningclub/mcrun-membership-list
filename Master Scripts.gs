@@ -113,7 +113,7 @@ function consolidateLastSubmission() {
 
   // Search for user in 'MASTER'
   const lastEmail = processedLastSubmission[PROCESSED_ARR.EMAIL];
-  const indexSubmission = findSubmissionFromEmail(lastEmail);   // Returns null if not found
+  const indexSubmission = findMemberByBinarySearch(lastEmail);   // Returns null if not found
   
   // Check if user already exists
   if (indexSubmission != null) {
@@ -264,8 +264,8 @@ function processSemesterData(sheetName) {
  * @update  Oct 23, 2024
  * 
  * @param {string} emailToFind  The email address to search for in the sheet.
- * @param {number} [start=1]  The starting row index for the search (1-indexed). 
- *                            Defaults to 1 (the first row).
+ * @param {number} [start=2]  The starting row index for the search (1-indexed). 
+ *                            Defaults to 2 (the second row) and not the header row.
  * @param {number} [end=MASTER_SHEET.getLastRow()]  The ending row index for the search. 
  *                                                  Defaults to the last row in the sheet.
  * 
@@ -275,7 +275,7 @@ function processSemesterData(sheetName) {
  * @example `const submissionRowNumber = findSubmissionFromEmail('example@mail.com');`
  */
 
-function findSubmissionFromEmail(emailToFind, start=1, end=MASTER_SHEET.getLastRow()) {
+function findMemberByBinarySearch(emailToFind, start=2, end=MASTER_SHEET.getLastRow()) {
   const MASTER_EMAIL_COL = 1;
  
   // Base case: If start index exceeds the end index, the email is not found
@@ -297,11 +297,11 @@ function findSubmissionFromEmail(emailToFind, start=1, end=MASTER_SHEET.getLastR
    // If the email at the middle row is alphabetically smaller, search the right half
    // Note: use localeString() to ensure string comparison matches GSheet
   } else if (emailAtMid.localeCompare(emailToFind) === -1) {
-    return findSubmissionFromEmail(emailToFind, mid + 1, end);
+    return findMemberByBinarySearch(emailToFind, mid + 1, end);
   
   // If the email at the middle row is alphabetically larger, search the left half
   } else {
-    return findSubmissionFromEmail(emailToFind, start, mid - 1);
+    return findMemberByBinarySearch(emailToFind, start, mid - 1);
   }
 
 }

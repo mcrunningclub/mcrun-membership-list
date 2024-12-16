@@ -16,16 +16,14 @@
 function onFormSubmit() {
   trimWhitespace_();
   fixLetterCaseInRow_();
-
   encodeLastRow();   // create unique member ID
-  //copyNewMemberToPointsLedger();  // copy new member to `Points Ledger`
 
   formatMainView();
-  //getReferenceNumberFromEmail_();
+  getReferenceNumberFromEmail_();
   
-  // Must add and sort AFTER getting Interac info and copying
+  // Must add and sort AFTER extracting Interac info from email
   addLastSubmissionToMaster();
-  //sortMainByName();
+  sortMainByName();
 }
 
 
@@ -50,6 +48,83 @@ function getLastSubmissionInMain() {
   }
 
   return lastRow;
+}
+
+
+function findMemberByEmail(emailToFind, sheet) {
+  // First try with binary search (faster)
+  const resultBinarySearch = findMemberByBinarySearch(emailToFind, sheet);
+  
+  if(resultBinarySearch != null) {
+    return resultBinarySearch;
+  }
+
+  // If binary search unsuccessful, try with iteration (slower)
+  return findMemberByIteration(emailToFind, sheet);
+}
+
+
+function findMemberByIteration(emailToFind, sheet, start=2, end=sheet.getLastRow()) {
+  const sheetName = sheet.getSheetName();
+  const thisEmailCol = GET_COL_MAP(sheetName).emailCol;
+  
+  for(var row=start; row <= end; row++) {
+    let email = sheet.getRange(row, thisEmailCol).getValue();
+    if(email === emailToFind) return row;    // exit out of loop
+  }
+
+  return null;
+}
+
+/**
+ * Recursive function to search for entry by email in `MASTER` sheet using binary search.
+ * Returns email's row index in GSheet (1-indexed), or null if not found.
+ * 
+ * @param {string} emailToFind  The email address to search for in the sheet.
+ * @param {number} [start=2]  The starting row index for the search (1-indexed). 
+ *                            Defaults to 2 (the second row) and not the header row.
+ * @param {number} [end=MASTER_SHEET.getLastRow()]  The ending row index for the search. 
+ *                                                  Defaults to the last row in the sheet.
+ * 
+ * @return {number|null}  Returns the 1-indexed row number where the email is found, 
+ *                        or `null` if the email is not found.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
+ * @date  Dec 16, 2024
+ * @update  Dec 16, 2024
+ * 
+ * @example `const submissionRowNumber = findMemberByBinarySearch('example@mail.com');`
+ */
+
+function findMemberByBinarySearch(emailToFind, sheet, start=2, end=sheet.getLastRow()) {
+  const sheetName = sheet.getSheetName();
+  const emailCol = GET_COL_MAP(sheetName).emailCol;
+ 
+  // Base case: If start index exceeds the end index, the email is not found
+  if (start > end) {
+    return null;
+  }
+
+  // Find the middle point between the start and end indexes
+  const mid = Math.floor((start + end) / 2);
+
+  // Get the email value at the middle row
+  const emailAtMid = sheet.getRange(mid, emailCol).getValue();
+
+  // Compare the target email with the middle email
+  if (emailAtMid === emailToFind) {
+    return mid;  // If the email matches, return the row index (1-indexed)
+  
+  // If the email at the middle row is alphabetically smaller, search the right half.
+  // Note: use localeString() to ensure string comparison matches GSheet.
+  } else if (emailAtMid.localeCompare(emailToFind) === -1) {
+    return findMemberByBinarySearch(emailToFind, sheet, mid + 1, end);
+  
+  // If the email at the middle row is alphabetically larger, search the left half.
+  } else {
+    return findMemberByBinarySearch(emailToFind, sheet, start, mid - 1);
+  }
+
 }
 
 
@@ -216,5 +291,4 @@ function extractInteracRef_(emailBody) {
   referenceNumberString = (referenceNumberString.substring(0, newlineIndex)).trim(); // trim everything after newline
   return referenceNumberString;
 }
-
 

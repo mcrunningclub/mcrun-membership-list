@@ -398,7 +398,7 @@ function encodeLastRow() {
  */
 
 function encodeList(sheet) {
-  let sheetCols = getColsToEncode(sheet);
+  let sheetCols = getColsFromSheet(sheet);
 
   // Start at row 2 (1-indexed)
   for (var i = 2; i <= sheet.getMaxRows(); i++) {
@@ -424,7 +424,7 @@ function encodeList(sheet) {
  */
 
 function encodeByRow(sheet, row=sheet.getLastRow()) {
-  let sheetCols = getColsToEncode(sheet);
+  let sheetCols = getColsFromSheet(sheet);
 
   const email = sheet.getRange(row, sheetCols.emailCol).getValue();
   if (email === "") throw RangeError("Invalid index access");   // check for invalid index
@@ -435,34 +435,44 @@ function encodeByRow(sheet, row=sheet.getLastRow()) {
 
 
 /**
- * Retrieves column indices of email and member id in GSheet.
+ * Retrieves column indices of `sheet` in GSheet.
  * 
- * Helper for encoding functions (i.e. `encodeList`, `encodeByRow`)
+ * Helper for encoding functions (e.g. `encodeList`, `encodeByRow`)
  * 
  * @param {SpreadsheetApp.Sheet} sheet  Sheet reference to encode
- * @return {{emailCol, memberIdCol}}  Returns col indices for `sheet`.
+ * @return {Object}  Returns col indices for `sheet`.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 13, 2024
- * @update  Nov 13, 2024
+ * @update  Dec 16, 2024
  */
 
-function getColsToEncode(sheet) {
-  let sheetCols = {emailCol: -1, memberIdCol: -1};    // starter values
+function getColsFromSheet(sheet) {
+  let sheetCols = {};
+  Logger.log("Now entering getColsFromSheet()...")
 
   switch (sheet) {
-    case MAIN_SHEET:
+    case (MAIN_SHEET || MAIN_SHEET.getSheetName() || MAIN_SHEET.getSheetId()):
+      Logger.log("Entered case 1");
       sheetCols.emailCol = EMAIL_COL;
       sheetCols.memberIdCol = MEMBER_ID_COL;
+      sheetCols.feeStatus = IS_FEE_PAID_COL;
+      sheetCols.collectionDate = COLLECTION_DATE_COL;
+      sheetCols.collector = COLLECTION_PERSON_COL;
+      sheetCols.isInternalCollected = IS_INTERNAL_COLLECTED_COL;
     break;
     
-    case MASTER_SHEET:
+    case (MASTER_SHEET || MASTER_SHEET.getSheetId()):
       sheetCols.emailCol = MASTER_EMAIL_COL;
       sheetCols.memberIdCol = MASTER_MEMBER_ID_COL;
+      sheetCols.feeStatus = MASTER_FEE_STATUS;
+      sheetCols.collectionDate = MASTER_COLLECTION_DATE;
+      sheetCols.collector = MASTER_FEE_COLLECTOR;
+      sheetCols.isInternalCollected = MASTER_IS_INTERNAL_COLLECTED;
     break;
+
+    default: return null;
   }
 
   return sheetCols;
-
 }
-
