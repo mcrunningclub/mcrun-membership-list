@@ -44,6 +44,7 @@ function onMemberAddedByApp() {
   cleanMasterRegistration();
   encodeByRow(MASTER_SHEET);
   insertRegistrationSem();
+  //updateFeeStatus();
   sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
 }
 

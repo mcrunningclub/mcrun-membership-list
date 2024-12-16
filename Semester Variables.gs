@@ -91,3 +91,4 @@ function getUserTimeZone_() {
 function getCurrentUserEmail_() {
   return Session.getActiveUser().toString();
 }
+

@@ -73,36 +73,38 @@ function sortMainByName() {
 
 function formatMainView() {
   var sheet = MAIN_SHEET;
+  const startRow = 2;   // Do not count header row
+  const lastRow = getLastSubmissionInMain();
 
-  const rangeRegistration = sheet.getRange('A2:A');   // Range for Registration Timestamp
-  const rangePreferredName = sheet.getRange('E2:E');  // Range for Preferred Name/Pronouns
-  const rangeWaiver = sheet.getRange('J2:J');         // Range for Waiver
-  const rangePaymentChoice = sheet.getRange('K2:K');  // Range for Payment Preferrence
-  const rangeInteracRef = sheet.getRange('L2:L');     // Range for Interac e-Transfer Reference
-  const rangeCollection = sheet.getRange('O2:P');     // Range for Collection Info
-  const rangeMemberId = sheet.getRange('T2:T');       // Range for Member Id
-  const rangeURL = sheet.getRange('U2:U');            // Range for PassKit URL
+  // Helper function to get sheet reference according to `col`
+  const getColumnRange = (col, numCol=1) => sheet.getRange(startRow, col, lastRow, numCol);
 
-  // Set ranges to Bold
-  rangeRegistration.setFontWeight('bold');
-  rangePreferredName.setFontWeight('bold');
-  rangePaymentChoice.setFontWeight('bold');
-  rangeInteracRef.setFontWeight('bold');
-  rangeCollection.setFontWeight('bold');
-  rangeMemberId.setFontWeight('bold');
-  rangeURL.setFontWeight('bold');
+  const rangeRegistration = getColumnRange(REGISTRATION_DATE_COL);
+  const rangePreferredName = getColumnRange(PREFERRED_NAME);
+  const rangeWaiver = getColumnRange(WAIVER_COL);
+  const rangePaymentChoice = getColumnRange(PAYMENT_METHOD_COL);
+  const rangeInteracRef = getColumnRange(INTERACT_REF_COL);
+  const rangeCollection = getColumnRange(COLLECTION_DATE_COL, 2); // Range for Collection Info   
+  const rangeMemberId = getColumnRange(MEMBER_ID_COL);
 
-  // Set Text Wrapping to 'Clip'
-  rangePaymentChoice.setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
-  rangeWaiver.setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+  [ // Set ranges to Bold
+    rangeRegistration, 
+    rangePreferredName, 
+    rangePaymentChoice, 
+    rangeInteracRef,
+    rangeCollection, 
+    rangeMemberId, 
+    rangeURL
+  ].forEach(r => r.setFontWeight('bold'));
 
   // Align ranges to Left
   rangePaymentChoice.setHorizontalAlignment('left');
+  
+  // Set Text Wrapping to 'Clip'
+  [rangePaymentChoice, rangeWaiver].forEach(r => r.setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP));
 
   // Centre these ranges
-  rangeInteracRef.setHorizontalAlignment('center');
-  rangeCollection.setHorizontalAlignment('center');
-  rangeMemberId.setHorizontalAlignment('center');
+  [rangeInteracRef, rangeCollection, rangeMemberId].forEach(r => r.setHorizontalAlignment('center'));
 }
 
 
@@ -175,14 +177,17 @@ function sortMasterByEmail() {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 22, 2024
- * @update  Nov 22, 2024
+ * @update  Dec 15, 2024
  */
 
 function formatMasterView() {
   var sheet = MASTER_SHEET;
 
   // Set Text to Bold
-  const rangeListToBold = sheet.getRangeList(['K2:K']);   // Latest Reg Semester
+  const rangeListToBold = sheet.getRangeList([
+    'K2:K',   // Latest Reg Semester
+    'N2:N',   // Fee Paid
+  ]);   
   rangeListToBold.setFontWeight('bold');
 
   // Reduce Font to 9
