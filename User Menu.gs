@@ -19,7 +19,7 @@ const PERM_USER_ = [
  * 
  * @trigger User choice in custom menu.
  * 
- * @input {string} [email=""]  Email of active user. 
+ * @param {string} [email=""]  Email of active user. 
  *                             Defaults to empty string.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
@@ -37,7 +37,7 @@ function logMenuAttempt_(email="") {
  * 
  * Changes view to `sheetName`.
  * 
- * @input {string}  sheetName  Name of target sheet.
+ * @param {string} sheetName  Name of target sheet.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 21, 2024
@@ -123,8 +123,8 @@ function helpUI_() {
  * 
  * @trigger User choice in custom menu.
  * 
- * @input {string}  functionName  Name of function to execute.
- * @input {string}  sheetName  Name of sheet where `functionName` will run.
+ * @param {string} functionName  Name of function to execute.
+ * @param {string} sheetName  Name of sheet where `functionName` will run.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 21, 2024
@@ -166,44 +166,6 @@ function confirmAndRunUserChoice_(functionName, sheetName) {
   // Log attempt in console using active user email
   logMenuAttempt_(userEmail);
 }
-
-
-
-function setOnEditFlagUI_() {
-  const ui = SpreadsheetApp.getUi();
-  const headerMsg = "Would you like to turn on onEdit()?";
-  const textMsg = `
-  If on, This function is triggered for any changes across the spreadsheet.
-  
-  If you are running large-scale function, onEdit() will disorganize your data.
-  `;
-
-  var response = ui.alert(headerMsg, textMsg, ui.ButtonSet.YES_NO);
-
-  // Process the user's response.
-  if(response == ui.Button.YES) {
-    setOnEditFlag(true);
-    ui.alert(
-      'Success: onEdit() is **on**', 
-      '⚠️ Ensure that you only make small changes to prevent unexpected values.', 
-      ui.ButtonSet.OK);
-  }
-  else if(response == ui.Button.NO){
-    setOnEditFlag(true);
-    ui.alert(
-      'Success: onEdit() is **off**', 
-      '⚠️ You are free to make large-scale changes', 
-      ui.ButtonSet.OK);
-  }  
-  else {
-    // User clicked "Canceled" or X in the title bar.
-    ui.alert('Execution cancelled...');
-  }
-  
-  logMenuAttempt_();    // log attempt
-}
-
-
 
 
 /** 

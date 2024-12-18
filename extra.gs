@@ -245,4 +245,71 @@ function drafts_() {
 
     return sheet.getRange(startRow, startColumn, numRows, numCols);
   }
+
+
+  /**
+   * --- SCRIPT PROPERTY FOR onEDIT() ---
+   */
+
+  const ON_EDIT_SCRIPT_PROPERTY = "IS_EDIT_CHECKING";
+  const SCRIPT_PROPERTY = PropertiesService.getScriptProperties();
+
+  function getOnEditFlag() {
+    const propertyName = ON_EDIT_SCRIPT_PROPERTY;
+    const propertyValue = SCRIPT_PROPERTY.getProperty(propertyName);
+    return(propertyValue);
+  }
+
+  function setOnEditFlag(setTo="") {
+    const propertyName = ON_EDIT_SCRIPT_PROPERTY;
+    const propertyValue = SCRIPT_PROPERTY.getProperty(propertyName);
+    const isEditAllowed = parseBool(propertyValue);  // Convert to boolean
+
+    if(setTo === "") {
+      var newValue = !isEditAllowed;  // Toggle if no parameter defaults
+    }
+    else {
+      newValue = parseBool(setTo);   // Set to input
+    }
+
+    // Set new value for property
+    SCRIPT_PROPERTY.setProperty(propertyName, newValue);
+  }
+  
+  
+  function setOnEditFlagUI_() {
+    const ui = SpreadsheetApp.getUi();
+    const headerMsg = "Would you like to turn on onEdit()?";
+    const textMsg = `
+    If on, This function is triggered for any changes across the spreadsheet.
+    
+    If you are running large-scale function, onEdit() will disorganize your data.
+    `;
+
+    var response = ui.alert(headerMsg, textMsg, ui.ButtonSet.YES_NO);
+
+    // Process the user's response.
+    if(response == ui.Button.YES) {
+      setOnEditFlag(true);
+      ui.alert(
+        'Success: onEdit() is **on**', 
+        '⚠️ Ensure that you only make small changes to prevent unexpected values.', 
+        ui.ButtonSet.OK);
+    }
+    else if(response == ui.Button.NO){
+      setOnEditFlag(true);
+      ui.alert(
+        'Success: onEdit() is **off**', 
+        '⚠️ You are free to make large-scale changes', 
+        ui.ButtonSet.OK);
+    }  
+    else {
+      // User clicked "Canceled" or X in the title bar.
+      ui.alert('Execution cancelled...');
+    }
+    
+    logMenuAttempt_();    // log attempt
+  }
+
+
 }

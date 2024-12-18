@@ -44,18 +44,30 @@ function onMemberAddedByApp() {
   cleanMasterRegistration();
   encodeByRow(MASTER_SHEET);
   insertRegistrationSem();
-  //updateFeeStatus();
+
+  // Allow onEdit to trigger and transfer target data
+  Utilities.sleep(1 * 60 * 100);   // ~6 sec
   sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
 }
 
-function addMemberFromSheetInRow(sheet, row) {
+/**
+ * Updates Payment History in `MASTER` from the member's semester sheet where they registered.
+ * 
+ * Appends semester code to range if non-empty.
+ * 
+ * @param {number} memberRow  The 1-index of the member in `MASTER`.
+ * @param {string} semesterSheetName  The name of the member's latest registration semester sheet.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Dec 17, 2024
+ * @update  Dec 17, 2024
+ * 
+ */
 
-}
-
-function addPaidSemesterToHistory(memberRow, semesterSheet) {
+function addPaidSemesterToHistory(memberRow, semesterSheetName) {
   const sheet = MASTER_SHEET;
   const paymentHistoryCol = MASTER_PAYMENT_HIST;
-  const semesterCode = getSemesterCode_(semesterSheet); // Get the semester code based on the sheet name
+  const semesterCode = getSemesterCode_(semesterSheetName); // Get the semester code based on the sheet name
 
   const rangePaymentHistory = sheet.getRange(memberRow, paymentHistoryCol);
   const paymentHistory = rangePaymentHistory.getValue();
@@ -67,6 +79,23 @@ function addPaidSemesterToHistory(memberRow, semesterSheet) {
   // Only modify if paymentHistory **does not** contains semesterCode to prevent duplicates.
   if(!paymentHistory.includes(semesterCode)) rangePaymentHistory.setValue(newHistory);
 }
+
+
+/**
+ * Updates `isFeePaid` info in member's `semesterSheet` (latest registration sheet of the member).
+ * 
+ * If member's semester code is removed from `MASTER`, it will update `isFeePaid` in `semesterSheet`.
+ * 
+ * @param {string} payHistory  Payment history of member's fee. Stored as 3-char code(s), separated by newline.
+ * @param {number} memberRow  The row index of the member in `semesterSheet` (1-indexed).
+ * @param {number} isFeePaidCol  The column index of `isFeePaid` in `semesterSheet` (1-indexed).
+ * @param {SpreadsheetApp.Sheet} semesterSheet  The member's latest registration sheet (e.g. "Fall 2024").
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Dec 17, 2024
+ * @update  Dec 17, 2024
+ * 
+ */
 
 function updateIsFeePaid(payHistory, memberRow, isFeePaidCol, semesterSheet) {
   const paymentHistoryArray = payHistory.split('\n');
@@ -419,7 +448,6 @@ function getSemesterCodeFromDate_(date) {
 
   return code;
 }
-
 
 
 function sortUniqueData() {

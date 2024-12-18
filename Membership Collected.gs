@@ -12,23 +12,21 @@
  */
 
 function onFormSubmit() {
-  setOnEditFlag(false);   // Turn off onEdit to speed up process
   trimWhitespace_();
   fixLetterCaseInRow_();
   encodeLastRow();   // create unique member ID
 
   formatMainView();
-  getReferenceNumberFromEmail_();
+  getInteracRefNumberFromEmail_();
   
   // Must add and sort AFTER extracting Interac info from email
   addLastSubmissionToMaster();
   sortMainByName();
-  setOnEditFlag(true);  // Turn onEdit back on for background checking
 }
 
 
 /**
- * Find last submission using while loop.
+ * Find last submission from end of sheet using while-loop.
  * 
  * Used to prevent native `sheet.getLastRow()` from returning empty row.
  * 
@@ -51,6 +49,25 @@ function getLastSubmissionInMain() {
 }
 
 
+/**
+ * Searches for member entry by email in `sheet` by binary search.
+ * If unsuccessful, searches again via top-to-bottom iteration.
+ * 
+ * Returns row index of `email` in GSheet (1-indexed), or null if not found.
+ * 
+ * @param {string} emailToFind  The email address to search for in `sheet`.
+ * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.
+ * 
+ * @return {number|null}  Returns the 1-indexed row number where the email is found, 
+ *                        or `null` if the email is not found.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
+ * @date  Dec 16, 2024
+ * @update  Dec 18, 2024
+ * 
+ * @example `const submissionRowNumber = findMemberByEmail('example@mail.com', MAIN_SHEET);`
+ */
+
 function findMemberByEmail(emailToFind, sheet) {
   // First try with binary search (faster)
   const resultBinarySearch = findMemberByBinarySearch(emailToFind, sheet);
@@ -62,13 +79,36 @@ function findMemberByEmail(emailToFind, sheet) {
 }
 
 
+/**
+ * Searches for member entry by email in `sheet` using iteration.
+ * Returns row index of `email` in GSheet (1-indexed), or null if not found.
+ * 
+ * See faster binary search function `findMemberByBinarySearch()`.
+ * 
+ * @param {string} emailToFind  The email address to search for in `sheet`.
+ * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.
+ * @param {number} [start=2]  The starting row index for the search (1-indexed).
+ *                            Defaults to 2 (the second row) to avoid the header row.
+ * @param {number} [end=MASTER_SHEET.getLastRow()]  The ending row index for the search.
+ *                                                  Defaults to the last row in the sheet.
+ * 
+ * @return {number|null}  Returns the 1-indexed row number where the email is found, 
+ *                        or `null` if the email is not found.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
+ * @date  Dec 16, 2024
+ * @update  Dec 18, 2024
+ * 
+ * @example `const submissionRowNumber = findMemberByIteration('example@mail.com', MAIN_SHEET);`
+ */
+
 function findMemberByIteration(emailToFind, sheet, start=2, end=sheet.getLastRow()) {
   const sheetName = sheet.getSheetName();
-  const thisEmailCol = GET_COL_MAP_(sheetName).emailCol;
+  const thisEmailCol = GET_COL_MAP_(sheetName).emailCol;    // Get email col index of `sheet`
   
   for(var row=start; row <= end; row++) {
     let email = sheet.getRange(row, thisEmailCol).getValue();
-    if(email === emailToFind) return row;    // exit out of loop
+    if(email === emailToFind) return row;    // Exit loop and return value;
   }
 
   return null;
@@ -95,12 +135,12 @@ function findMemberByIteration(emailToFind, sheet, start=2, end=sheet.getLastRow
  * @date  Oct 21, 2024
  * @update  Dec 17, 2024
  * 
- * @example `const submissionRowNumber = findMemberByBinarySearch('example@mail.com');`
+ * @example `const submissionRowNumber = findMemberByBinarySearch('example@mail.com', MASTER_SHEET);`
  */
 
 function findMemberByBinarySearch(emailToFind, sheet, start=2, end=sheet.getLastRow()) {
   const sheetName = sheet.getSheetName();
-  const emailCol = GET_COL_MAP_(sheetName).emailCol;
+  const emailCol = GET_COL_MAP_(sheetName).emailCol;  // Get email col from `sheet`
  
   // Base case: If start index exceeds the end index, the email is not found
   if (start > end) {
@@ -131,7 +171,7 @@ function findMemberByBinarySearch(emailToFind, sheet, start=2, end=sheet.getLast
 
 
 /**
- * Hash function using modified MD5 algorithm. 
+ * Hash function using modified MD5 algorithm.
  * 
  * Used for members' External ID.
  * 
@@ -210,7 +250,7 @@ function enterInteracRef_(emailInteracRef) {
  * @update  Nov 13, 2024
  */
 
-function getReferenceNumberFromEmail_() {
+function getInteracRefNumberFromEmail_() {
   const sheet = MAIN_SHEET;
   const lastRow = sheet.getLastRow();
   

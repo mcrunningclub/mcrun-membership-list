@@ -1,39 +1,13 @@
-const SCRIPT_PROPERTY = PropertiesService.getScriptProperties();
 const CELL_EDIT_LIMIT = 10;   // set number of cells that can be edited at once
 
-function getOnEditFlag() {
-  const propertyName = ON_EDIT_SCRIPT_PROPERTY;
-  const propertyValue = SCRIPT_PROPERTY.getProperty(propertyName);
-  return(propertyValue);
-}
-
-function setOnEditFlag(setTo="") {
-  const propertyName = ON_EDIT_SCRIPT_PROPERTY;
-  const propertyValue = SCRIPT_PROPERTY.getProperty(propertyName);
-  const isEditAllowed = parseBool(propertyValue);  // Convert to boolean
-
-  if(setTo === "") {
-    var newValue = !isEditAllowed;  // Toggle if no parameter defaults
-  }
-  else {
-    newValue = parseBool(setTo);   // Set to input
-  }
-
-  // Set new value for property
-  SCRIPT_PROPERTY.setProperty(propertyName, newValue);
-}
-
-
 function onEdit(e) {
-  const isEditAllowed = getOnEditFlag();
-  if(isEditAllowed == "false") return;    // Prevent unplanned edits
-
   // Get details of edit event's sheet
-  const thisSheet = e.range.getSheet();
-  const thisSheetName = thisSheet.getName();
   const thisRange = e.range;
+  const thisSheet = thisRange.getSheet();
+  const thisSheetName = thisSheet.getName();
+  
 
-  if(range.getNumRows() > 2) return;  // prevent sheet-wide changes
+  if(thisRange.getNumRows() > 2) return;  // prevent sheet-wide changes
 
   var debug_e = {
     authMode:  e.authMode,
@@ -201,31 +175,6 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
   }
 
   console.log("updateFeeInfo 4 ->  finished updating payment history");
-}
-  
-
-function updateFeeInfo2_(sourceRow, sourceSheet, targetRow, targetSheet) {
-  sourceCols = getColsFromSheet(sourceSheet);
-  targetCols = getColsFromSheet(targetSheet);
-
-  const transferValue = (fromCell, toCell) => {
-    let fromValue = fromCell.getValue();
-    Logger.log("Previous value: " + toValue.getValue());    // Add previous value to execution log
-    toCell.setValue(fromValue);
-  }
-
-  oldFeeStatusRange = targetSheet.getRange(targetRow, targetCols.feeStatus);
-  newFeeStatusRange = sourceSheet.getRange(sourceRow, sourceSheet.feeStatus);
-  transferValue(oldFeeStatusRange, newFeeStatusRange);
-
-  oldCollectionDateRange = targetSheet.getRange(targetRow, targetCols.collectionDate);
-  newCollectionDateRange = source.getRange(row, sourceSheet.collectionDate);
-
-  oldCollector = targetSheet.getRange(targetRow, targetCols.collector);
-  newCollector = source.getRange(sourceRow, sourceSheet.collector);
-
-  oldInternalCollectedRange = targetSheet.getRange(targetRow, targetCols.isInternalCollected);
-  newInternalCollectedRange = source.getRange(sourceRow, sourceSheet.isInternalCollected);
 }
 
 

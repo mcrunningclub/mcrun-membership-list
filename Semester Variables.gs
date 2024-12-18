@@ -66,11 +66,6 @@ const SHEET_COL_MAP = {
 // Function to get column mappings
 function GET_COL_MAP_(sheet) { return SHEET_COL_MAP[sheet] || null };
 
-function test() {
-  var sheetName = MAIN_SHEET;
-  var colMap = GET_COL_MAP_(sheetName);
-}
-
 const SEMESTER_CODE_MAP = new Map();
 const ALL_SEMESTERS = ['Fall 2024', 'Summer 2024', 'Winter 2024'];
 const MASTER_COL_SIZE = 20;   // Range 'A:T' in 'MASTER'
@@ -80,9 +75,6 @@ const FEE_STATUS_ENUM = [
   "Unpaid",
   "Expired"
 ];
-
-const ON_EDIT_SCRIPT_PROPERTY = "IS_EDIT_CHECKING";
-
 
 // Found in `Internal Fee Collection` sheet
 const INTERAC_ITEM_COL = 'A3'

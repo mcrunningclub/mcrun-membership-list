@@ -317,6 +317,7 @@ function cleanMasterRegistration() {
 
 /**
  * Recursive function to search for entry by email in `MASTER` sheet using binary search.
+ * 
  * Returns email's row index in GSheet (1-indexed), or null if not found.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
@@ -411,11 +412,12 @@ function encodeLastRow() {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 20, 2024
- * @update  Nov 13, 2024
+ * @update  Dec 18, 2024
  */
 
 function encodeList(sheet) {
-  let sheetCols = getColsFromSheet(sheet);
+  const sheetName = sheet.getSheetName();
+  let sheetCols = GET_COL_MAP_(sheetName);
 
   // Start at row 2 (1-indexed)
   for (var i = 2; i <= sheet.getMaxRows(); i++) {
@@ -437,59 +439,16 @@ function encodeList(sheet) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 20, 2024
- * @update  Dec 11, 2024
+ * @update  Dec 18, 2024
  */
 
 function encodeByRow(sheet, row=sheet.getLastRow()) {
-  let sheetCols = getColsFromSheet(sheet);
+  const sheetName = sheet.getSheetName();
+  let sheetCols = GET_COL_MAP_(sheetName);
 
   const email = sheet.getRange(row, sheetCols.emailCol).getValue();
   if (email === "") throw RangeError("Invalid index access");   // check for invalid index
 
   const member_id = MD5(email);
   sheet.getRange(row, sheetCols.memberIdCol).setValue(member_id);
-}
-
-
-/**
- * Retrieves column indices of `sheet` in GSheet.
- * 
- * Helper for encoding functions (e.g. `encodeList`, `encodeByRow`)
- * 
- * @param {SpreadsheetApp.Sheet} sheet  Sheet reference to encode
- * @return {Object}  Returns col indices for `sheet`.
- *  
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
- * @date  Nov 13, 2024
- * @update  Dec 16, 2024
- */
-
-function getColsFromSheet(sheet) {
-  let sheetCols = {};
-  Logger.log("Now entering getColsFromSheet()...")
-
-  switch (sheet) {
-    case (MAIN_SHEET || MAIN_SHEET.getSheetName() || MAIN_SHEET.getSheetId()):
-      Logger.log("Entered case 1");
-      sheetCols.emailCol = EMAIL_COL;
-      sheetCols.memberIdCol = MEMBER_ID_COL;
-      sheetCols.feeStatus = IS_FEE_PAID_COL;
-      sheetCols.collectionDate = COLLECTION_DATE_COL;
-      sheetCols.collector = COLLECTION_PERSON_COL;
-      sheetCols.isInternalCollected = IS_INTERNAL_COLLECTED_COL;
-    break;
-    
-    case (MASTER_SHEET || MASTER_SHEET.getSheetId()):
-      sheetCols.emailCol = MASTER_EMAIL_COL;
-      sheetCols.memberIdCol = MASTER_MEMBER_ID_COL;
-      sheetCols.feeStatus = MASTER_FEE_STATUS;
-      sheetCols.collectionDate = MASTER_COLLECTION_DATE;
-      sheetCols.collector = MASTER_FEE_COLLECTOR;
-      sheetCols.isInternalCollected = MASTER_IS_INTERNAL_COLLECTED;
-    break;
-
-    default: return null;
-  }
-
-  return sheetCols;
 }
