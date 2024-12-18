@@ -1,55 +1,71 @@
-/* SHEET CONSTANTS */
-const BACKUP_NAME = 'BACKUP';
-const BACKUP_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(BACKUP_NAME);
-
-// Function to get column mappings
-const GET_COL_MAP = (sheet) => { return sheetColumnMappings[sheet] || null };
-
-const SHEET_COL_MAP = {
-  [SHEET_NAME]: {
-    emailCol: EMAIL_COL,
-    memberIdCol: MEMBER_ID_COL,
-    feeStatus: IS_FEE_PAID_COL,
-    collectionDate: COLLECTION_DATE_COL,
-    collector: COLLECTION_PERSON_COL,
-    isInternalCollected: IS_INTERNAL_COLLECTED_COL,
-  },
-  [MASTER_NAME]: {
-    emailCol: MASTER_EMAIL_COL,
-    memberIdCol: MASTER_MEMBER_ID_COL,
-    feeStatus: MASTER_FEE_STATUS,
-    collectionDate: MASTER_COLLECTION_DATE,
-    collector: MASTER_FEE_COLLECTOR,
-    isInternalCollected: MASTER_IS_INTERNAL_COLLECTED,
-  },
-};
-
-
 function onEdit(e) {
   // Get details of edit event's sheet
   const thisSheet = e.range.getSheet();
   const thisSheetName = thisSheet.getName();
 
+  var debug_e = {
+    authMode:  e.authMode,
+    range:  e.range.getA1Notation(),
+    sheetName : e.range.getSheet().getName(),
+    source:  e.source,
+    value:  e.value,
+    oldValue: e.oldValue
+  }
+
+  console.log(`eventObject: ${debug_e}`);
+
+  console.log(`onEdit 1 -> thisSheetName: ${thisSheetName}`);
+  
   // Check if legal sheet
-  if(thisSheetName != SHEET_NAME || thisSheetName != MASTER_NAME) return;
+  if(thisSheetName != SHEET_NAME && thisSheetName != MASTER_NAME) return;
+
+  console.log("onEdit -> Passed first check");
 
   // Check if legal edit
   if(!verifyLegalEditInRange(e, thisSheet)) return;
 
+  console.log("onEdit 2 -> Passed verifyLegalEditInRange");
+
   // Get the email column for the current sheet
-  const thisEmailCol = GET_COL_MAP(thisSheetName).emailCol;
+  const thisEmailCol = GET_COL_MAP_(thisSheetName).emailCol;
   const thisRow = e.range.getRow();
+
+  console.log(`onEdit 3 -> thisEmailCol: ${thisEmailCol} thisRow: ${thisRow}`);
 
   // Get email from `thisRow` and `thisEmailCol`
   const email = thisSheet.getRange(thisRow, thisEmailCol).getValue();
 
   const isMainSheet = (thisSheetName == SHEET_NAME);
+  console.log(`onEdit 4 -> email: ${email} isMainSheet: ${isMainSheet}`);
 
   const sourceSheet = isMainSheet ? MAIN_SHEET : MASTER_SHEET;
   const targetSheet = isMainSheet ? MASTER_SHEET : MAIN_SHEET;
-  const targetRow = isMainSheet ? null : findMemberByBinarySearch(email)
+  const targetRow = findMemberByEmail(email, targetSheet);  // Find row of member in `targetSheet` using their email
+
+  // Throw error message if member not in `targetSheet`
+  if(targetRow == null) {
+    const errorMessage = `
+      targetRow not found in onEdit(). 
+      Edit made in ${thisSheetName} at row ${thisRow}.
+      Email of edited member: ${email}. Please review this error.
+    `
+    throw Error(errorMessage);
+  }
+
+  console.log(`onEdit 5 -> targetRow: ${targetRow} found by \`findMemberByBinarySearch()\``);
     
   updateFeeInfo(e, sourceSheet, targetRow, targetSheet);
+  console.log(`onEdit 6 -> successfully completed trigger check`);
+}
+
+function test_onEdit() {
+  onEdit({
+    user : Session.getActiveUser().getEmail(),
+    source : SpreadsheetApp.getActiveSpreadsheet(),
+    range : SpreadsheetApp.getActiveSpreadsheet().getActiveCell(),
+    value : SpreadsheetApp.getActiveSpreadsheet().getActiveCell().getValue(),
+    authMode : "LIMITED"
+  });
 }
 
 
@@ -59,15 +75,17 @@ function onEdit(e) {
  */
 
 function verifyLegalEditInRange(e, sheet) {
+  Logger.log("NOW ENTERING verifyLegalEditInRange()...");
   const sheetName = sheet.getName();
   var thisRow = e.range.getRow();
   var thisCol = e.range.getColumn();
+  Logger.log(`verifyLegalEditInRange 1 -> sheetName: ${sheetName}`);
   
   // Function to get column mappings
-  const feeStatus = GET_COL_MAP(sheetName).feeStatus;
-  const isInternalCollected = GET_COL_MAP(sheetName).isInternalCollected;
+  const feeStatus = GET_COL_MAP_(sheetName).feeStatus;
+  const isInternalCollected = GET_COL_MAP_(sheetName).isInternalCollected;
 
-  Logger.log(`Now in verifyLegalEditInRange... feeStatusCol : ${feeStatus}, isInternalCollected : ${isInternalCollected}`);
+  Logger.log(`verifyLegalEditInRange 2 -> feeStatusCol: ${feeStatus}, isInternalCollected: ${isInternalCollected}`);
   
   const feeEditRange = {
     top : 2,    // Skip header row
@@ -76,7 +94,7 @@ function verifyLegalEditInRange(e, sheet) {
     rightmost : isInternalCollected,
   }
 
-  // Helper function to log error message
+  // Helper function to log error message and exit function
   const logAndExitFalse = (cell) => { Logger.log(`${cell} is out of bounds`); return false; }
 
   // Exit if we're out of range
@@ -85,6 +103,7 @@ function verifyLegalEditInRange(e, sheet) {
   
   return true;    // edit e is within legal edit range
 }
+
 
 /** 
  * Update fee status from `sourceSheet` to `targetSheet`.
@@ -102,11 +121,17 @@ function verifyLegalEditInRange(e, sheet) {
 
 function updateFeeInfo(e, sourceSheet, targetRow, targetSheet) {
   const thisRange = e.range;
-  const thisCol = e.range.getColumn();
+  const thisCol = thisRange.getColumn();
 
-  const sourceCols = getColsFromSheet(sourceSheet);
-  const targetCols = getColsFromSheet(targetSheet);
+  console.log(`NOW ENTERING updateFeeInfo()`);
+  console.log(`{Source: ${sourceSheet}, Target: ${targetSheet}, targetRow: ${targetRow}, thisCol: ${thisCol}}`);
 
+  const sourceCols = getColsFromSheet(sourceSheet);   //TODO: change to GET_COL_MAP_
+  const targetCols = getColsFromSheet(targetSheet);   // same
+
+  Logger.log("updateFeeInfo 1 -> Successfully got sourceCols and targetCols");
+
+  // Find respective column where `targetCol` contains same data as `sourceCol`.
   const getTargetCol = (sourceCol) => {
     switch(sourceCol) {
       case(sourceCols.feeStatus) : return targetCols.feeStatus;
@@ -116,9 +141,14 @@ function updateFeeInfo(e, sourceSheet, targetRow, targetSheet) {
     }
   };
 
+  // Find which column was edited in `sourceSheet` and find respective col in `targetSheet`
   const targetCol = getTargetCol(thisCol);
+  Logger.log(`updateFeeInfo 2 -> targetRow: ${targetRow} targetCol: ${targetCol}`);
+  
   const targetRange = targetSheet.getRange(targetRow, targetCol);
+
   thisRange.copyTo(targetRange, {contentsOnly: true});
+  console.log("updateFeeInfo 2 ->  finished copying to target cell");
 }
   
 

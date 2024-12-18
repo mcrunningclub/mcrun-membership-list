@@ -390,7 +390,7 @@ function encodeLastRow() {
 /**
  * Create Member ID for every member in `sheet`.
  * 
- * @input {SpreadsheetApp.Sheet} sheet  Sheet reference to encode
+ * @param {SpreadsheetApp.Sheet} sheet  Sheet reference to encode
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 20, 2024

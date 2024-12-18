@@ -113,7 +113,7 @@ function consolidateLastSubmission() {
 
   // Search for user in 'MASTER'
   const lastEmail = processedLastSubmission[PROCESSED_ARR.EMAIL];
-  const indexSubmission = findMemberByBinarySearch(lastEmail);   // Returns null if not found
+  const indexSubmission = findMemberByBinarySearch(lastEmail, sheet);   // Returns null if not found
   
   // Check if user already exists
   if (indexSubmission != null) {
@@ -252,58 +252,6 @@ function processSemesterData(sheetName) {
   });
 
   return processedData;
-}
-
-
-/**
- * Recursive function to search for entry by email in `MASTER` sheet using binary search.
- * Returns email's row index in GSheet (1-indexed), or null if not found.
- * 
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
- * @date  Oct 21, 2024
- * @update  Oct 23, 2024
- * 
- * @param {string} emailToFind  The email address to search for in the sheet.
- * @param {number} [start=2]  The starting row index for the search (1-indexed). 
- *                            Defaults to 2 (the second row) and not the header row.
- * @param {number} [end=MASTER_SHEET.getLastRow()]  The ending row index for the search. 
- *                                                  Defaults to the last row in the sheet.
- * 
- * @return {number|null}  Returns the 1-indexed row number where the email is found, 
- *                        or `null` if the email is not found.
- * 
- * @example `const submissionRowNumber = findSubmissionFromEmail('example@mail.com');`
- */
-
-function findMemberByBinarySearch(emailToFind, start=2, end=MASTER_SHEET.getLastRow()) {
-  const MASTER_EMAIL_COL = 1;
- 
-  // Base case: If start index exceeds the end index, the email is not found
-  if (start > end) {
-    return null;
-  }
-
-  // Find the middle point between the start and end indexes
-  const mid = Math.floor((start + end) / 2);
-
-  // Get the email value at the middle row
-  const emailAtMid = MASTER_SHEET.getRange(mid, MASTER_EMAIL_COL).getValue();
-
-
-  // Compare the target email with the middle email
-  if (emailAtMid === emailToFind) {
-    return mid;  // If the email matches, return the row index (1-indexed)
-  
-   // If the email at the middle row is alphabetically smaller, search the right half
-   // Note: use localeString() to ensure string comparison matches GSheet
-  } else if (emailAtMid.localeCompare(emailToFind) === -1) {
-    return findMemberByBinarySearch(emailToFind, mid + 1, end);
-  
-  // If the email at the middle row is alphabetically larger, search the left half
-  } else {
-    return findMemberByBinarySearch(emailToFind, start, mid - 1);
-  }
-
 }
 
 

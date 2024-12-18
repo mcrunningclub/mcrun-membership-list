@@ -41,6 +41,31 @@ const MASTER_IS_INTERNAL_COLLECTED = 18;
 const MASTER_PAYMENT_HIST = 19;
 const MASTER_MEMBER_ID_COL = 22;
 
+
+// MAPPING USED TO GET COL INDEX ACROSS SHEETS
+const SHEET_COL_MAP = {
+  [SHEET_NAME]: {
+    emailCol: EMAIL_COL,
+    memberIdCol: MEMBER_ID_COL,
+    feeStatus: IS_FEE_PAID_COL,
+    collectionDate: COLLECTION_DATE_COL,
+    collector: COLLECTION_PERSON_COL,
+    isInternalCollected: IS_INTERNAL_COLLECTED_COL,
+  },
+  [MASTER_NAME]: {
+    emailCol: MASTER_EMAIL_COL,
+    memberIdCol: MASTER_MEMBER_ID_COL,
+    feeStatus: MASTER_FEE_STATUS,
+    collectionDate: MASTER_COLLECTION_DATE,
+    collector: MASTER_FEE_COLLECTOR,
+    isInternalCollected: MASTER_IS_INTERNAL_COLLECTED,
+  },
+};
+
+// Function to get column mappings
+function GET_COL_MAP_(sheet) { return SHEET_COL_MAP[sheet] || null };
+
+
 const SEMESTER_CODE_MAP = new Map();
 const ALL_SEMESTERS = ['Fall 2024', 'Summer 2024', 'Winter 2024'];
 const MASTER_COL_SIZE = 20;   // Range 'A:T' in 'MASTER'

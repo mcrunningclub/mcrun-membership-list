@@ -59,14 +59,14 @@ function findMemberByEmail(emailToFind, sheet) {
     return resultBinarySearch;
   }
 
-  // If binary search unsuccessful, try with iteration (slower)
+  // If binary search unsuccessful, try with iteration (2x slower)
   return findMemberByIteration(emailToFind, sheet);
 }
 
 
 function findMemberByIteration(emailToFind, sheet, start=2, end=sheet.getLastRow()) {
   const sheetName = sheet.getSheetName();
-  const thisEmailCol = GET_COL_MAP(sheetName).emailCol;
+  const thisEmailCol = GET_COL_MAP_(sheetName).emailCol;
   
   for(var row=start; row <= end; row++) {
     let email = sheet.getRange(row, thisEmailCol).getValue();
@@ -76,13 +76,17 @@ function findMemberByIteration(emailToFind, sheet, start=2, end=sheet.getLastRow
   return null;
 }
 
+
 /**
- * Recursive function to search for entry by email in `MASTER` sheet using binary search.
- * Returns email's row index in GSheet (1-indexed), or null if not found.
+ * Recursive function to search for entry by email in `sheet` using binary search.
+ * Returns row index of `email` in GSheet (1-indexed), or null if not found.
  * 
- * @param {string} emailToFind  The email address to search for in the sheet.
+ * Previously `findSubmissionFromEmail` in `Master Scripts.gs`
+ * 
+ * @param {string} emailToFind  The email address to search for in `sheet`.
+ * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.
  * @param {number} [start=2]  The starting row index for the search (1-indexed). 
- *                            Defaults to 2 (the second row) and not the header row.
+ *                            Defaults to 2 (the second row) to avoid the header row.
  * @param {number} [end=MASTER_SHEET.getLastRow()]  The ending row index for the search. 
  *                                                  Defaults to the last row in the sheet.
  * 
@@ -90,15 +94,15 @@ function findMemberByIteration(emailToFind, sheet, start=2, end=sheet.getLastRow
  *                        or `null` if the email is not found.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
- * @date  Dec 16, 2024
- * @update  Dec 16, 2024
+ * @date  Oct 21, 2024
+ * @update  Dec 17, 2024
  * 
  * @example `const submissionRowNumber = findMemberByBinarySearch('example@mail.com');`
  */
 
 function findMemberByBinarySearch(emailToFind, sheet, start=2, end=sheet.getLastRow()) {
   const sheetName = sheet.getSheetName();
-  const emailCol = GET_COL_MAP(sheetName).emailCol;
+  const emailCol = GET_COL_MAP_(sheetName).emailCol;
  
   // Base case: If start index exceeds the end index, the email is not found
   if (start > end) {
