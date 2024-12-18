@@ -24,7 +24,7 @@ function onEdit(e) {
   // Check if legal edit
   if(!verifyLegalEditInRange(e, thisSheet)) return;
 
-  console.log("onEdit 2 -> Passed verifyLegalEditInRange");
+  console.log("onEdit 2 -> Passed \`verifyLegalEditInRange()\`");
 
   // Get the email column for the current sheet
   const thisEmailCol = GET_COL_MAP_(thisSheetName).emailCol;
@@ -52,9 +52,9 @@ function onEdit(e) {
     throw Error(errorMessage);
   }
 
-  console.log(`onEdit 5 -> targetRow: ${targetRow} found by \`findMemberByBinarySearch()\``);
+  console.log(`onEdit 5 -> targetRow: ${targetRow} found by \`findMemberByEmail()\``);
     
-  updateFeeInfo(e, sourceSheet, targetRow, targetSheet);
+  updateFeeInfo(e, thisSheetName, targetRow, targetSheet);
   console.log(`onEdit 6 -> successfully completed trigger check`);
 }
 
@@ -109,46 +109,73 @@ function verifyLegalEditInRange(e, sheet) {
  * Update fee status from `sourceSheet` to `targetSheet`.
  * 
  * @param {Event} e  Event Object from `onEdit`.
- * @param {SpreadsheetApp.Sheet} sourceSheet  Source sheet to extract fee info.
+ * @param {string} sourceSheetName  Name of source sheet to extract fee info.
  * @param {number} targetRow  Target row to update.
  * @param {SpreadsheetApp.Sheet} targetSheet  Target sheet to update fee info.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Dec 16, 2024
- * @update  Dec 16, 2024
+ * @update  Dec 18, 2024
  * 
  */
 
-function updateFeeInfo(e, sourceSheet, targetRow, targetSheet) {
+function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
   const thisRange = e.range;
   const thisCol = thisRange.getColumn();
+  const targetSheetName = targetSheet.getSheetName();
 
   console.log(`NOW ENTERING updateFeeInfo()`);
-  console.log(`{Source: ${sourceSheet}, Target: ${targetSheet}, targetRow: ${targetRow}, thisCol: ${thisCol}}`);
+  console.log(`Source: ${sourceSheetName}, thisCol: ${thisCol} && Target: ${targetSheetName}, targetRow: ${targetRow}`);
 
-  const sourceCols = getColsFromSheet(sourceSheet);   //TODO: change to GET_COL_MAP_
-  const targetCols = getColsFromSheet(targetSheet);   // same
+  const sourceCols = GET_COL_MAP_(sourceSheetName);   // Map of type of member data to its column index
+  const targetCols = GET_COL_MAP_(targetSheetName);   // Get map of member data with respective column indices
 
   Logger.log("updateFeeInfo 1 -> Successfully got sourceCols and targetCols");
 
   // Find respective column where `targetCol` contains same data as `sourceCol`.
-  const getTargetCol = (sourceCol) => {
-    switch(sourceCol) {
+  const getTargetCol = (source) => {
+    switch(source) {
       case(sourceCols.feeStatus) : return targetCols.feeStatus;
       case(sourceCols.collectionDate) : return targetCols.collectionDate;
       case(sourceCols.collector) : return targetCols.collector;
-      case(sourceCols.isInternalCollected) : return target.isInternalCollected;
+      case(sourceCols.isInternalCollected) : return targetCols.isInternalCollected;
     }
   };
 
   // Find which column was edited in `sourceSheet` and find respective col in `targetSheet`
   const targetCol = getTargetCol(thisCol);
   Logger.log(`updateFeeInfo 2 -> targetRow: ${targetRow} targetCol: ${targetCol}`);
-  
+
   const targetRange = targetSheet.getRange(targetRow, targetCol);
 
-  thisRange.copyTo(targetRange, {contentsOnly: true});
-  console.log("updateFeeInfo 2 ->  finished copying to target cell");
+  // Special case: MASTER stores payment history as semesterCode(s).
+  // If isPaid, then add semesterCode to payment history, i.e. bool -> str
+  // Otherwise, nothing to modify in MASTER for member's payment history
+  if(targetSheetName == MASTER_NAME && targetCol == MASTER_PAYMENT_HIST) {
+    console.log("updateFeeInfo 3 -> entering if statement");
+    const value = thisRange.getValue() || "";
+    const isPaid = !!value;    // convert to bool
+    console.log(`updateFeeInfo 3b -> Value: ${value} isPaid: ${isPaid}`);
+
+    // Only modify payment history if isPaid == true.
+    if(isPaid) {
+      console.log("updateFeeInfo 3c -> entering isPaid");
+      addPaidSemesterToHistory(targetRow, sourceSheetName);
+    }
+    
+  }
+  else if(sourceSheetName == MASTER_NAME && thisCol == MASTER_PAYMENT_HIST) {
+    // CASE 2: Add history payment to sheet
+    console.log("updateFeeInfo 3 ->  entering else if statement");
+    const paymentHistory = thisRange.getValue() || "";
+    updateIsFeePaid(paymentHistory, targetRow, targetCol, targetSheet);
+  }
+  else {
+    console.log("updateFeeInfo 3 ->  entering else statement");
+    thisRange.copyTo(targetRange, {contentsOnly: true});
+  }
+
+  console.log("updateFeeInfo 4 ->  finished updating payment history");
 }
   
 

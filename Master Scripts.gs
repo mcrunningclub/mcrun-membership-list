@@ -52,6 +52,33 @@ function addMemberFromSheetInRow(sheet, row) {
 
 }
 
+function addPaidSemesterToHistory(memberRow, semesterSheet) {
+  const sheet = MASTER_SHEET;
+  const paymentHistoryCol = MASTER_PAYMENT_HIST;
+  const semesterCode = getSemesterCode_(semesterSheet); // Get the semester code based on the sheet name
+
+  const rangePaymentHistory = sheet.getRange(memberRow, paymentHistoryCol);
+  const paymentHistory = rangePaymentHistory.getValue();
+
+  // If previous payment history, append with `semesterCode`
+  // Otherwise only use `semesterCode`.
+  const newHistory = paymentHistory ? `${paymentHistory}\n${semesterCode}` : semesterCode;
+
+  rangePaymentHistory.setValue(newHistory);
+}
+
+function updateIsFeePaid(payHistory, memberRow, isFeePaidCol, semesterSheet) {
+  const paymentHistoryArray = payHistory.split('\n');
+  const semesterCode = getSemesterCode_(semesterSheet.getSheetName()); // Get the semester code based on the sheet name
+  
+  // Returns false if no payment history or semester code not in payHistory
+  const isFeePaid = paymentHistoryArray.includes(semesterCode);
+  Logger.log(`updateIsFeePaid -> payHistory: ${payHistory} isFeePaid: ${isFeePaid}`);
+
+  const rangeIsFeePaid = semesterSheet.getRange(memberRow, isFeePaidCol);
+  rangeIsFeePaid.setValue(isFeePaid);
+}
+
 
 /**
  * Processes the last submitted row from the `MAIN_SHEET`, adding semester codes
@@ -82,7 +109,7 @@ function processLastSubmission() {
     }
   });
 
-  // Append semester code to IS_FEE_PAID column
+  // Append semester code to IS_FEE_PAID column in array
   if (lastSubmission[PROCESSED_ARR.FEE_PAID_HIST]) {
     lastSubmission[PROCESSED_ARR.FEE_PAID_HIST] = semesterCode;
   }
@@ -113,11 +140,11 @@ function consolidateLastSubmission() {
 
   // Search for user in 'MASTER'
   const lastEmail = processedLastSubmission[PROCESSED_ARR.EMAIL];
-  const indexSubmission = findMemberByBinarySearch(lastEmail, sheet);   // Returns null if not found
+  const memberIndex = findMemberByEmail(lastEmail, sheet);   // Returns null if not found
   
   // Check if user already exists
-  if (indexSubmission != null) {
-    var existingEntry = sheet.getRange(indexSubmission, 1, 1, MASTER_COL_SIZE).getValues()[0];
+  if (memberIndex != null) {
+    var existingEntry = sheet.getRange(memberIndex, 1, 1, MASTER_COL_SIZE).getValues()[0];
 
     // Data to append in latest registration: 
     const indicesToAppend = {
@@ -151,7 +178,7 @@ function consolidateLastSubmission() {
     }
 
     // Case 1: no previous registration -> move old regCode to regHistory
-    // Lastly add registration history
+    // And lastly add registration history
     var existingHistory = existingEntry[11];
     var existingRegCode = existingEntry[10];
     var latestHistory = processedLastSubmission[PROCESSED_ARR.REGISTRATION_HIST];
@@ -193,8 +220,8 @@ function consolidateLastSubmission() {
 
   // Output data to 'MASTER'
   // CASE 1 : User exists -> replace previous entry
-  if (indexSubmission != null) {
-    sheet.getRange(indexSubmission, 1, 1, selectedData.length).setValues([selectedData]);
+  if (memberIndex != null) {
+    sheet.getRange(memberIndex, 1, 1, selectedData.length).setValues([selectedData]);
   }
   // CASE 2: User does not exist in 'MASTER' -> add new entry to the bottom of sheet
   else {

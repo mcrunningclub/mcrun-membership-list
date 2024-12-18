@@ -34,8 +34,9 @@ const MASTER_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MASTER
 const MASTER_EMAIL_COL = 1;
 const MASTER_FIRST_NAME_COL = 2;
 const MASTER_LAST_REG_SEM = 11;
-const MASTER_FEE_STATUS = 14;
-const MASTER_FEE_COLLECTOR = 16;
+const MASTER_FEE_STATUS = 14;   // Do not modify - Contains formula
+const MASTER_FEE_EXPIRATION = 15;   // Do not modify - Contains formula
+const MASTER_FEE_COLLECTOR = 16;  // Do not modify - Contains formula
 const MASTER_COLLECTION_DATE = 17;
 const MASTER_IS_INTERNAL_COLLECTED = 18;
 const MASTER_PAYMENT_HIST = 19;
@@ -47,7 +48,7 @@ const SHEET_COL_MAP = {
   [SHEET_NAME]: {
     emailCol: EMAIL_COL,
     memberIdCol: MEMBER_ID_COL,
-    feeStatus: IS_FEE_PAID_COL,
+    feeStatus: IS_FEE_PAID_COL,   // Boolean value
     collectionDate: COLLECTION_DATE_COL,
     collector: COLLECTION_PERSON_COL,
     isInternalCollected: IS_INTERNAL_COLLECTED_COL,
@@ -55,7 +56,7 @@ const SHEET_COL_MAP = {
   [MASTER_NAME]: {
     emailCol: MASTER_EMAIL_COL,
     memberIdCol: MASTER_MEMBER_ID_COL,
-    feeStatus: MASTER_FEE_STATUS,
+    feeStatus: MASTER_PAYMENT_HIST,   // String with semester code(s)
     collectionDate: MASTER_COLLECTION_DATE,
     collector: MASTER_FEE_COLLECTOR,
     isInternalCollected: MASTER_IS_INTERNAL_COLLECTED,
@@ -64,6 +65,11 @@ const SHEET_COL_MAP = {
 
 // Function to get column mappings
 function GET_COL_MAP_(sheet) { return SHEET_COL_MAP[sheet] || null };
+
+function test() {
+  var sheetName = MAIN_SHEET;
+  var colMap = GET_COL_MAP_(sheetName);
+}
 
 
 const SEMESTER_CODE_MAP = new Map();
