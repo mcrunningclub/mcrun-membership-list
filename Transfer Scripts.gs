@@ -1,7 +1,39 @@
+const SCRIPT_PROPERTY = PropertiesService.getScriptProperties();
+const CELL_EDIT_LIMIT = 10;   // set number of cells that can be edited at once
+
+function getOnEditFlag() {
+  const propertyName = ON_EDIT_SCRIPT_PROPERTY;
+  const propertyValue = SCRIPT_PROPERTY.getProperty(propertyName);
+  return(propertyValue);
+}
+
+function setOnEditFlag(setTo="") {
+  const propertyName = ON_EDIT_SCRIPT_PROPERTY;
+  const propertyValue = SCRIPT_PROPERTY.getProperty(propertyName);
+  const isEditAllowed = parseBool(propertyValue);  // Convert to boolean
+
+  if(setTo === "") {
+    var newValue = !isEditAllowed;  // Toggle if no parameter defaults
+  }
+  else {
+    newValue = parseBool(setTo);   // Set to input
+  }
+
+  // Set new value for property
+  SCRIPT_PROPERTY.setProperty(propertyName, newValue);
+}
+
+
 function onEdit(e) {
+  const isEditAllowed = getOnEditFlag();
+  if(isEditAllowed == "false") return;    // Prevent unplanned edits
+
   // Get details of edit event's sheet
   const thisSheet = e.range.getSheet();
   const thisSheetName = thisSheet.getName();
+  const thisRange = e.range;
+
+  if(range.getNumRows() > 2) return;  // prevent sheet-wide changes
 
   var debug_e = {
     authMode:  e.authMode,
@@ -12,7 +44,7 @@ function onEdit(e) {
     oldValue: e.oldValue
   }
 
-  console.log(`eventObject: ${debug_e}`);
+  console.log({test: 2, eventObject: debug_e});
 
   console.log(`onEdit 1 -> thisSheetName: ${thisSheetName}`);
   
@@ -56,16 +88,6 @@ function onEdit(e) {
     
   updateFeeInfo(e, thisSheetName, targetRow, targetSheet);
   console.log(`onEdit 6 -> successfully completed trigger check`);
-}
-
-function test_onEdit() {
-  onEdit({
-    user : Session.getActiveUser().getEmail(),
-    source : SpreadsheetApp.getActiveSpreadsheet(),
-    range : SpreadsheetApp.getActiveSpreadsheet().getActiveCell(),
-    value : SpreadsheetApp.getActiveSpreadsheet().getActiveCell().getValue(),
-    authMode : "LIMITED"
-  });
 }
 
 
@@ -154,13 +176,16 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
   if(targetSheetName == MASTER_NAME && targetCol == MASTER_PAYMENT_HIST) {
     console.log("updateFeeInfo 3 -> entering if statement");
     const value = thisRange.getValue() || "";
-    const isPaid = !!value;    // convert to bool
+    const isPaid = parseBool(value);    // convert to bool
     console.log(`updateFeeInfo 3b -> Value: ${value} isPaid: ${isPaid}`);
 
     // Only modify payment history if isPaid == true.
     if(isPaid) {
       console.log("updateFeeInfo 3c -> entering isPaid");
       addPaidSemesterToHistory(targetRow, sourceSheetName);
+    }
+    else {
+      console.log("updateFeeInfo 3c -> entering NOT(isPaid)");
     }
     
   }

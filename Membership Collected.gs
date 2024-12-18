@@ -1,12 +1,10 @@
 /**
- * Runs formatting functions after form submission by new member.
+ * Runs formatting functions after new member submits a registration form.
  * 
  * https://developers.google.com/apps-script/samples/automations/event-session-signup
  * 
  * https://stackoverflow.com/questions/62246016/how-to-check-if-current-form-submission-is-editing-response
  *
- * 
- * CURRENTLY IN REVIEW (may-28)
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
@@ -14,6 +12,7 @@
  */
 
 function onFormSubmit() {
+  setOnEditFlag(false);   // Turn off onEdit to speed up process
   trimWhitespace_();
   fixLetterCaseInRow_();
   encodeLastRow();   // create unique member ID
@@ -24,6 +23,7 @@ function onFormSubmit() {
   // Must add and sort AFTER extracting Interac info from email
   addLastSubmissionToMaster();
   sortMainByName();
+  setOnEditFlag(true);  // Turn onEdit back on for background checking
 }
 
 
@@ -36,12 +36,12 @@ function onFormSubmit() {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Sept 1, 2024
- * @update  Sept 1, 2024
+ * @update  Dec 18, 2024
  */
 
 function getLastSubmissionInMain() {
   const sheet = MAIN_SHEET;
-  const lastRow = sheet.getLastRow();
+  let lastRow = sheet.getLastRow();
 
   while (sheet.getRange(lastRow, REGISTRATION_DATE_COL).getValue() == "") {
     lastRow = lastRow - 1;
@@ -55,9 +55,7 @@ function findMemberByEmail(emailToFind, sheet) {
   // First try with binary search (faster)
   const resultBinarySearch = findMemberByBinarySearch(emailToFind, sheet);
   
-  if(resultBinarySearch != null) {
-    return resultBinarySearch;
-  }
+  if(resultBinarySearch != null) return resultBinarySearch;   // success!
 
   // If binary search unsuccessful, try with iteration (2x slower)
   return findMemberByIteration(emailToFind, sheet);
@@ -81,7 +79,7 @@ function findMemberByIteration(emailToFind, sheet, start=2, end=sheet.getLastRow
  * Recursive function to search for entry by email in `sheet` using binary search.
  * Returns row index of `email` in GSheet (1-indexed), or null if not found.
  * 
- * Previously `findSubmissionFromEmail` in `Master Scripts.gs`
+ * Previously `findSubmissionFromEmail` in `Master Scripts.gs`.
  * 
  * @param {string} emailToFind  The email address to search for in `sheet`.
  * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.

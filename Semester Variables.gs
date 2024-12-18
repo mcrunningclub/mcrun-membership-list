@@ -71,7 +71,6 @@ function test() {
   var colMap = GET_COL_MAP_(sheetName);
 }
 
-
 const SEMESTER_CODE_MAP = new Map();
 const ALL_SEMESTERS = ['Fall 2024', 'Summer 2024', 'Winter 2024'];
 const MASTER_COL_SIZE = 20;   // Range 'A:T' in 'MASTER'
@@ -81,6 +80,8 @@ const FEE_STATUS_ENUM = [
   "Unpaid",
   "Expired"
 ];
+
+const ON_EDIT_SCRIPT_PROPERTY = "IS_EDIT_CHECKING";
 
 
 // Found in `Internal Fee Collection` sheet
@@ -123,5 +124,18 @@ function getUserTimeZone_() {
 
 function getCurrentUserEmail_() {
   return Session.getActiveUser().toString();
+}
+
+
+/**
+ * Converts a string to a boolean value.
+ * 
+ * @param {string} val  A string that contains a boolean.
+ * 
+ * @return {Boolean}  Parsed value.
+ */
+
+function parseBool(val) { 
+  return val === true || val === "true";
 }
 

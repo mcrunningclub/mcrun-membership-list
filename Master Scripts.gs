@@ -64,7 +64,8 @@ function addPaidSemesterToHistory(memberRow, semesterSheet) {
   // Otherwise only use `semesterCode`.
   const newHistory = paymentHistory ? `${paymentHistory}\n${semesterCode}` : semesterCode;
 
-  rangePaymentHistory.setValue(newHistory);
+  // Only modify if paymentHistory **does not** contains semesterCode to prevent duplicates.
+  if(!paymentHistory.includes(semesterCode)) rangePaymentHistory.setValue(newHistory);
 }
 
 function updateIsFeePaid(payHistory, memberRow, isFeePaidCol, semesterSheet) {

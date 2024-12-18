@@ -24,7 +24,7 @@ function trimWhitespace_() {
 /**
  * Returns reg expression for target string.
  * 
- * @input {string}  targetSubstring  String used to create regex.
+ * @param {string}  targetSubstring  String used to create regex.
  * @return {RegExp}   Returns regular expression.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
@@ -41,7 +41,7 @@ function getRegEx_(targetSubstring) {
 /**
  * Sorts `MAIN_SHEET` by first name, then last name.
  * 
- * @trigger New form submission.
+ * @trigger New form submission or McRUN menu.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
@@ -76,23 +76,35 @@ function formatMainView() {
   const startRow = 2;   // Do not count header row
   const lastRow = getLastSubmissionInMain();
 
+  // Prevent unwanted changes
+  if(getOnEditFlag() == true) throw Error("Please turn off onEdit before continuing");
+
   // Helper function to get sheet reference according to `col`
   const getColumnRange = (col, numCol=1) => sheet.getRange(startRow, col, lastRow, numCol);
 
+  // Set formatting type of collection date
+  const rangeCollectionDate = getColumnRange(COLLECTION_DATE_COL);
+  rangeCollectionDate.setNumberFormat('mmm d, yyyy');
+  return;
+
   const rangeRegistration = getColumnRange(REGISTRATION_DATE_COL);
   const rangePreferredName = getColumnRange(PREFERRED_NAME);
+  const rangeDescription = getColumnRange(DESCRIPTION_COL);
   const rangeWaiver = getColumnRange(WAIVER_COL);
   const rangePaymentChoice = getColumnRange(PAYMENT_METHOD_COL);
   const rangeInteracRef = getColumnRange(INTERACT_REF_COL);
-  const rangeCollection = getColumnRange(COLLECTION_DATE_COL, 2); // Range for Collection Info   
+  //const rangeCollectionDate = getColumnRange(COLLECTION_DATE_COL);
+  const rangeCollector = getColumnRange(COLLECTION_DATE_COL); // Range for Collection Info   
   const rangeMemberId = getColumnRange(MEMBER_ID_COL);
+  const rangeURL = getColumnRange(WAIVER_COL);
 
   [ // Set ranges to Bold
     rangeRegistration, 
     rangePreferredName, 
     rangePaymentChoice, 
     rangeInteracRef,
-    rangeCollection, 
+    rangeCollectionDate,
+    rangeCollector, 
     rangeMemberId, 
     rangeURL
   ].forEach(r => r.setFontWeight('bold'));
@@ -101,10 +113,12 @@ function formatMainView() {
   rangePaymentChoice.setHorizontalAlignment('left');
   
   // Set Text Wrapping to 'Clip'
-  [rangePaymentChoice, rangeWaiver].forEach(r => r.setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP));
+  [rangeDescription, rangePaymentChoice, rangeWaiver].forEach(r => r.setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP));
 
   // Centre these ranges
-  [rangeInteracRef, rangeCollection, rangeMemberId].forEach(r => r.setHorizontalAlignment('center'));
+  [rangeInteracRef, rangeCollectionDate, rangeCollector, rangeMemberId].forEach(r => r.setHorizontalAlignment('center'));
+
+  
 }
 
 
@@ -253,7 +267,10 @@ function formatMasterView() {
   // Show Hyperlink for Waivers
   const rangeListShowHyperlink = sheet.getRangeList(['G2:G']);
   rangeListShowHyperlink.setShowHyperlink(true);
-  
+
+  // Set formatting type of collection date
+  const rangeCollectionDate = sheet.getRange('Q2:Q');
+  rangeCollectionDate.setNumberFormat('yyyy-mm-dd');
 }
 
 

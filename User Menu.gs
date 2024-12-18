@@ -70,6 +70,7 @@ function onOpen() {
   ui.createMenu('🏃‍♂️ McRUN Menu')
     .addItem('📢 Custom menu. Click for help.', helpUI_.name)
     .addSeparator()
+    .addItem('Turn ON/OFF onEdit()', setOnEditFlagUI_.name)
 
     .addSubMenu(ui.createMenu('Main Scripts')
       .addItem('Sort by Name', sortByNameUI_.name)
@@ -165,6 +166,44 @@ function confirmAndRunUserChoice_(functionName, sheetName) {
   // Log attempt in console using active user email
   logMenuAttempt_(userEmail);
 }
+
+
+
+function setOnEditFlagUI_() {
+  const ui = SpreadsheetApp.getUi();
+  const headerMsg = "Would you like to turn on onEdit()?";
+  const textMsg = `
+  If on, This function is triggered for any changes across the spreadsheet.
+  
+  If you are running large-scale function, onEdit() will disorganize your data.
+  `;
+
+  var response = ui.alert(headerMsg, textMsg, ui.ButtonSet.YES_NO);
+
+  // Process the user's response.
+  if(response == ui.Button.YES) {
+    setOnEditFlag(true);
+    ui.alert(
+      'Success: onEdit() is **on**', 
+      '⚠️ Ensure that you only make small changes to prevent unexpected values.', 
+      ui.ButtonSet.OK);
+  }
+  else if(response == ui.Button.NO){
+    setOnEditFlag(true);
+    ui.alert(
+      'Success: onEdit() is **off**', 
+      '⚠️ You are free to make large-scale changes', 
+      ui.ButtonSet.OK);
+  }  
+  else {
+    // User clicked "Canceled" or X in the title bar.
+    ui.alert('Execution cancelled...');
+  }
+  
+  logMenuAttempt_();    // log attempt
+}
+
+
 
 
 /** 
