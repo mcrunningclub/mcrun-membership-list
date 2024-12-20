@@ -76,9 +76,6 @@ function formatMainView() {
   const startRow = 2;   // Do not count header row
   const lastRow = getLastSubmissionInMain();
 
-  // Prevent unwanted changes
-  if(getOnEditFlag() == true) throw Error("Please turn off onEdit before continuing");
-
   // Helper function to get sheet reference according to `col`
   const getColumnRange = (col, numCol=1) => sheet.getRange(startRow, col, lastRow, numCol);
 

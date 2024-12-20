@@ -5,27 +5,33 @@ function onEdit(e) {
   const thisRange = e.range;
   const thisSheet = thisRange.getSheet();
   const thisSheetName = thisSheet.getName();
-  
-
-  if(thisRange.getNumRows() > 2) return;  // prevent sheet-wide changes
 
   var debug_e = {
-    authMode:  e.authMode,
+    //authMode:  e.authMode,
     range:  e.range.getA1Notation(),
-    sheetName : e.range.getSheet().getName(),
-    source:  e.source,
+    sheetName : e.range.getSheet().getSheetName(),
+    //source:  e.source,
     value:  e.value,
     oldValue: e.oldValue
   }
-
   console.log({test: 2, eventObject: debug_e});
+
+  if(thisRange.getNumRows() > 2) return;  // prevent sheet-wide changes
+  else if(thisRange.getNumColumns() > 4) {
+    // TODO: add function to individually process changes
+    Logger.log("More than 2 rows edited at once");
+  }
 
   console.log(`onEdit 1 -> thisSheetName: ${thisSheetName}`);
   
   // Check if legal sheet
   if(thisSheetName != SHEET_NAME && thisSheetName != MASTER_NAME) return;
 
-  console.log("onEdit -> Passed first check");
+  console.log("onEdit 1a -> Passed first check");
+
+  //if(e.value == e.oldValue) return;   // Values have not changed. Edit was on sheet formatting.
+
+  console.log("onEdit 1b -> Passed second check");
 
   // Check if legal edit
   if(!verifyLegalEditInRange(e, thisSheet)) return;
@@ -51,7 +57,8 @@ function onEdit(e) {
   // Throw error message if member not in `targetSheet`
   if(targetRow == null) {
     const errorMessage = `
-      targetRow not found in onEdit(). 
+      --- onEdit() ---
+      targetRow not found in ${targetSheet}. 
       Edit made in ${thisSheetName} at row ${thisRow}.
       Email of edited member: ${email}. Please review this error.
     `

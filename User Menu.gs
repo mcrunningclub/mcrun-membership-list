@@ -70,7 +70,6 @@ function onOpen() {
   ui.createMenu('🏃‍♂️ McRUN Menu')
     .addItem('📢 Custom menu. Click for help.', helpUI_.name)
     .addSeparator()
-    .addItem('Turn ON/OFF onEdit()', setOnEditFlagUI_.name)
 
     .addSubMenu(ui.createMenu('Main Scripts')
       .addItem('Sort by Name', sortByNameUI_.name)
