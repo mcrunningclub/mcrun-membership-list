@@ -1,4 +1,4 @@
-const CELL_EDIT_LIMIT = 10;   // set number of cells that can be edited at once
+const CELL_EDIT_LIMIT = 4;   // set number of cells that can be edited at once
 
 function onEdit(e) {
   // Get details of edit event's sheet
@@ -17,9 +17,9 @@ function onEdit(e) {
   console.log({test: 2, eventObject: debug_e});
 
   if(thisRange.getNumRows() > 2) return;  // prevent sheet-wide changes
-  else if(thisRange.getNumColumns() > 4) {
+  else if(thisRange.getNumColumns() > CELL_EDIT_LIMIT) {
     // TODO: add function to individually process changes
-    Logger.log("More than 2 rows edited at once");
+    Logger.log(`More than ${CELL_EDIT_LIMIT} columns edited at once`);
   }
 
   console.log(`onEdit 1 -> thisSheetName: ${thisSheetName}`);

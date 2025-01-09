@@ -1,5 +1,5 @@
 // SHEET CONSTANTS
-const SHEET_NAME = 'Fall 2024';       // MUST UPDATE EVERY SEMESTER!
+const SHEET_NAME = 'Winter 2025';       // MUST UPDATE EVERY SEMESTER!
 const MAIN_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
 
 const TIMEZONE = getUserTimeZone_();
@@ -67,7 +67,7 @@ const SHEET_COL_MAP = {
 function GET_COL_MAP_(sheet) { return SHEET_COL_MAP[sheet] || null };
 
 const SEMESTER_CODE_MAP = new Map();
-const ALL_SEMESTERS = ['Fall 2024', 'Summer 2024', 'Winter 2024'];
+const ALL_SEMESTERS = ['Winter 2025', 'Fall 2024', 'Summer 2024', 'Winter 2024'];
 const MASTER_COL_SIZE = 20;   // Range 'A:T' in 'MASTER'
 
 const FEE_STATUS_ENUM = [

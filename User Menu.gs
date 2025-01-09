@@ -7,7 +7,6 @@ const PERM_USER_ = [
   'mcrunningclub@ssmu.ca',
   'ademetriou8@gmail.com',
   'andreysebastian10.g@gmail.com',
-  'gagnonjikael@gmail.com',
   'thecharlesvillegas@gmail.com',
 ];
 
