@@ -7,7 +7,7 @@
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 17, 2023
- * @update  Nov 22, 2024
+ * @update  Jan 11, 2024
  */
 
 function trimWhitespace_() {
@@ -16,8 +16,6 @@ function trimWhitespace_() {
   const lastRow = sheet.getLastRow();
   const rangeToFormat = sheet.getRange(lastRow, FIRST_NAME_COL, 1, 7);
   rangeToFormat.trimWhitespace();
-
-  return;
 }
 
 
@@ -45,7 +43,7 @@ function getRegEx_(targetSubstring) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
- * @update  Jun 1, 2024
+ * @update  Jan 11, 2025
  */
 
 function sortMainByName() {
@@ -59,7 +57,6 @@ function sortMainByName() {
   
   // Sorts values by `First Name` then by `Last Name`
   range.sort([{column: 3, ascending: true}, {column: 4, ascending: true}]);
-  return;
 }
 
 
@@ -68,54 +65,105 @@ function sortMainByName() {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
- * @update  Nov 22, 2024
+ * @update  Jan 11, 2025
  */
 
 function formatMainView() {
-  var sheet = MAIN_SHEET;
-  const startRow = 2;   // Do not count header row
-  const lastRow = getLastSubmissionInMain();
+  const sheet = MAIN_SHEET;
+  //const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Fall 2024");
 
-  // Helper function to get sheet reference according to `col`
-  const getColumnRange = (col, numCol=1) => sheet.getRange(startRow, col, lastRow, numCol);
+  // Freeze two leftmost columns and first row
+  sheet.setFrozenColumns(2);
+  sheet.setFrozenRows(1);
+
+  // Set Text to Bold
+  const rangeListToBold = sheet.getRangeList([
+    'A1:T1',  // Header Row
+    'A2:A',   // Registration
+    'E2:E',   // Preferred Name
+    'K2:L',   // Payment Method + Interac Ref Number
+    'O2:P',   // Collection Date + Collector
+    'T2:T',   // Member ID
+  ]);   
+  rangeListToBold.setFontWeight('bold');
+
+  // Set head row to 11
+  sheet.getRange('A1:T1').setFontSize(11).set;
+
+  // Reduce Font to 10
+  const rangeListToSetFont10 = sheet.getRangeList([
+    'E1',   // Prefered Name (Header Cell)
+    'T2:T', // Member ID
+    'N1',   // Fee Paid (Header Cell)
+    'S1',   // Attendance Status (Header Cell)
+  ]);
+  rangeListToSetFont10.setFontSize(10).set;
+
+  // Reduce font to 9
+  const rangeListToSetFont9 = sheet.getRangeList([
+    'Q1',     // Given to Internal (Header Cell)
+    'T2:T',   // Member ID
+  ]);
+  rangeListToSetFont9.setFontSize(9).set;
+
+  // Set font of Payment Method + Interac Ref Number to 8
+  sheet.getRange('K1:L1').setFontSize(8).set;
+
+
+  // Change font family of Member ID to 'Google Sans Mono'
+  sheet.getRange('T2:T').setFontFamily('Google Sans Mono');
 
   // Set formatting type of collection date
-  const rangeCollectionDate = getColumnRange(COLLECTION_DATE_COL);
-  rangeCollectionDate.setNumberFormat('mmm d, yyyy');
-  return;
-
-  const rangeRegistration = getColumnRange(REGISTRATION_DATE_COL);
-  const rangePreferredName = getColumnRange(PREFERRED_NAME);
-  const rangeDescription = getColumnRange(DESCRIPTION_COL);
-  const rangeWaiver = getColumnRange(WAIVER_COL);
-  const rangePaymentChoice = getColumnRange(PAYMENT_METHOD_COL);
-  const rangeInteracRef = getColumnRange(INTERACT_REF_COL);
-  //const rangeCollectionDate = getColumnRange(COLLECTION_DATE_COL);
-  const rangeCollector = getColumnRange(COLLECTION_DATE_COL); // Range for Collection Info   
-  const rangeMemberId = getColumnRange(MEMBER_ID_COL);
-  const rangeURL = getColumnRange(WAIVER_COL);
-
-  [ // Set ranges to Bold
-    rangeRegistration, 
-    rangePreferredName, 
-    rangePaymentChoice, 
-    rangeInteracRef,
-    rangeCollectionDate,
-    rangeCollector, 
-    rangeMemberId, 
-    rangeURL
-  ].forEach(r => r.setFontWeight('bold'));
-
-  // Align ranges to Left
-  rangePaymentChoice.setHorizontalAlignment('left');
+  sheet.getRange('O2:O').setNumberFormat('mmm d, yyyy');
   
+
   // Set Text Wrapping to 'Clip'
-  [rangeDescription, rangePaymentChoice, rangeWaiver].forEach(r => r.setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP));
+  const rangeListToClipWrap = sheet.getRangeList([
+    'J1:J',   // Waiver
+    'K2:K'    // Payment Choice
+  ]);
+  rangeListToClipWrap.setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+
+  // Align range to Right
+  sheet.getRange('A2:A').setHorizontalAlignment('right');
 
   // Centre these ranges
-  [rangeInteracRef, rangeCollectionDate, rangeCollector, rangeMemberId].forEach(r => r.setHorizontalAlignment('center'));
+  const rangeListToCentre = sheet.getRangeList([
+    'L2:L',   // Interac Ref
+    'N2:Q',   // Fee Paid... Given to Internal
+    'S2:T',   // Attendance Status + Member ID
+  ])
+  rangeListToCentre.setHorizontalAlignment('center').setVerticalAlignment('middle');
 
-  
+  // Link pixel size to column index
+  const sizeMap = {
+    [REGISTRATION_DATE_COL]: 140,
+    [EMAIL_COL]: 245,
+    [FIRST_NAME_COL]: 115,
+    [LAST_NAME_COL]: 115,
+    [PREFERRED_NAME]: 120,
+    [YEAR_COL]: 90,
+    [PROGRAM_COL]: 240,
+    [DESCRIPTION_COL]: 400,
+    [REFERRAL_COL]: 145,
+    [WAIVER_COL]: 185,
+    [PAYMENT_METHOD_COL]: 139,
+    [INTERACT_REF_COL]: 155,
+    [EMPTY_COL]: 40,
+    [IS_FEE_PAID_COL]: 75,
+    [COLLECTION_DATE_COL]: 150,
+    [COLLECTION_PERSON_COL]: 150,
+    [IS_INTERNAL_COLLECTED_COL]: 65,
+    [COMMENTS_COL]: 255,
+    [ATTENDANCE_STATUS]: 125,
+    [MEMBER_ID_COL]: 140,
+  }
+
+  // Resize columns by their corresponding pixel size
+  for (const [col, width] of Object.entries(sizeMap)) {
+    sheet.setColumnWidth(col, width);
+  }
+
 }
 
 
@@ -165,6 +213,7 @@ function fixLetterCaseInRow_(row=MASTER_SHEET.getLastRow()) {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 27, 2024
+ * @update  Jan 11, 2025
  */
 
 function sortMasterByEmail() {
@@ -177,7 +226,6 @@ function sortMasterByEmail() {
     
   // Sorts values by email
   range.sort([{column: 1, ascending: true}]);
-  return;
 }
 
 
