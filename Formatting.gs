@@ -70,72 +70,58 @@ function sortMainByName() {
 
 function formatMainView() {
   const sheet = MAIN_SHEET;
-  //const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Fall 2024");
 
-  // Freeze two leftmost columns and first row
-  sheet.setFrozenColumns(2);
+  // Helper fuction to improve readability
+  const getThisRange = (ranges) => 
+    Array.isArray(ranges) ? sheet.getRangeList(ranges) : sheet.getRange(ranges);
+  
+  // 1. Freeze panes
   sheet.setFrozenRows(1);
-
-  // Set Text to Bold
-  const rangeListToBold = sheet.getRangeList([
+  sheet.setFrozenColumns(2);
+  
+  // 2. Bold formatting
+  getThisRange([
     'A1:T1',  // Header Row
     'A2:A',   // Registration
     'E2:E',   // Preferred Name
     'K2:L',   // Payment Method + Interac Ref Number
     'O2:P',   // Collection Date + Collector
     'T2:T',   // Member ID
-  ]);   
-  rangeListToBold.setFontWeight('bold');
+  ]).setFontWeight('bold');
 
-  // Set head row to 11
-  sheet.getRange('A1:T1').setFontSize(11).set;
-
-  // Reduce Font to 10
-  const rangeListToSetFont10 = sheet.getRangeList([
+  // 3. Font size adjustments
+  getThisRange([
     'E1',   // Prefered Name (Header Cell)
     'T2:T', // Member ID
     'N1',   // Fee Paid (Header Cell)
     'S1',   // Attendance Status (Header Cell)
-  ]);
-  rangeListToSetFont10.setFontSize(10).set;
+  ]).setFontSize(10);
 
-  // Reduce font to 9
-  const rangeListToSetFont9 = sheet.getRangeList([
-    'Q1',     // Given to Internal (Header Cell)
-    'T2:T',   // Member ID
-  ]);
-  rangeListToSetFont9.setFontSize(9).set;
+  getThisRange('A1:T1').setFontSize(11);  // Header row to size 11
+  getThisRange(['Q1', 'T2:T']).setFontSize(9);  // Given to Internal (Header Cell) +  Member ID
+  getThisRange('K1:L1').setFontSize(8);  // Payment Method headers
 
-  // Set font of Payment Method + Interac Ref Number to 8
-  sheet.getRange('K1:L1').setFontSize(8).set;
+  // 4. Font family adjustment
+  getThisRange('T2:T').setFontFamily('Google Sans Mono');
+
+  // 5. Format collection date
+  getThisRange('O2:O').setNumberFormat('mmm d, yyyy');
+
+  // 6. Text wrapping set to 'Clip' (for Waiver + Payment Choice)
+  getThisRange(['J1:J', 'K2:K']).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);   
 
 
-  // Change font family of Member ID to 'Google Sans Mono'
-  sheet.getRange('T2:T').setFontFamily('Google Sans Mono');
-
-  // Set formatting type of collection date
-  sheet.getRange('O2:O').setNumberFormat('mmm d, yyyy');
-  
-
-  // Set Text Wrapping to 'Clip'
-  const rangeListToClipWrap = sheet.getRangeList([
-    'J1:J',   // Waiver
-    'K2:K'    // Payment Choice
-  ]);
-  rangeListToClipWrap.setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
-
-  // Align range to Right
-  sheet.getRange('A2:A').setHorizontalAlignment('right');
-
-  // Centre these ranges
-  const rangeListToCentre = sheet.getRangeList([
+  // 7. Horizontal and vertical alignment
+  getThisRange([
     'L2:L',   // Interac Ref
-    'N2:Q',   // Fee Paid... Given to Internal
-    'S2:T',   // Attendance Status + Member ID
-  ])
-  rangeListToCentre.setHorizontalAlignment('center').setVerticalAlignment('middle');
+    'N2:Q',   // Fee Paid, ..., Given to Internal
+    'S1:T',   // Attendance Status + Member ID
+  ]).setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
 
-  // Link pixel size to column index
+  getThisRange(['A2:A', 'I1']).setHorizontalAlignment('right');   // Align right
+  
+  // 8. Column width mapping
   const sizeMap = {
     [REGISTRATION_DATE_COL]: 140,
     [EMAIL_COL]: 245,
@@ -159,10 +145,10 @@ function formatMainView() {
     [MEMBER_ID_COL]: 140,
   }
 
-  // Resize columns by their corresponding pixel size
-  for (const [col, width] of Object.entries(sizeMap)) {
+  // Resize columns based on `sizeMap`
+  Object.entries(sizeMap).forEach(([col, width]) => {
     sheet.setColumnWidth(col, width);
-  }
+  });
 
 }
 
