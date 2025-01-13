@@ -33,6 +33,7 @@ const MASTER_NAME = 'MASTER';
 const MASTER_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MASTER_NAME);
 const MASTER_EMAIL_COL = 1;
 const MASTER_FIRST_NAME_COL = 2;
+const MASTER_LAST_NAME_COL = 3;
 const MASTER_LAST_REG_SEM = 11;
 const MASTER_FEE_STATUS = 14;   // Do not modify - Contains formula
 const MASTER_FEE_EXPIRATION = 15;   // Do not modify - Contains formula

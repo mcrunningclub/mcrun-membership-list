@@ -46,32 +46,6 @@ function createMemberPass(passInfo) {
     }
   }
 
-  /*
-  const shapes = slide.getShapes();
-
-  for (let shape of shapes) {
-    if (shape.getText().asString().includes(placeholder)) {
-      // Generate the QR code image as a blob
-      const qrCodeBlob = UrlFetchApp.fetch(qrCodeUrl).getBlob();
-
-      // Get the position and size of the placeholder
-      const position = shape.getLeft();
-      const top = shape.getTop();
-      const width = shape.getWidth();
-      const height = shape.getHeight();
-
-      // Remove the text placeholder
-      shape.getText().setText('');
-
-      // Insert the QR code image in place of the placeholder
-      slide.insertImage(qrCodeBlob, position, top, width, height);
-
-      Logger.log('QR Code added to the slide.');
-      break;
-    }
-  }
-  */
-
   // Save anc close copy template
   copyFilePtr.saveAndClose();
 
@@ -104,25 +78,67 @@ function generateQrUrl(memberID) {
 }
 
 
-function start() {
+function generateMemberPass(memberEmail) {
+  const startTime = new Date().getTime();
+
   const sheet = MASTER_SHEET;
-  const memberEmail = 'adela.cerna@mail.mcgill.ca';
-  const memberRow = findMemberByEmail(memberEmail, sheet);
-  
-  const testInfo = {
-    firstName : 'Benjamin',
-    lastName : 'Higgins',
-    memberID : '21a15ee377a022d7',
-    memberStatus : 'Active',
-    feeStatus : 'Paid',
-    expiry : 'Feb 2025',
+  const row = findMemberByEmail(memberEmail, sheet);
+
+  // Error management
+  if (isNaN(row)) {
+    throw Error(`Member email (${memberEmail}) could not be found in MASTER`);
   }
 
-  createMemberPass(testInfo);
+  // Get member data to populate pass template
+  const endCol = MASTER_MEMBER_ID_COL;   // From first name to id col
+  const memberData = sheet.getRange(row, 1, 1, endCol).getValues()[0];
+
+  // Add entry to beginning to allow 1-indexed data access like for GSheet
+  memberData.unshift('');  
+
+  // Get membership expiration date
+  const membershipExpiration = getExpirationDate(memberData[MASTER_LAST_REG_SEM]);
+
+  // Map member info to pass info
+  const passInfo = {
+    firstName : memberData[MASTER_FIRST_NAME_COL],
+    lastName : memberData[MASTER_LAST_NAME_COL],
+    memberID : memberData[MASTER_MEMBER_ID_COL],
+    memberStatus : 'Active',    // If email not found, then membership expired
+    feeStatus : memberData[MASTER_FEE_STATUS],
+    expiry : membershipExpiration,
+  }
+
+  createMemberPass(passInfo);
+
+  // Record the end time
+  const endTime = new Date().getTime();
+  
+  // Calculate the runtime in milliseconds
+  const runtime = endTime - startTime;
+
+  // Log the runtime
+  Logger.log(`Function runtime: ${runtime} ms`);
 }
 
 
-//https://docs.google.com/presentation/d/10eZkny4yeuafoGnnkWG2VV4umKZ66CN4D9xV2A9J9-Y/export?format=png
+
+function getExpirationDate(semCode) {
+  const validDuration = 1;    // 1 year
+
+  const semester = semCode.charAt(0);
+  const expirationYear = '20' + (parseInt(semCode.slice(-2)) + validDuration)
+
+  switch (semester) {
+    case ('F') : return `Sep ${expirationYear}`;
+    case ('W') : return `Jan ${expirationYear}`;
+    case ('S') : return `Jun ${expirationYear}`;
+    default: return null;
+  };
+
+}
+
+
 //const slidesBlob = (tempDoc, 'application/vnd.google-apps.presentation');
 //const pngBlob = slidesBlob.getAs('image/png');
 //const tempCopy = template.makeCopy(tempName, passFolder);
@@ -170,8 +186,6 @@ function generateMemberIDCards_() {
 
   //SpreadsheetApp.getUi().alert(`ID cards and QR codes have been created.`);
 }
-
-
 
 function generateMemberIDCards2() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Members');
@@ -235,6 +249,7 @@ function generateQRCode2(memberID) {
 
   return baseUrl + params;
 }
+
 
 function test() {
   const fileId = '1zIQfQzTj1h5FNSTttXn';
