@@ -1,4 +1,4 @@
-function createMemberPass(passInfo) {
+function createPassFile(passInfo) {
   const TEMPLATE_ID = '14NG31db-g-bFX1OUHeRByTKN6S2QuMAkDuANOAtwF6o';
   const FOLDER_ID = '1_NVOD_HbXfzPl26lC_-jjytzaWXqLxTn';
 
@@ -30,7 +30,7 @@ function createMemberPass(passInfo) {
   const slide = copyFilePtr.getSlides()[0];
 
   // Create QR code
-  const qrCodeUrl = generateQrUrl(passInfo.aMemberId);
+  const qrCodeUrl = generateQrUrl(passInfo.memberID);
   const qrCodeBlob = UrlFetchApp.fetch(qrCodeUrl).getBlob();
 
   // Find shape with placeholder alt text and replace with qr code
@@ -70,14 +70,6 @@ function createMemberPass(passInfo) {
 }
 
 
-function generateQrUrl(memberID) {
-  const baseUrl = 'https://quickchart.io/qr?';
-  const params = `text=${encodeURIComponent(memberID)}&margin=1&size=200`
-
-  return baseUrl + params;
-}
-
-
 function generateMemberPass(memberEmail) {
   const startTime = new Date().getTime();
 
@@ -109,7 +101,7 @@ function generateMemberPass(memberEmail) {
     expiry : membershipExpiration,
   }
 
-  createMemberPass(passInfo);
+  createPassFile(passInfo);
 
   // Record the end time
   const endTime = new Date().getTime();
@@ -121,6 +113,13 @@ function generateMemberPass(memberEmail) {
   Logger.log(`Function runtime: ${runtime} ms`);
 }
 
+
+function generateQrUrl(memberID) {
+  const baseUrl = 'https://quickchart.io/qr?';
+  const params = `text=${encodeURIComponent(memberID)}&margin=1&size=200`
+
+  return baseUrl + params;
+}
 
 
 function getExpirationDate(semCode) {
@@ -139,131 +138,7 @@ function getExpirationDate(semCode) {
 }
 
 
-//const slidesBlob = (tempDoc, 'application/vnd.google-apps.presentation');
-//const pngBlob = slidesBlob.getAs('image/png');
-//const tempCopy = template.makeCopy(tempName, passFolder);
-//const tempDoc = SlidesApp.openById(tempCopy.getId());
-
-function generateMemberIDCards_() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Members'); // Replace with your sheet name
-  const data = sheet.getDataRange().getValues();
-  const header = data[0];
-  const qrCodeUrlColumn = header.indexOf('QR Code URL') + 1; // Adjust this if your sheet already has a 'QR Code URL' column
-  
-  // Create a folder for the member cards
-  const cardsFolder = DriveApp.createFolder('Member ID Cards');
-
-  // Iterate through member rows
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    const firstName = row[header.indexOf('First Name')];
-    const lastName = row[header.indexOf('Last Name')];
-    const memberId = row[header.indexOf('Member ID')];
-    const runPoints = row[header.indexOf('Run Points')];
-    const tier = row[header.indexOf('Tier')];
-    const validUntil = row[header.indexOf('Valid Until')];
-
-    // Generate QR Code URL
-    const qrCodeUrl = generateQRURL(memberId);
-    //sheet.getRange(i + 1, qrCodeUrlColumn).setValue(qrCodeUrl); // Write QR Code URL to the sheet
-
-    // Load HTML template and replace placeholders
-    const template = HtmlService.createTemplateFromFile('IDCardTemplate');
-    template.firstName = firstName;
-    template.lastName = lastName;
-    template.runPoints = runPoints;
-    template.tier = tier;
-    template.qrCodeUrl = qrCodeUrl;
-    template.validUntil = validUntil;
-
-    const htmlContent = template.evaluate().getContent();
-
-    // Convert HTML to Blob and create PDF
-    const blob = Utilities.newBlob(htmlContent, 'text/html', `${firstName}_${lastName}_IDCard.html`);
-    const pdf = blob.getAs('application/pdf');
-    cardsFolder.createFile(pdf).setName(`${firstName}_${lastName}_IDCard.pdf`);
-  }
-
-  //SpreadsheetApp.getUi().alert(`ID cards and QR codes have been created.`);
-}
-
-function generateMemberIDCards2() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Members');
-  const data = sheet.getDataRange().getValues();
-  const header = data[0]; // Assuming the first row contains headers
-
-  // Gets a folder in Google Drive
-  const cardsFolder = DriveApp.getFolderById('1_NVOD_HbXfzPl26lC_-jjytzaWXqLxTn');
-
-  // Mapping header indices
-  const firstNameIndex = header.indexOf('First Name');
-  const lastNameIndex = header.indexOf('Last Name');
-  const memberIdIndex = header.indexOf('Member ID');
-  const runPointsIndex = header.indexOf('Run Points');
-  const tierIndex = header.indexOf('Tier');
-  const validUntilIndex = header.indexOf('Valid Until');
-
-
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    const firstName = row[firstNameIndex];
-    const lastName = row[lastNameIndex];
-    const memberId = row[memberIdIndex];
-    const runPoints = row[runPointsIndex];
-    const tier = row[tierIndex];
-    const validUntil = row[validUntilIndex];
-
-    // Generate QR Code URL
-    const fileId = '1z1bsjoVoIQfQzTj1h5FNSTt84GS3rtXn' 
-    //'https://drive.google.com/uc?export=download&id=1z1bsjoVoIQfQzTj1h5FNSTt84GS3rtXn' //generateQRCode2(memberId);
-
-    const qrCodeUrl = loadImageBytes(fileId);
-    //sheet.getRange(i + 1, qrCodeUrlColumn).setValue(qrCodeUrl); // Write QR Code URL to the sheet
-    
-    // Load HTML template and replace placeholders
-    const template = HtmlService.createTemplateFromFile('memberIDTemplate');
-    template.name = `${firstName} ${lastName}`;
-    template.runPoints = runPoints;
-    template.tier = tier;
-    //template.qrCodeUrl = 'data:image/png;base64,' + `${qrCodeUrl}`;
-    template.validUntil = validUntil;
-
-    const htmlContent = template.evaluate().getContent();
-    Logger.log(htmlContent);
-    
-    // Convert HTML to a Blob and create a PDF
-    const blob = Utilities.newBlob(htmlContent, 'text/html', `${firstName}_${lastName}_IDCard.html`);
-    const pdf = blob.getAs('application/pdf');
-    cardsFolder.createFile(pdf).setName(`${firstName}_${lastName}_IDCard_6.pdf`);
-  }
-  
-  //SpreadsheetApp.getUi().alert(`ID cards have been created in the folder: ${cardsFolder.getName()}`);
-}
-
-function generateQRCode2(memberID) {
-  const baseUrl = 'https://quickchart.io/qr?';
-  const bottomText = "Valid until 2023"
-  const params = `text=${encodeURIComponent(memberID)}&margin=1&size=200`
-
-  //const params = `text=${encodeURIComponent(memberID)}&margin=1&size=200&caption=${encodeURIComponent(`${bottomText}`)}&captionFontFamily=mono&captionFontSize=11`
-
-  return baseUrl + params;
-}
-
-
-function test() {
-  const fileId = '1zIQfQzTj1h5FNSTttXn';
-  const encoded = loadImageBytes(fileId);
-  const res = 'data:image/png;base64,' + encoded;
-
-  Logger.log(res) ;
-
-  //"https://quickchart.io/qr?text=hello$margin=1$size=300"
-}
-
-
 function getImage(url) {
-  var image = UrlFetchApp.fetch(url).getAs('image/png')
   var response = UrlFetchApp.fetch(url).getResponseCode();
   if (response === 200) {
     var img = UrlFetchApp.fetch(url).getAs('image/png');
@@ -275,6 +150,19 @@ function getImage(url) {
 function loadImageBytes(id){
   var bytes = DriveApp.getFileById(id).getBlob().getBytes();
   return Utilities.base64Encode(bytes);
+}
+
+
+function testQRGenerator() {
+  const FOLDER_ID = '1_NVOD_HbXfzPl26lC_-jjytzaWXqLxTn';
+  const passFolder = DriveApp.getFolderById(FOLDER_ID);
+
+  const memberId = '1zIQfQzTj1h5FNSTttXn';
+  
+  const qrCodeUrl = generateQrUrl(memberId);
+  const qrCodeBlob = UrlFetchApp.fetch(qrCodeUrl).getBlob();
+
+  passFolder.createFile(qrCodeBlob).setName(`QRCode-test.png`);
 }
 
 

@@ -312,4 +312,124 @@ function drafts_() {
   }
 
 
+  /**
+   * --- FUNCTIONS FOR MEMBER PASS GENERATION ---
+   */
+
+  //const slidesBlob = (tempDoc, 'application/vnd.google-apps.presentation');
+  //const pngBlob = slidesBlob.getAs('image/png');
+  //const tempCopy = template.makeCopy(tempName, passFolder);
+  //const tempDoc = SlidesApp.openById(tempCopy.getId());
+
+  function generateMemberIDCards_() {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Members'); // Replace with your sheet name
+    const data = sheet.getDataRange().getValues();
+    const header = data[0];
+    const qrCodeUrlColumn = header.indexOf('QR Code URL') + 1; // Adjust this if your sheet already has a 'QR Code URL' column
+    
+    // Create a folder for the member cards
+    const cardsFolder = DriveApp.createFolder('Member ID Cards');
+
+    // Iterate through member rows
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const firstName = row[header.indexOf('First Name')];
+      const lastName = row[header.indexOf('Last Name')];
+      const memberId = row[header.indexOf('Member ID')];
+      const runPoints = row[header.indexOf('Run Points')];
+      const tier = row[header.indexOf('Tier')];
+      const validUntil = row[header.indexOf('Valid Until')];
+
+      // Generate QR Code URL
+      const qrCodeUrl = generateQRURL(memberId);
+      //sheet.getRange(i + 1, qrCodeUrlColumn).setValue(qrCodeUrl); // Write QR Code URL to the sheet
+
+      // Load HTML template and replace placeholders
+      const template = HtmlService.createTemplateFromFile('IDCardTemplate');
+      template.firstName = firstName;
+      template.lastName = lastName;
+      template.runPoints = runPoints;
+      template.tier = tier;
+      template.qrCodeUrl = qrCodeUrl;
+      template.validUntil = validUntil;
+
+      const htmlContent = template.evaluate().getContent();
+
+      // Convert HTML to Blob and create PDF
+      const blob = Utilities.newBlob(htmlContent, 'text/html', `${firstName}_${lastName}_IDCard.html`);
+      const pdf = blob.getAs('application/pdf');
+      cardsFolder.createFile(pdf).setName(`${firstName}_${lastName}_IDCard.pdf`);
+    }
+
+    //SpreadsheetApp.getUi().alert(`ID cards and QR codes have been created.`);
+  }
+
+  function generateMemberIDCards2() {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Members');
+    const data = sheet.getDataRange().getValues();
+    const header = data[0]; // Assuming the first row contains headers
+
+    // Gets a folder in Google Drive
+    const cardsFolder = DriveApp.getFolderById('1_NVOD_HbXfzPl26lC_-jjytzaWXqLxTn');
+
+    // Mapping header indices
+    const firstNameIndex = header.indexOf('First Name');
+    const lastNameIndex = header.indexOf('Last Name');
+    const memberIdIndex = header.indexOf('Member ID');
+    const runPointsIndex = header.indexOf('Run Points');
+    const tierIndex = header.indexOf('Tier');
+    const validUntilIndex = header.indexOf('Valid Until');
+
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const firstName = row[firstNameIndex];
+      const lastName = row[lastNameIndex];
+      const memberId = row[memberIdIndex];
+      const runPoints = row[runPointsIndex];
+      const tier = row[tierIndex];
+      const validUntil = row[validUntilIndex];
+
+      // Generate QR Code URL
+      const fileId = '1z1bsjoVoIQfQzTj1h5FNSTt84GS3rtXn' 
+      //'https://drive.google.com/uc?export=download&id=1z1bsjoVoIQfQzTj1h5FNSTt84GS3rtXn' //generateQRCode2(memberId);
+
+      const qrCodeUrl = loadImageBytes(fileId);
+      //sheet.getRange(i + 1, qrCodeUrlColumn).setValue(qrCodeUrl); // Write QR Code URL to the sheet
+      
+      // Load HTML template and replace placeholders
+      const template = HtmlService.createTemplateFromFile('memberIDTemplate');
+      template.name = `${firstName} ${lastName}`;
+      template.runPoints = runPoints;
+      template.tier = tier;
+      //template.qrCodeUrl = 'data:image/png;base64,' + `${qrCodeUrl}`;
+      template.validUntil = validUntil;
+
+      const htmlContent = template.evaluate().getContent();
+      Logger.log(htmlContent);
+      
+      // Convert HTML to a Blob and create a PDF
+      const blob = Utilities.newBlob(htmlContent, 'text/html', `${firstName}_${lastName}_IDCard.html`);
+      const pdf = blob.getAs('application/pdf');
+      cardsFolder.createFile(pdf).setName(`${firstName}_${lastName}_IDCard_6.pdf`);
+    }
+    
+    //SpreadsheetApp.getUi().alert(`ID cards have been created in the folder: ${cardsFolder.getName()}`);
+  }
+
+  function generateQRCode2(memberID) {
+    const baseUrl = 'https://quickchart.io/qr?';
+    const bottomText = "Valid until 2023"
+    const params = `text=${encodeURIComponent(memberID)}&margin=1&size=200`
+
+    //const params = `text=${encodeURIComponent(memberID)}&margin=1&size=200&caption=${encodeURIComponent(`${bottomText}`)}&captionFontFamily=mono&captionFontSize=11`
+
+    return baseUrl + params;
+  }
+
+  function testQR2() {
+    const fileId = '1zIQfQzTj1h5FNSTttXn';
+    const encoded = loadImageBytes(fileId);
+    const res = 'data:image/png;base64,' + encoded;
+  }
 }

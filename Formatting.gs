@@ -90,6 +90,8 @@ function formatMainView() {
   ]).setFontWeight('bold');
 
   // 3. Font size adjustments
+  getThisRange('A1:T1').setFontSize(11);  // Header row to size 11
+
   getThisRange([
     'E1',   // Prefered Name (Header Cell)
     'T2:T', // Member ID
@@ -97,7 +99,6 @@ function formatMainView() {
     'S1',   // Attendance Status (Header Cell)
   ]).setFontSize(10);
 
-  getThisRange('A1:T1').setFontSize(11);  // Header row to size 11
   getThisRange(['Q1', 'T2:T']).setFontSize(9);  // Given to Internal (Header Cell) +  Member ID
   getThisRange('K1:L1').setFontSize(8);  // Payment Method headers
 
