@@ -65,7 +65,7 @@ function sortMainByName() {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
- * @update  Jan 11, 2025
+ * @update  Jan 13, 2025
  */
 
 function formatMainView() {

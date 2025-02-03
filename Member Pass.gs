@@ -1,6 +1,6 @@
 function createPassFile(passInfo) {
-  const TEMPLATE_ID = '14NG31db-g-bFX1OUHeRByTKN6S2QuMAkDuANOAtwF6o';
-  const FOLDER_ID = '1_NVOD_HbXfzPl26lC_-jjytzaWXqLxTn';
+  const TEMPLATE_ID = '14NG31db-g-bFX1OUHeRByTKN6S2QuMAkDuANOAtwF6o';   // Is not confidential
+  const FOLDER_ID = '1_NVOD_HbXfzPl26lC_-jjytzaWXqLxTn';    // Is not confidential either
 
   // Get the template presentation
   const template = DriveApp.getFileById(TEMPLATE_ID);
