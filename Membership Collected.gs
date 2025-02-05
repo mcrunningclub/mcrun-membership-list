@@ -11,17 +11,18 @@
  * @update  May 28, 2024
  */
 
-function onFormSubmit() {
-  trimWhitespace_();
-  fixLetterCaseInRow_();
-  encodeLastRow();   // create unique member ID
+function onFormSubmit(newRow=getLastSubmissionInMain()) {
+  trimWhitespace_(newRow);
+  fixLetterCaseInRow_(newRow);
+  encodeLastRow(newRow);   // create unique member ID
 
+  addMissingItems_(newRow);
   formatMainView();
-  getInteracRefNumberFromEmail_();
+  //getInteracRefNumberFromEmail_(newRow);
   
   // Must add and sort AFTER extracting Interac info from email
   addLastSubmissionToMaster();
-  sortMainByName();
+  //sortMainByName();
 }
 
 
@@ -250,10 +251,7 @@ function enterInteracRef_(emailInteracRef) {
  * @update  Nov 13, 2024
  */
 
-function getInteracRefNumberFromEmail_() {
-  const sheet = MAIN_SHEET;
-  const lastRow = sheet.getLastRow();
-  
+function getInteracRefNumberFromEmail_(lastRow=MAIN_SHEET.getLastRow()) {
   const paymentForm = MAIN_SHEET.getRange(lastRow, PAYMENT_METHOD_COL).getValue();
   if ( !(String(paymentForm).includes('Interac')) ) return;   // Exit if Interac is not chosen
 

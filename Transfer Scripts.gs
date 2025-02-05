@@ -3,21 +3,39 @@ const CELL_EDIT_LIMIT = 4;   // set number of cells that can be edited at once
 // USED TO IMPORT NEW REGISTRATION FROM FILLOUT FORM
 function onChange(e) {
   // Get details of edit event's sheet
-
   console.log(e);
-
   const thisSource = e.source;
-  const thisSheetID = thisSource.getSheetId();
-  console.log(thisSheetID);
-  //const thisSheetName = thisSource.getSheetName();
-  const thisLastRow = thisSource.getLastRow();
+  
+  // Try-catch to prevent errors when sheetId cannot be found
+  try {
+    const thisSheetID = thisSource.getSheetId();
+    const thisLastRow = thisSource.getLastRow();
 
-  if (thisSheetID !== IMPORT_NAME) {
-    console.log(`ENTERED IF-BRACKET`);
-    //const registrationObj = e.value;
-    //copyToMain(registrationObj);
+    if (thisSheetID == IMPORT_SHEET_ID) {
+      const importSheet = thisSource.getSheetById(thisSheetID);
+      const registrationObj = importSheet.getRange(thisLastRow, 1).getValue();
+
+      const lastRow = copyToMain(registrationObj);
+      onFormSubmit(lastRow);
+    }
   }
+  catch (error) {
+    console.log(error);
+  }
+
 }
+
+function transferLastImport() {
+  const thisLastRow = IMPORT_SHEET.getLastRow();
+  transferThisRow(thisLastRow)
+}
+
+function transferThisRow(row) {
+  const registrationObj = IMPORT_SHEET.getRange(row, 1).getValue();
+  const lastRow = copyToMain(registrationObj);
+  onFormSubmit(lastRow);
+}
+
 
 function onEdit(e) {
   // Get details of edit event's sheet
@@ -214,7 +232,7 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
- * @update  Feb 4, 2025
+ * @update  Feb 5, 2025
  * 
  */
 
@@ -222,29 +240,55 @@ function copyToMain(registration, row=getLastSubmissionInMain()) {
   const mainSheet = MAIN_SHEET;
   const importMap = IMPORT_MAP;
 
+  const registrationObj = JSON.parse(registration);
+  console.log(registrationObj);
+
   const startRow = row + 1;
   const colSize = mainSheet.getLastColumn();
 
   const valuesByIndex = Array(colSize);
 
-  for (const [key, value] of Object.entries(registration)) {
+  // Format timestamp correctly; otherwise GSheet will not understand datetime
+  const timestamp = registrationObj['timestamp'];
+  if (timestamp != '') {
+    const formattedTimestamp = Utilities.formatDate(
+      new Date(timestamp),
+      TIMEZONE,
+      "yyyy-MM-dd HH:mm:ss"
+    );
+
+    registrationObj['timestamp'] = formattedTimestamp;   // replace with formatted
+  }
+
+  for (const [key, value] of Object.entries(registrationObj)) {
     if (key in importMap) {
       let indexInMain = importMap[key] - 1;   // Set 1-index to 0-index
-      valuesByIndex[indexInMain] = value;
+      valuesByIndex[indexInMain] = value.replace(/,+\s*$/, ''); // Remove trailing commas and spaces
     }
   }
+
+  Logger.log(valuesByIndex);
   
   // Set values of registration
   const rangeToImport = mainSheet.getRange(startRow, 1, 1, colSize);
   rangeToImport.setValues([valuesByIndex]);
 
   return startRow;
-
 }
 
 
 function testMigrate() {
-  const ex = '{"timestamp":"2025-02-04 00:08:57","email":"jane.doe@mail.mcgill.ca","firstName":"Jane","lastName":"Doe","preferredName":"","year":"","program":"","memberDescription":"its fun!","paymentMethod":"Interac e-Transfer","interacRef":"test123","comments":"not really!","referral":"Social Media, Activities Night, Referral (e.g. friend, classmate, professor...), test2 Instagram, Reddit Caleb"}';
+  const ex = `{"timestamp":"2025-02-03T22:31:55.196Z",
+  "email":"charlotte.bodart@mail.mcgill.ca",
+  "firstName":"Charlotte",
+  "lastName":"Bodart",
+  "preferredName":"",
+  "year":"U2",
+  "program":"Bachelor of Arts in Economics and Psychology",
+  "memberDescription":"I used to run regularly before i started university, but i havent been going very often since im not too good at managing my time and finding the motivation to go for runs. I feel like running with a group would definitely motivate me much more. ",
+  "paymentMethod":"Interac e-Transfer", "interacRef":"C1AARqkBBs6u",
+  "comments":"",
+  "referral":"Social Media,Activities Night Instagram "}`;
 
   const obj = JSON.parse(ex);
   console.log(obj);
@@ -252,8 +296,6 @@ function testMigrate() {
   const newRowIndex = copyToMain(obj);
   Logger.log(newRowIndex);
 }
-
-
 
 
 function doPost(e) {

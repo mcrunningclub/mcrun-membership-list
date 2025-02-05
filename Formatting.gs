@@ -7,13 +7,11 @@
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 17, 2023
- * @update  Jan 11, 2024
+ * @update  Feb 5, 2025
  */
 
-function trimWhitespace_() {
+function trimWhitespace_(lastRow = MAIN_SHEET.getLastRow()) {
   const sheet = MAIN_SHEET;
-  
-  const lastRow = sheet.getLastRow();
   const rangeToFormat = sheet.getRange(lastRow, FIRST_NAME_COL, 1, 7);
   rangeToFormat.trimWhitespace();
 }
@@ -65,7 +63,7 @@ function sortMainByName() {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
- * @update  Jan 13, 2025
+ * @update  Feb 5, 2025
  */
 
 function formatMainView() {
@@ -109,8 +107,8 @@ function formatMainView() {
   getThisRange('A2:A').setNumberFormat('yyyy-MM-dd hh:mm:ss');
   getThisRange('O2:O').setNumberFormat('mmm d, yyyy');
 
-  // 6. Text wrapping set to 'Clip' (for Waiver + Payment Choice)
-  getThisRange(['J1:J', 'K2:K']).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);   
+  // 6. Text wrapping set to 'Clip' (for Referral + Waiver + Payment Choice)
+  getThisRange(['I2:I', 'J1:J', 'K2:K']).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);   
 
 
   // 7. Horizontal and vertical alignment
@@ -155,6 +153,25 @@ function formatMainView() {
 }
 
 
+function addMissingItems_(row) {
+  const sheet = MAIN_SHEET;
+  
+  // Copy the list item  in 'Collection Person' col from first entry
+  //var collectorItem = sheet.getRange(5, COLLECTION_PERSON_COL).getDataValidation();
+  //var targetCell = sheet.getRange(row, COLLECTION_PERSON_COL);
+  
+  // Set the collector item
+  //targetCell.setDataValidation(collectorItem);
+
+  // Add checkboxes to target columns
+  [IS_FEE_PAID_COL, IS_INTERNAL_COLLECTED_COL, ATTENDANCE_STATUS_COL].forEach(
+    col =>
+    sheet.getRange(row, col).insertCheckboxes()
+  );
+  
+}
+
+
 /**
  * Set letter case of specific columns in member entry as following:
  *  - Lower Case: [McGill Email Address] 
@@ -170,9 +187,8 @@ function formatMainView() {
  * 
  */
 
-function fixLetterCaseInRow_(row=MASTER_SHEET.getLastRow()) {
+function fixLetterCaseInRow_(lastRow=getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
-  const lastRow = getLastSubmissionInMain();
 
   // Set to lower case
   const rangeToLowerCase = sheet.getRange(lastRow, EMAIL_COL);
@@ -425,12 +441,11 @@ function encodeFromInput(input) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 9, 2023
- * @update  Oct 20, 2024
+ * @update Feb 5, 2025
  */
 
-function encodeLastRow() {
+function encodeLastRow(newSubmissionRow = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
-  const newSubmissionRow = getLastSubmissionInMain();
   
   const email = sheet.getRange(newSubmissionRow, EMAIL_COL).getValue();
   const member_id = MD5(email);

@@ -258,11 +258,12 @@ function consolidateLastSubmission() {
     sheet.getRange(newEntryRow, 1, 1, selectedData.length).setValues([selectedData]);
   }
 
+  // Get row of member if existing or non-existing
+  const targetRow = memberIndex ? memberIndex : newEntryRow;
+  
   // Add formula for `Fee Paid` col
-  const isFeePaidCell = sheet.getRange(newEntryRow, MASTER_FEE_STATUS);
+  const isFeePaidCell = sheet.getRange(targetRow, MASTER_FEE_STATUS);
   isFeePaidCell.setFormula(isFeePaidFormula);
-
-  return;
 }
 
 

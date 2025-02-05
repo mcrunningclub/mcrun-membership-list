@@ -1,7 +1,11 @@
 // SHEET CONSTANTS
 const SHEET_NAME = 'Winter 2025';       // MUST UPDATE EVERY SEMESTER!
 const MAIN_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+
+// IMPORT SHEET FOR FILLOUT REGISTRATIONS
 const IMPORT_NAME = 'Import';
+const IMPORT_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(IMPORT_NAME);
+const IMPORT_SHEET_ID = 973209987;
 
 const TIMEZONE = getUserTimeZone_();
 
