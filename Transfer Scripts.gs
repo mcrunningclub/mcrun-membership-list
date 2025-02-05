@@ -1,5 +1,24 @@
 const CELL_EDIT_LIMIT = 4;   // set number of cells that can be edited at once
 
+// USED TO IMPORT NEW REGISTRATION FROM FILLOUT FORM
+function onChange(e) {
+  // Get details of edit event's sheet
+
+  console.log(e);
+
+  const thisSource = e.source;
+  const thisSheetID = thisSource.getSheetId();
+  console.log(thisSheetID);
+  //const thisSheetName = thisSource.getSheetName();
+  const thisLastRow = thisSource.getLastRow();
+
+  if (thisSheetID !== IMPORT_NAME) {
+    console.log(`ENTERED IF-BRACKET`);
+    //const registrationObj = e.value;
+    //copyToMain(registrationObj);
+  }
+}
+
 function onEdit(e) {
   // Get details of edit event's sheet
   const thisRange = e.range;
@@ -15,6 +34,8 @@ function onEdit(e) {
     oldValue: e.oldValue
   }
   console.log({test: 2, eventObject: debug_e});
+
+
 
   if(thisRange.getNumRows() > 2) return;  // prevent sheet-wide changes
   else if(thisRange.getNumColumns() > CELL_EDIT_LIMIT) {
@@ -186,41 +207,83 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
 
 
 /** 
- * @author: Andrey S Gonzalez
- * @date: Oct 18, 2023
- * @update: Oct 18, 2023
+ * Transfer new member registration from `Import` to main sheet.
  * 
- * Triggered by `checkURLFromIndex` when PassKit URL in `BACKUP` exists & !isCopied
+ * @trigger  New entry in `Import` sheet.
+ * @param {Object} registration  Information on member registration.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Oct 18, 2023
+ * @update  Feb 4, 2025
  * 
  */
 
-function copyToMain(url, targetEmail) {
+function copyToMain(registration, row=getLastSubmissionInMain()) {
   const mainSheet = MAIN_SHEET;
-  const EMAIL_COL = 1;
-  const URL_COL = 21;
-  
-  var mainData = mainSheet.getDataRange().getValues();
-  var targetData = [];
-  var mainRow, email, i;
+  const importMap = IMPORT_MAP;
 
-  // Loop through rows in `main` until matching email entry is found
-  for (i = 0; i < mainData.length; i++) {
-    mainRow = mainData[i];
-    email = mainRow[EMAIL_COL]; // get email using email column index
-    
-    if (email === targetEmail) {
-      targetData.push(mainRow);
-      break; // Exit the loop once the matching row is found
+  const startRow = row + 1;
+  const colSize = mainSheet.getLastColumn();
+
+  const valuesByIndex = Array(colSize);
+
+  for (const [key, value] of Object.entries(registration)) {
+    if (key in importMap) {
+      let indexInMain = importMap[key] - 1;   // Set 1-index to 0-index
+      valuesByIndex[indexInMain] = value;
     }
   }
+  
+  // Set values of registration
+  const rangeToImport = mainSheet.getRange(startRow, 1, 1, colSize);
+  rangeToImport.setValues([valuesByIndex]);
 
-  // Copy URL when match is found
-  if (targetData.length > 0) {
-    targetRow = i + 1;
-    mainSheet.getRange(targetRow, URL_COL).setValue(url);
-    return true;
-  }
+  return startRow;
 
-  return false;
 }
+
+
+function testMigrate() {
+  const ex = '{"timestamp":"2025-02-04 00:08:57","email":"jane.doe@mail.mcgill.ca","firstName":"Jane","lastName":"Doe","preferredName":"","year":"","program":"","memberDescription":"its fun!","paymentMethod":"Interac e-Transfer","interacRef":"test123","comments":"not really!","referral":"Social Media, Activities Night, Referral (e.g. friend, classmate, professor...), test2 Instagram, Reddit Caleb"}';
+
+  const obj = JSON.parse(ex);
+  console.log(obj);
+
+  const newRowIndex = copyToMain(obj);
+  Logger.log(newRowIndex);
+}
+
+
+
+
+function doPost(e) {
+  var apiKey = e.parameter.apiKey;
+  var expectedApiKey = 'your-secret-api-key';
+  
+  if (apiKey !== expectedApiKey) {
+    return ContentService.createTextOutput('Unauthorized').setMimeType(ContentService.MimeType.TEXT);
+  }
+  
+  try {
+    // Parse incoming request data
+    var data = JSON.parse(e.postData.contents);
+    
+    // Validate the incoming data
+    if (!data.name || !data.email || !data.message) {
+      throw new Error('Missing required fields');
+    }
+
+    // Open the sheet and append data
+    var sheet = SpreadsheetApp.openById('your-spreadsheet-id').getSheetByName('targetSheet');
+    sheet.appendRow([data.name, data.email, data.message]);
+    
+    // Respond with success message
+    return ContentService.createTextOutput('Row added successfully').setMimeType(ContentService.MimeType.TEXT);
+
+  } catch (error) {
+    // Handle errors and send an error response
+    return ContentService.createTextOutput('Error: ' + error.message).setMimeType(ContentService.MimeType.TEXT);
+  }
+}
+
 

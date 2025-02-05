@@ -1,6 +1,7 @@
 // SHEET CONSTANTS
 const SHEET_NAME = 'Winter 2025';       // MUST UPDATE EVERY SEMESTER!
 const MAIN_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+const IMPORT_NAME = 'Import';
 
 const TIMEZONE = getUserTimeZone_();
 
@@ -10,7 +11,7 @@ const REGISTRATION_DATE_COL = 1;      // Column 'A'
 const EMAIL_COL = 2;                  // Column 'B'
 const FIRST_NAME_COL = 3;             // Column 'C'
 const LAST_NAME_COL = 4;              // Column 'D'
-const PREFERRED_NAME = 5;             // Column 'E'
+const PREFERRED_NAME_COL = 5;         // Column 'E'
 const YEAR_COL = 6;                   // Column 'F'
 const PROGRAM_COL = 7;                // Column 'G'
 const DESCRIPTION_COL = 8;            // Column 'H'
@@ -24,7 +25,7 @@ const COLLECTION_DATE_COL = 15;       // Column 'O'
 const COLLECTION_PERSON_COL = 16;       // Column 'P'
 const IS_INTERNAL_COLLECTED_COL = 17;   // Column 'Q'
 const COMMENTS_COL = 18;                // Column 'R'
-const ATTENDANCE_STATUS = 19;           // Column 'S'
+const ATTENDANCE_STATUS_COL = 19;       // Column 'S'
 const MEMBER_ID_COL = 20;               // Column 'T'
 
 
@@ -63,6 +64,25 @@ const SHEET_COL_MAP = {
     isInternalCollected: MASTER_IS_INTERNAL_COLLECTED,
   },
 };
+
+
+// MAPPING FROM FILLOUT REGISTRATION OBJ TO MAIN
+const IMPORT_MAP = {
+  'timestamp' : REGISTRATION_DATE_COL,
+  'email' : EMAIL_COL,
+  'firstName' : FIRST_NAME_COL,
+  'lastName' : LAST_NAME_COL,
+  'preferredName' : PREFERRED_NAME_COL,
+  'year' : YEAR_COL,
+  'program' : PROGRAM_COL,
+  'memberDescription' : DESCRIPTION_COL,
+  'referral' : REFERRAL_COL,
+  'waiver' : WAIVER_COL,
+  'paymentMethod' : PAYMENT_METHOD_COL,
+  'interacRef' : INTERACT_REF_COL,
+  'comments' : COMMENTS_COL,
+}
+
 
 // Function to get column mappings
 function GET_COL_MAP_(sheet) { return SHEET_COL_MAP[sheet] || null };

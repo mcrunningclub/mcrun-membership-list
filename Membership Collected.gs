@@ -26,7 +26,7 @@ function onFormSubmit() {
 
 
 /**
- * Find last submission from end of sheet using while-loop.
+ * Find row index of last submission, starting from bottom using while-loop.
  * 
  * Used to prevent native `sheet.getLastRow()` from returning empty row.
  * 

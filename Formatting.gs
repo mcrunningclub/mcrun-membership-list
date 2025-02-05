@@ -106,6 +106,7 @@ function formatMainView() {
   getThisRange('T2:T').setFontFamily('Google Sans Mono');
 
   // 5. Format collection date
+  getThisRange('A2:A').setNumberFormat('yyyy-MM-dd hh:mm:ss');
   getThisRange('O2:O').setNumberFormat('mmm d, yyyy');
 
   // 6. Text wrapping set to 'Clip' (for Waiver + Payment Choice)
@@ -128,7 +129,7 @@ function formatMainView() {
     [EMAIL_COL]: 245,
     [FIRST_NAME_COL]: 115,
     [LAST_NAME_COL]: 115,
-    [PREFERRED_NAME]: 120,
+    [PREFERRED_NAME_COL]: 120,
     [YEAR_COL]: 90,
     [PROGRAM_COL]: 240,
     [DESCRIPTION_COL]: 400,
@@ -142,7 +143,7 @@ function formatMainView() {
     [COLLECTION_PERSON_COL]: 150,
     [IS_INTERNAL_COLLECTED_COL]: 65,
     [COMMENTS_COL]: 255,
-    [ATTENDANCE_STATUS]: 125,
+    [ATTENDANCE_STATUS_COL]: 125,
     [MEMBER_ID_COL]: 140,
   }
 
