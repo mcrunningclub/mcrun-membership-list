@@ -1,5 +1,5 @@
 /**
- * Runs formatting functions after new member submits a registration form.
+ * Run formatting functions after new member submits a registration form.
  * 
  * https://developers.google.com/apps-script/samples/automations/event-session-signup
  * 
@@ -242,9 +242,9 @@ function testIt() {
 }
 
 /**
- * Look for new emails from Interac starting today (form trigger date) and extract ref number.
+ * Look for new emails from Interac starting yesterday (cannot search for day of) and extract ref number.
  * 
- * Interac email address either "catch@payments.interac.ca" or "notify@payments.interac.ca"
+ * Interac email address end in "interac.ca"
  * 
  * @trigger  New member registration.
  * @error  Send notification email to McRUN if no ref number found.
@@ -277,30 +277,29 @@ function getInteracRefNumberFromEmail_(row=MAIN_SHEET.getLastRow()) {
   const refToCheck = [];
 
   const interacLabel = GmailApp.getUserLabelByName(interacLabelName);
-  const firstThread = threads[0];
 
-  for (message of firstThread.getMessages()) {
-    const emailBody = message.getPlainBody();
+  for (thread of threads) {
+    for (message of thread.getMessages()) {
+      const emailBody = message.getPlainBody();
+     
+      // Extract Interac e-transfer reference
+      const interacRef = extractInteracRef_(emailBody);
+      const isSuccess = enterInteracRef_(interacRef);
 
-    // Add label to thread
-    firstThread.addLabel(interacLabel);
-
-    // Extract Interac e-transfer reference
-    const interacRef = extractInteracRef_(emailBody);
-    const isSuccess = enterInteracRef_(interacRef);
-
-    // Success: Mark thread as read and archive it
-    if (isSuccess) {
-      found = true;
-      firstThread.markRead();
-      firstThread.moveToArchive();
-    }
-    else {
-      refToCheck.push(interacRef);
+      // Success: Mark thread as read and archive it
+      if (isSuccess) {
+        found = true;
+        thread.markRead();
+        thread.moveToArchive();
+        thread.addLabel(interacLabel);
+      }
+      else {
+        refToCheck.push(interacRef);
+      }
     }
   }
 
-  if(true) {
+  if(refToCheck.length > 0) {
     var errorEmail = {
       to: 'mcrunningclub@ssmu.ca',
       cc: '',
@@ -410,14 +409,56 @@ function getInteracRefNumberFromEmail_(row=MAIN_SHEET.getLastRow()) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 13, 2024
- * @update  Nov 13, 2024
+ * @update  Feb 10, 2025
  */
 
 function extractInteracRef_(emailBody) {
-  const searchString = "Reference Number:";
-  const searchStringFR = "Numero de reference :";  // Accents not required
+  const searchPattern = /(Reference Number|Numero de reference)\s*:\s*(\w+)/;
+  const match = message.match(searchPattern);
+
+  // If a reference is found, return it. Otherwise, return null
+  // The interac reference is in the second capturing group i.e. match[2];
+  if (match && match[2]) {
+    return match[2].trim();
+  }
+
+  return null;
+
+  /*
+  // VERSION 2
+  const englishPattern = /Reference Number\s*:\s*(\w+)/;
+  const frenchPattern = /Numero de reference\s*:\s*(\w+)/;
+  
+  // Try searching in English, then in french
+  let match = message.match(englishPattern) 
+  ? message.match(englishPattern) 
+  : message.match(frenchPattern);
+
+  // If a reference is found, return it
+  if (match && match[1]) {
+    return match[1]; // match[1] contains the reference number
+  }
+
+  return null;
+
+  // VERSION 1
+  let searchString = "Reference Number";
+  const searchStringFR = "Numero de reference";  // Accents not required
+
+  let startIndex = -1;
 
   // Try searching in English
+  if(emailBody.includes(searchString)) {
+    startIndex = emailBody.indexOf(searchString) + searchString.length + 1;
+  }
+  else if(emailBody.includes(searchStringFR)) {
+    startIndex = emailBody.indexOf(searchString) + searchString.length + 2;
+  }
+  else {
+
+  }
+
+  // VERSION 1
   let startIndex = emailBody.indexOf(searchString) + searchString.length + 1;
 
   // Now in French
@@ -427,10 +468,11 @@ function extractInteracRef_(emailBody) {
   }
 
   // Extract substring of length 20, and split after '\n'
-  var referenceNumberString = emailBody.substring(startIndex, startIndex + 20);
-  var newlineIndex = referenceNumberString.indexOf('\n', 1);
+  let referenceNumberString = emailBody.substring(startIndex, startIndex + 20);
+  let newlineIndex = referenceNumberString.indexOf('\n', 1);
     
   referenceNumberString = (referenceNumberString.substring(0, newlineIndex)).trim(); // trim everything after newline
   return referenceNumberString;
+  */
 }
 
