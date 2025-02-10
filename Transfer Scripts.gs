@@ -20,14 +20,14 @@ function onChange(e) {
     }
   }
   catch (error) {
-    console.log(error);
+    console.error(error);
   }
 
 }
 
 function transferLastImport() {
   const thisLastRow = IMPORT_SHEET.getLastRow();
-  transferThisRow(thisLastRow)
+  transferThisRow(thisLastRow);
 }
 
 function transferThisRow(row) {
@@ -232,7 +232,7 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
- * @update  Feb 5, 2025
+ * @update  Feb 10, 2025
  * 
  */
 
@@ -260,14 +260,17 @@ function copyToMain(registration, row=getLastSubmissionInMain()) {
     registrationObj['timestamp'] = formattedTimestamp;   // replace with formatted
   }
 
+
+  const removeRegex = /^[,\s\n\r\t-]+|[,\s\n\r\t-]+$/g;
+
   for (const [key, value] of Object.entries(registrationObj)) {
     if (key in importMap) {
       let indexInMain = importMap[key] - 1;   // Set 1-index to 0-index
-      valuesByIndex[indexInMain] = value.replace(/,+\s*$/, ''); // Remove trailing commas and spaces
+      valuesByIndex[indexInMain] = value.replace(removeRegex, ''); // Remove all unwanted
     }
   }
 
-  Logger.log(valuesByIndex);
+  Logger.log(valuesByIndex[REFERRAL_COL-1]);
   
   // Set values of registration
   const rangeToImport = mainSheet.getRange(startRow, 1, 1, colSize);
@@ -288,12 +291,9 @@ function testMigrate() {
   "memberDescription":"I used to run regularly before i started university, but i havent been going very often since im not too good at managing my time and finding the motivation to go for runs. I feel like running with a group would definitely motivate me much more. ",
   "paymentMethod":"Interac e-Transfer", "interacRef":"C1AARqkBBs6u",
   "comments":"",
-  "referral":"Social Media,Activities Night Instagram "}`;
+  "referral":",Activities Night Instagram "}`;
 
-  const obj = JSON.parse(ex);
-  console.log(obj);
-
-  const newRowIndex = copyToMain(obj);
+  const newRowIndex = copyToMain(ex);
   Logger.log(newRowIndex);
 }
 

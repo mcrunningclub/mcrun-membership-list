@@ -18,7 +18,7 @@ function onFormSubmit(newRow=getLastSubmissionInMain()) {
 
   addMissingItems_(newRow);
   formatMainView();
-  //getInteracRefNumberFromEmail_(newRow);
+  getInteracRefNumberFromEmail_(newRow);
   
   // Must add and sort AFTER extracting Interac info from email
   addLastSubmissionToMaster();
@@ -224,7 +224,7 @@ function enterInteracRef_(emailInteracRef) {
   const newSubmissionRow = sheet.getLastRow();
   const userInteracRef = sheet.getRange(newSubmissionRow, INTERACT_REF_COL);
 
-  if (userInteracRef.getValue() != emailInteracRef) return -1;
+  if (userInteracRef.getValue() != emailInteracRef) return false;
   
   // Copy the '(isInterac)' list item in `Internal Fee Collection` to set in 'Collection Person' col
   var interacItem = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Internal Fee Collection").getRange(INTERAC_ITEM_COL).getValue();
@@ -234,9 +234,12 @@ function enterInteracRef_(emailInteracRef) {
   sheet.getRange(newSubmissionRow, COLLECTION_PERSON_COL).setValue(interacItem);
   sheet.getRange(newSubmissionRow, IS_INTERNAL_COLLECTED_COL).check();
 
-  return 0;   // Success!
+  return true;   // Success!
 }
 
+function testIt() {
+  getInteracRefNumberFromEmail_();
+}
 
 /**
  * Look for new emails from Interac starting today (form trigger date) and extract ref number.
@@ -248,35 +251,134 @@ function enterInteracRef_(emailInteracRef) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
- * @update  Nov 13, 2024
+ * @update  Feb 10, 2025
  */
 
-function getInteracRefNumberFromEmail_(lastRow=MAIN_SHEET.getLastRow()) {
-  const paymentForm = MAIN_SHEET.getRange(lastRow, PAYMENT_METHOD_COL).getValue();
-  if ( !(String(paymentForm).includes('Interac')) ) return;   // Exit if Interac is not chosen
+function getInteracRefNumberFromEmail_(row=MAIN_SHEET.getLastRow()) {
+  const paymentForm = MAIN_SHEET.getRange(row, PAYMENT_METHOD_COL).getValue();
+  if ( !(String(paymentForm).includes('Interac')) ) return;
 
   // If payment by Interac, allow Interac email confirmation to arrive in inbox
-  Utilities.sleep(1 * 60 * 1000);   // 1 minute
-  const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy/MM/dd');
-  const threads = GmailApp.search('from:payments.interac.ca "Reference Number" "label:inbox" after:' + currentDate, 0, 10);
-  //const threads = GmailApp.search('from:payments.interac.ca "INTERAC" after:2024/10/20', 0, 5); // TEST
+  //Utilities.sleep(1 * 60 * 1000);   // 1 minute
+
+  // Format start search date (yesterday) for GmailApp.search()
+  const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
+  const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd'); 
+
+  const interacLabelName = "Interac Emails";
+  //const threads = GmailApp.search(`from:(interac.ca) in:inbox NOT(label:"${interacLabel}") after:${formattedYesterday}`, 0, 10);
+  const threads = GmailApp.search(`from:(interac.ca) in:inbox NOT(label:"${interacLabelName}")`, 0, 10);
   
-  // If none found, Interac email has not arrived or not found
-  if (threads.length < 1) return;
+  if (threads.length === 0) {
+    throw new Error(`No Interac e-Transfer Ref matches the latest submission. Please verify inbox`);
+  }
+
+  let found = false;
+  const refToCheck = [];
+
+  const interacLabel = GmailApp.getUserLabelByName(interacLabelName);
+  const firstThread = threads[0];
+
+  for (message of firstThread.getMessages()) {
+    const emailBody = message.getPlainBody();
+
+    // Add label to thread
+    firstThread.addLabel(interacLabel);
+
+    // Extract Interac e-transfer reference
+    const interacRef = extractInteracRef_(emailBody);
+    const isSuccess = enterInteracRef_(interacRef);
+
+    // Success: Mark thread as read and archive it
+    if (isSuccess) {
+      found = true;
+      firstThread.markRead();
+      firstThread.moveToArchive();
+    }
+    else {
+      refToCheck.push(interacRef);
+    }
+  }
+
+  if(true) {
+    var errorEmail = {
+      to: 'mcrunningclub@ssmu.ca',
+      cc: '',
+      subject: 'ATTENTION: Interac Reference to CHECK!',
+      body: `
+      Cannot identify new Interac e-Transfer Reference number: ${refToCheck.join('; ')}
+      
+      Please check the newest entry of the membership list.
+      
+      Automatic email created by 'Membership Collected (main)' script.`
+    }
+      
+    // Send warning email if reference code cannot be found
+    GmailApp.sendEmail(errorEmail.to, errorEmail.subject, errorEmail.body);
+  }
+
+  //firstThread.markUnread();   // needed??
+
+  return;
+
   
-  var firstThread = threads[0];
-  var messages = firstThread.getMessages();
-  
-  // Loop through messages
-  for (var i=0; i<messages.length; i++) {
-    var emailBody = messages[i].getPlainBody();
+
+
+
+
+  /* const interacRef = messages.forEach((msg, i) => {
     threads[i].addLabel(GmailApp.getUserLabelByName("Interac Emails"));   // Label as `Interac Emails`
 
-    var referenceNumberString = extractInteracRef_(emailBody);  // search for Interac e-transfer ref in email
+    const emailBody = msg.getPlainBody();
+    const ref = extractInteracRef_(emailBody);
+
+    if((enterInteracRef_(ref)) === 0) {
+      firstThread.markRead();
+      firstThread.moveToArchive();  // remove from inbox
+      return ref;
+    }
+  });
+
+  // Error handling: mark Interac email unread & send notification email to McRUN
+  if (!interacRef) {
+    firstThread.markUnread();
+
+    var errorEmail = {
+      to: 'mcrunningclub@ssmu.ca',
+      cc: "",
+      subject: 'ERROR: Interac Reference to CHECK!',
+      body: `
+      Cannot identify new Interac e-Transfer Reference number: ${referenceNumberString}
+      
+      Please check the newest entry of the membership list.
+      
+      Automatic email created by 'Membership Collected (main)' script.
+      `
+    }
+        
+    // Send warning email if reference code cannot be found
+    GmailApp.sendEmail(errorEmail.to, errorEmail.subject, errorEmail.body);
+  }
+  
+  return;
+  const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
+  const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd'); 
+
+  const threads = GmailApp.search(`from:(interac.ca) in:inbox after:${formattedYesterday}`, 0, 10);
+
+  const firstThread = threads[0];
+  const messages = firstThread.getMessages();  
+
+  // Loop through messages
+  for (let i=0; i<messages.length; i++) {
+    const emailBody = messages[i].getPlainBody();
+    threads[i].addLabel(GmailApp.getUserLabelByName("Interac Emails"));   // Label as `Interac Emails`
+
+    referenceNumberString = extractInteracRef_(emailBody);  // search for Interac e-transfer ref in email
     var errorCode = enterInteracRef_(referenceNumberString);  // confirm number with newest entry in membership list
 
     // Email with ref is found
-    if (errorCode == 0) {
+    if (errorCode === 0) {
       firstThread.markRead();
       firstThread.moveToArchive();  // remove from inbox
       break;    // email found, exit loop
@@ -294,7 +396,7 @@ function getInteracRefNumberFromEmail_(lastRow=MAIN_SHEET.getLastRow()) {
         
     // Send warning email if reference code cannot be found
     GmailApp.sendEmail(errorEmail.to, errorEmail.subject, errorEmail.body);
-  }
+  } */
 }
 
 
