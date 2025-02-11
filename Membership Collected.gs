@@ -7,7 +7,7 @@
  *
  */
 
-function onFormSubmit(newRow=getLastSubmissionInMain()) {
+function onFormSubmit(newRow = getLastSubmissionInMain()) {
   trimWhitespace_(newRow);
   fixLetterCaseInRow_(newRow);
   encodeLastRow(newRow);   // create unique member ID
@@ -15,10 +15,10 @@ function onFormSubmit(newRow=getLastSubmissionInMain()) {
   addMissingItems_(newRow);
   formatMainView();
   getInteracRefNumberFromEmail_(newRow);
-  
+
   // Must add and sort AFTER extracting Interac info from email
   addLastSubmissionToMaster();
-  //sortMainByName();
+  sortMainByName();
 }
 
 
@@ -68,8 +68,8 @@ function getLastSubmissionInMain() {
 function findMemberByEmail(emailToFind, sheet) {
   // First try with binary search (faster)
   const resultBinarySearch = findMemberByBinarySearch(emailToFind, sheet);
-  
-  if(resultBinarySearch != null) return resultBinarySearch;   // success!
+
+  if (resultBinarySearch != null) return resultBinarySearch;   // success!
 
   // If binary search unsuccessful, try with iteration (2x slower)
   return findMemberByIteration(emailToFind, sheet);
@@ -99,13 +99,13 @@ function findMemberByEmail(emailToFind, sheet) {
  * @example `const submissionRowNumber = findMemberByIteration('example@mail.com', MAIN_SHEET);`
  */
 
-function findMemberByIteration(emailToFind, sheet, start=2, end=sheet.getLastRow()) {
+function findMemberByIteration(emailToFind, sheet, start = 2, end = sheet.getLastRow()) {
   const sheetName = sheet.getSheetName();
   const thisEmailCol = GET_COL_MAP_(sheetName).emailCol;    // Get email col index of `sheet`
-  
-  for(var row=start; row <= end; row++) {
+
+  for (var row = start; row <= end; row++) {
     let email = sheet.getRange(row, thisEmailCol).getValue();
-    if(email === emailToFind) return row;    // Exit loop and return value;
+    if (email === emailToFind) return row;    // Exit loop and return value;
   }
 
   return null;
@@ -135,10 +135,10 @@ function findMemberByIteration(emailToFind, sheet, start=2, end=sheet.getLastRow
  * @example `const submissionRowNumber = findMemberByBinarySearch('example@mail.com', MASTER_SHEET);`
  */
 
-function findMemberByBinarySearch(emailToFind, sheet, start=2, end=sheet.getLastRow()) {
+function findMemberByBinarySearch(emailToFind, sheet, start = 2, end = sheet.getLastRow()) {
   const sheetName = sheet.getSheetName();
   const emailCol = GET_COL_MAP_(sheetName).emailCol;  // Get email col from `sheet`
- 
+
   // Base case: If start index exceeds the end index, the email is not found
   if (start > end) {
     return null;
@@ -153,13 +153,13 @@ function findMemberByBinarySearch(emailToFind, sheet, start=2, end=sheet.getLast
   // Compare the target email with the middle email
   if (emailAtMid === emailToFind) {
     return mid;  // If the email matches, return the row index (1-indexed)
-  
-  // If the email at the middle row is alphabetically smaller, search the right half.
-  // Note: use localeString() to ensure string comparison matches GSheet.
+
+    // If the email at the middle row is alphabetically smaller, search the right half.
+    // Note: use localeString() to ensure string comparison matches GSheet.
   } else if (emailAtMid.localeCompare(emailToFind) === -1) {
     return findMemberByBinarySearch(emailToFind, sheet, mid + 1, end);
-  
-  // If the email at the middle row is alphabetically larger, search the left half.
+
+    // If the email at the middle row is alphabetically larger, search the left half.
   } else {
     return findMemberByBinarySearch(emailToFind, sheet, start, mid - 1);
   }
@@ -183,9 +183,9 @@ function MD5(input) {
   var rawHash = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, input);
   var txtHash = '';
   for (i = 0; (i < rawHash.length); i++) {
-    if (i%2 == 0) continue;
+    if (i % 2 == 0) continue;
     var hashVal = rawHash[i];
-    
+
     if (hashVal < 0) {
       hashVal += 256;
     }
@@ -210,10 +210,10 @@ function MD5(input) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
- * @update  Oct 8, 2023
+ * @update  Feb 10, 2025
  */
 
-function enterInteracRef_(emailInteracRef, row=getLastSubmissionInMain()) {
+function enterInteracRef_(emailInteracRef, row = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
 
   const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
@@ -222,7 +222,7 @@ function enterInteracRef_(emailInteracRef, row=getLastSubmissionInMain()) {
   if (userInteracRef.getValue() != emailInteracRef) {
     return false;
   }
-  
+
   // Copy the '(isInterac)' list item in `Internal Fee Collection` to set in 'Collection Person' col
   const interacItem = getInteracItem();
 
@@ -245,16 +245,16 @@ function enterInteracRef_(emailInteracRef, row=getLastSubmissionInMain()) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
- * @update  Feb 10, 2025
+ * @update  Feb 11, 2025
  */
 
-function getInteracRefNumberFromEmail_(row=MAIN_SHEET.getLastRow()) {
+function getInteracRefNumberFromEmail_(row = MAIN_SHEET.getLastRow()) {
   const paymentForm = MAIN_SHEET.getRange(row, PAYMENT_METHOD_COL).getValue();
-  
+
   if (!(String(paymentForm).includes('Interac'))) {
     return;
   }
-  else if(getCurrentUserEmail_() !== MCRUN_EMAIL) {
+  else if (getCurrentUserEmail_() !== MCRUN_EMAIL) {
     throw new Error('Please verify the club\'s inbox to search for the Interac email');
   }
 
@@ -262,7 +262,7 @@ function getInteracRefNumberFromEmail_(row=MAIN_SHEET.getLastRow()) {
 
   // Format start search date (yesterday) for GmailApp.search()
   const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
-  const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd'); 
+  const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd');
 
   const interacLabelName = "Interac Emails";
   const searchStr = `from:(interac.ca) in:inbox after:${formattedYesterday}`;
@@ -279,7 +279,7 @@ function getInteracRefNumberFromEmail_(row=MAIN_SHEET.getLastRow()) {
   for (thread of threads) {
     for (message of thread.getMessages()) {
       const emailBody = message.getPlainBody();
-     
+
       // Extract Interac e-transfer reference
       const interacRef = extractInteracRef_(emailBody);
       const isSuccess = enterInteracRef_(interacRef);
@@ -296,7 +296,7 @@ function getInteracRefNumberFromEmail_(row=MAIN_SHEET.getLastRow()) {
     }
   }
 
-  if(checkTheseRef.length > 0) {
+  if (checkTheseRef.length > 0) {
     var errorEmail = {
       to: 'mcrunningclub@ssmu.ca',
       subject: 'ATTENTION: Interac Reference(s) to CHECK!',

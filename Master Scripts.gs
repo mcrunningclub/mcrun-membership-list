@@ -128,7 +128,7 @@ function updateIsFeePaid(payHistory, memberRow, isFeePaidCol, semesterSheet) {
 function processLastSubmission() {
   const lastRowNum = getLastSubmissionInMain();     // Last row num from 'MAIN_SHEET'
   const semesterCode = getSemesterCode_(SHEET_NAME); // Get the semester code based on the sheet name
-  var lastSubmission = MAIN_SHEET.getRange(lastRowNum, 1, 1, MASTER_COL_SIZE).getValues()[0];
+  var lastSubmission = MAIN_SHEET.getSheetValues(lastRowNum, 1, 1, MASTER_COL_SIZE)[0];
   
   const indicesToProcess = [PROCESSED_ARR.MEMBER_DESCR, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
 
@@ -174,7 +174,7 @@ function consolidateLastSubmission() {
   
   // Check if user already exists
   if (memberIndex != null) {
-    var existingEntry = sheet.getRange(memberIndex, 1, 1, MASTER_COL_SIZE).getValues()[0];
+    var existingEntry = sheet.getSheetValues(memberIndex, 1, 1, MASTER_COL_SIZE)[0];
 
     // Data to append in latest registration: 
     const indicesToAppend = {
@@ -283,7 +283,7 @@ function processSemesterData(sheetName) {
   const SPREADSHEET = SpreadsheetApp.getActiveSpreadsheet();
   const semesterSheetRange = 'A2:T';
   
-  var sheetData = SPREADSHEET.getSheetByName(sheetName).getRange(semesterSheetRange).getValues();
+  var sheetData = SPREADSHEET.getSheetByName(sheetName).getSheetValues(semesterSheetRange);
   const semesterCode = getSemesterCode_(sheetName); // Get the semester code based on the sheet name
 
   const processedData = sheetData.map(function (row) {
@@ -454,9 +454,9 @@ function getSemesterCodeFromDate_(date) {
 function sortUniqueData() {
   // Get the active sheet and data from each range
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
-  var fall2024 = sheet.getSheetByName('Fall 2024').getRange('A2:U').getValues();
-  var summer2024 = sheet.getSheetByName('Summer 2024').getRange('A2:U').getValues();
-  var winter2024 = sheet.getSheetByName('Winter 2024').getRange('A2:U').getValues();
+  var fall2024 = sheet.getSheetByName('Fall 2024').getSheetValues('A2:U');
+  var summer2024 = sheet.getSheetByName('Summer 2024').getSheetValues('A2:U');
+  var winter2024 = sheet.getSheetByName('Winter 2024').getSheetValues('A2:U');
 
   // Append the sheet name to each row
   fall2024 = fall2024.map(function (row) {
