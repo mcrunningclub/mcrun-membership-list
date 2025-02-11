@@ -8,6 +8,7 @@ const IMPORT_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(IMPORT
 const IMPORT_SHEET_ID = 973209987;
 
 const TIMEZONE = getUserTimeZone_();
+const MCRUN_EMAIL = 'mcrunningclub@ssmu.ca';
 
 // LIST OF COLUMNS IN SHEET_NAME
 // Please update any changes made in active sheet
@@ -102,7 +103,15 @@ const FEE_STATUS_ENUM = [
 ];
 
 // Found in `Internal Fee Collection` sheet
-const INTERAC_ITEM_COL = 'A3'
+const INTERAC_ITEM_COL = 'A3';
+
+function getInteracItem() {
+  return SpreadsheetApp
+  .getActiveSpreadsheet()
+  .getSheetByName("Internal Fee Collection")
+  .getRange(INTERAC_ITEM_COL)
+  .getValue();
+}
 
 
 // GSheet formula for IS_FEE_PAID_COL in `MASTER`

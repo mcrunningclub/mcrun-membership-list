@@ -5,10 +5,6 @@
  * 
  * https://stackoverflow.com/questions/62246016/how-to-check-if-current-form-submission-is-editing-response
  *
- *  
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
- * @date  Oct 1, 2023
- * @update  May 28, 2024
  */
 
 function onFormSubmit(newRow=getLastSubmissionInMain()) {
@@ -217,29 +213,27 @@ function MD5(input) {
  * @update  Oct 8, 2023
  */
 
-function enterInteracRef_(emailInteracRef) {
-  const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
+function enterInteracRef_(emailInteracRef, row=getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
 
-  const newSubmissionRow = sheet.getLastRow();
-  const userInteracRef = sheet.getRange(newSubmissionRow, INTERACT_REF_COL);
+  const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
+  const userInteracRef = sheet.getRange(row, INTERACT_REF_COL);
 
-  if (userInteracRef.getValue() != emailInteracRef) return false;
+  if (userInteracRef.getValue() != emailInteracRef) {
+    return false;
+  }
   
   // Copy the '(isInterac)' list item in `Internal Fee Collection` to set in 'Collection Person' col
-  var interacItem = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Internal Fee Collection").getRange(INTERAC_ITEM_COL).getValue();
+  const interacItem = getInteracItem();
 
-  sheet.getRange(newSubmissionRow, IS_FEE_PAID_COL).check();
-  sheet.getRange(newSubmissionRow, COLLECTION_DATE_COL).setValue(currentDate);
-  sheet.getRange(newSubmissionRow, COLLECTION_PERSON_COL).setValue(interacItem);
-  sheet.getRange(newSubmissionRow, IS_INTERNAL_COLLECTED_COL).check();
+  sheet.getRange(row, IS_FEE_PAID_COL).check();
+  sheet.getRange(row, COLLECTION_DATE_COL).setValue(currentDate);
+  sheet.getRange(row, COLLECTION_PERSON_COL).setValue(interacItem);
+  sheet.getRange(row, IS_INTERNAL_COLLECTED_COL).check();
 
   return true;   // Success!
 }
 
-function testIt() {
-  getInteracRefNumberFromEmail_();
-}
 
 /**
  * Look for new emails from Interac starting yesterday (cannot search for day of) and extract ref number.
@@ -256,28 +250,32 @@ function testIt() {
 
 function getInteracRefNumberFromEmail_(row=MAIN_SHEET.getLastRow()) {
   const paymentForm = MAIN_SHEET.getRange(row, PAYMENT_METHOD_COL).getValue();
-  if ( !(String(paymentForm).includes('Interac')) ) return;
+  
+  if (!(String(paymentForm).includes('Interac'))) {
+    return;
+  }
+  else if(getCurrentUserEmail_() !== MCRUN_EMAIL) {
+    throw new Error('Please verify the club\'s inbox to search for the Interac email');
+  }
 
-  // If payment by Interac, allow Interac email confirmation to arrive in inbox
-  //Utilities.sleep(1 * 60 * 1000);   // 1 minute
+  Utilities.sleep(60 * 1000);   // If payment by Interac, allow *60 sec* for Interac email confirmation to arrive
 
   // Format start search date (yesterday) for GmailApp.search()
   const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
   const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd'); 
 
   const interacLabelName = "Interac Emails";
-  //const threads = GmailApp.search(`from:(interac.ca) in:inbox NOT(label:"${interacLabel}") after:${formattedYesterday}`, 0, 10);
-  const threads = GmailApp.search(`from:(interac.ca) in:inbox NOT(label:"${interacLabelName}")`, 0, 10);
-  
+  const searchStr = `from:(interac.ca) in:inbox after:${formattedYesterday}`;
+  const threads = GmailApp.search(searchStr, 0, 10);
+
   if (threads.length === 0) {
-    throw new Error(`No Interac e-Transfer Ref matches the latest submission. Please verify inbox`);
+    throw new Error(`No Interac e-Transfer emails in inbox. Please verify again for latest member registration.`);
   }
 
-  let found = false;
-  const refToCheck = [];
-
+  const checkTheseRef = [];
   const interacLabel = GmailApp.getUserLabelByName(interacLabelName);
 
+  // Most Interac emails only have 1 message, so O(n) instead of O(n**2). Coded as safeguard.
   for (thread of threads) {
     for (message of thread.getMessages()) {
       const emailBody = message.getPlainBody();
@@ -288,124 +286,41 @@ function getInteracRefNumberFromEmail_(row=MAIN_SHEET.getLastRow()) {
 
       // Success: Mark thread as read and archive it
       if (isSuccess) {
-        found = true;
         thread.markRead();
         thread.moveToArchive();
         thread.addLabel(interacLabel);
       }
       else {
-        refToCheck.push(interacRef);
+        checkTheseRef.push(interacRef);
       }
     }
   }
 
-  if(refToCheck.length > 0) {
+  if(checkTheseRef.length > 0) {
     var errorEmail = {
       to: 'mcrunningclub@ssmu.ca',
-      cc: '',
-      subject: 'ATTENTION: Interac Reference to CHECK!',
+      subject: 'ATTENTION: Interac Reference(s) to CHECK!',
       body: `
-      Cannot identify new Interac e-Transfer Reference number: ${refToCheck.join('; ')}
+      Cannot identify new Interac e-Transfer Reference number(s): ${checkTheseRef.join(', ')}
       
       Please check the newest entry of the membership list.
       
       Automatic email created by 'Membership Collected (main)' script.`
-    }
-      
-    // Send warning email if reference code cannot be found
+    };
+
+    // Send warning email for unlabeled interac emails in inbox
     GmailApp.sendEmail(errorEmail.to, errorEmail.subject, errorEmail.body);
   }
-
-  //firstThread.markUnread();   // needed??
-
-  return;
-
-  
-
-
-
-
-  /* const interacRef = messages.forEach((msg, i) => {
-    threads[i].addLabel(GmailApp.getUserLabelByName("Interac Emails"));   // Label as `Interac Emails`
-
-    const emailBody = msg.getPlainBody();
-    const ref = extractInteracRef_(emailBody);
-
-    if((enterInteracRef_(ref)) === 0) {
-      firstThread.markRead();
-      firstThread.moveToArchive();  // remove from inbox
-      return ref;
-    }
-  });
-
-  // Error handling: mark Interac email unread & send notification email to McRUN
-  if (!interacRef) {
-    firstThread.markUnread();
-
-    var errorEmail = {
-      to: 'mcrunningclub@ssmu.ca',
-      cc: "",
-      subject: 'ERROR: Interac Reference to CHECK!',
-      body: `
-      Cannot identify new Interac e-Transfer Reference number: ${referenceNumberString}
-      
-      Please check the newest entry of the membership list.
-      
-      Automatic email created by 'Membership Collected (main)' script.
-      `
-    }
-        
-    // Send warning email if reference code cannot be found
-    GmailApp.sendEmail(errorEmail.to, errorEmail.subject, errorEmail.body);
-  }
-  
-  return;
-  const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
-  const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd'); 
-
-  const threads = GmailApp.search(`from:(interac.ca) in:inbox after:${formattedYesterday}`, 0, 10);
-
-  const firstThread = threads[0];
-  const messages = firstThread.getMessages();  
-
-  // Loop through messages
-  for (let i=0; i<messages.length; i++) {
-    const emailBody = messages[i].getPlainBody();
-    threads[i].addLabel(GmailApp.getUserLabelByName("Interac Emails"));   // Label as `Interac Emails`
-
-    referenceNumberString = extractInteracRef_(emailBody);  // search for Interac e-transfer ref in email
-    var errorCode = enterInteracRef_(referenceNumberString);  // confirm number with newest entry in membership list
-
-    // Email with ref is found
-    if (errorCode === 0) {
-      firstThread.markRead();
-      firstThread.moveToArchive();  // remove from inbox
-      break;    // email found, exit loop
-    }
-    
-    // Error handling: mark Interac email unread & send notification email to McRUN
-    firstThread.markUnread();
-
-    var errorEmail = {
-      to: "mcrunningclub@ssmu.ca",
-      cc: "",
-      subject: "ERROR: Interac Reference to CHECK!",
-      body: "Cannot identify new Interac e-Transfer Reference number: " + referenceNumberString + "\n\nPlease check the newest entry of the membership list.\n\n\nAutomatic email created by \'Membership Collected (main)\' script."
-    }
-        
-    // Send warning email if reference code cannot be found
-    GmailApp.sendEmail(errorEmail.to, errorEmail.subject, errorEmail.body);
-  } */
 }
 
 
 /**
  * Extract Interac e-Transfer reference string.
  * 
- * Helper function for getReferenceNumberFromEmail_()
+ * Helper function for getReferenceNumberFromEmail_().
  * 
  * @param {string} emailBody  The body of the Interac e-Transfer email.
- * @return {string}  Returns extracted Interac Ref from `emailBody`.
+ * @return {string || null}  Returns extracted Interac Ref from `emailBody`, otherwise null.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 13, 2024
@@ -414,7 +329,7 @@ function getInteracRefNumberFromEmail_(row=MAIN_SHEET.getLastRow()) {
 
 function extractInteracRef_(emailBody) {
   const searchPattern = /(Reference Number|Numero de reference)\s*:\s*(\w+)/;
-  const match = message.match(searchPattern);
+  const match = emailBody.match(searchPattern);
 
   // If a reference is found, return it. Otherwise, return null
   // The interac reference is in the second capturing group i.e. match[2];
@@ -423,56 +338,4 @@ function extractInteracRef_(emailBody) {
   }
 
   return null;
-
-  /*
-  // VERSION 2
-  const englishPattern = /Reference Number\s*:\s*(\w+)/;
-  const frenchPattern = /Numero de reference\s*:\s*(\w+)/;
-  
-  // Try searching in English, then in french
-  let match = message.match(englishPattern) 
-  ? message.match(englishPattern) 
-  : message.match(frenchPattern);
-
-  // If a reference is found, return it
-  if (match && match[1]) {
-    return match[1]; // match[1] contains the reference number
-  }
-
-  return null;
-
-  // VERSION 1
-  let searchString = "Reference Number";
-  const searchStringFR = "Numero de reference";  // Accents not required
-
-  let startIndex = -1;
-
-  // Try searching in English
-  if(emailBody.includes(searchString)) {
-    startIndex = emailBody.indexOf(searchString) + searchString.length + 1;
-  }
-  else if(emailBody.includes(searchStringFR)) {
-    startIndex = emailBody.indexOf(searchString) + searchString.length + 2;
-  }
-  else {
-
-  }
-
-  // VERSION 1
-  let startIndex = emailBody.indexOf(searchString) + searchString.length + 1;
-
-  // Now in French
-  if(startIndex < 0 ) {
-    startIndex = emailBody.indexOf(searchStringFR) + searchStringFR.length + 2;
-    searchString = searchStringFR;
-  }
-
-  // Extract substring of length 20, and split after '\n'
-  let referenceNumberString = emailBody.substring(startIndex, startIndex + 20);
-  let newlineIndex = referenceNumberString.indexOf('\n', 1);
-    
-  referenceNumberString = (referenceNumberString.substring(0, newlineIndex)).trim(); // trim everything after newline
-  return referenceNumberString;
-  */
 }
-

@@ -155,6 +155,12 @@ function formatMainView() {
 
 function addMissingItems_(row) {
   const sheet = MAIN_SHEET;
+
+  // Add checkboxes to target columns
+  [ IS_FEE_PAID_COL, 
+    IS_INTERNAL_COLLECTED_COL, 
+    ATTENDANCE_STATUS_COL
+  ].forEach(col =>sheet.getRange(row, col).insertCheckboxes());
   
   // Copy the list item  in 'Collection Person' col from first entry
   //var collectorItem = sheet.getRange(5, COLLECTION_PERSON_COL).getDataValidation();
@@ -162,13 +168,6 @@ function addMissingItems_(row) {
   
   // Set the collector item
   //targetCell.setDataValidation(collectorItem);
-
-  // Add checkboxes to target columns
-  [IS_FEE_PAID_COL, IS_INTERNAL_COLLECTED_COL, ATTENDANCE_STATUS_COL].forEach(
-    col =>
-    sheet.getRange(row, col).insertCheckboxes()
-  );
-  
 }
 
 
@@ -187,16 +186,16 @@ function addMissingItems_(row) {
  * 
  */
 
-function fixLetterCaseInRow_(lastRow=getLastSubmissionInMain()) {
+function fixLetterCaseInRow_(row=getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
 
   // Set to lower case
-  const rangeToLowerCase = sheet.getRange(lastRow, EMAIL_COL);
+  const rangeToLowerCase = sheet.getRange(row, EMAIL_COL);
   const rawValue = rangeToLowerCase.getValue().toString();
   rangeToLowerCase.setValue(rawValue.toLowerCase());
 
   // Set to Capitalized (first letter of word is UPPER)
-  const rangeToCapitalize = sheet.getRange(lastRow, FIRST_NAME_COL, 1, 5);
+  const rangeToCapitalize = sheet.getRange(row, FIRST_NAME_COL, 1, 5);
   const valuesToCapitalize = rangeToCapitalize.getValues()[0]   // Flatten array
   
   // Capitalize each value in array
@@ -360,7 +359,6 @@ function cleanMasterRegistration() {
 
   // Replace values with formatted values
   rangeToCapitalize.setValues([valuesToCapitalize]);  // setValues() requires 2D array
-
 }
 
 
@@ -448,8 +446,8 @@ function encodeLastRow(newSubmissionRow = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
   
   const email = sheet.getRange(newSubmissionRow, EMAIL_COL).getValue();
-  const member_id = MD5(email);
-  sheet.getRange(newSubmissionRow, MEMBER_ID_COL).setValue(member_id);
+  const memberID = MD5(email);
+  sheet.getRange(newSubmissionRow, MEMBER_ID_COL).setValue(memberID);
 }
 
 
@@ -470,7 +468,7 @@ function encodeList(sheet) {
   // Start at row 2 (1-indexed)
   for (var i = 2; i <= sheet.getMaxRows(); i++) {
     var email = sheet.getRange(i, sheetCols.emailCol).getValue();
-    if (email === "") return;   // check for invalid row
+    if (!email) return;   // check for invalid row
 
     var member_id = MD5(email);
     sheet.getRange(i, sheetCols.memberIdCol).setValue(member_id);
@@ -495,7 +493,7 @@ function encodeByRow(sheet, row=sheet.getLastRow()) {
   let sheetCols = GET_COL_MAP_(sheetName);
 
   const email = sheet.getRange(row, sheetCols.emailCol).getValue();
-  if (email === "") throw RangeError("Invalid index access");   // check for invalid index
+  if (!email) throw RangeError("Invalid index access");   // check for invalid index
 
   const member_id = MD5(email);
   sheet.getRange(row, sheetCols.memberIdCol).setValue(member_id);
