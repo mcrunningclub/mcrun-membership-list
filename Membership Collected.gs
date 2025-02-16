@@ -10,7 +10,7 @@
 function onFormSubmit(newRow = getLastSubmissionInMain()) {
   trimWhitespace_(newRow);
   fixLetterCaseInRow_(newRow);
-  encodeLastRow(newRow);   // create unique member ID
+  encodeLastRow_(newRow);   // create unique member ID
 
   addMissingItems_(newRow);
   formatMainView();
@@ -254,9 +254,9 @@ function getInteracRefNumberFromEmail_(row = MAIN_SHEET.getLastRow()) {
   if (!(String(paymentForm).includes('Interac'))) {
     return;
   }
-  else if (getCurrentUserEmail_() !== MCRUN_EMAIL) {
-    throw new Error('Please verify the club\'s inbox to search for the Interac email');
-  }
+  // else if (getCurrentUserEmail_() !== MCRUN_EMAIL) {
+  //   throw new Error('Please verify the club\'s inbox to search for the Interac email');
+  // }
 
   Utilities.sleep(60 * 1000);   // If payment by Interac, allow *60 sec* for Interac email confirmation to arrive
 

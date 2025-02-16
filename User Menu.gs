@@ -3,7 +3,7 @@
  * 
  * Prevents unwanted data overwrite in Gsheet.
  */
-const PERM_USER_ = [ 
+const PERM_USER_ = [
   'mcrunningclub@ssmu.ca',
   'ademetriou8@gmail.com',
   'andreysebastian10.g@gmail.com',
@@ -26,7 +26,7 @@ const PERM_USER_ = [
  * @update  Nov 22, 2024
  */
 
-function logMenuAttempt_(email="") {
+function logMenuAttempt_(email = "") {
   const userEmail = email.size > 0 ? email : getCurrentUserEmail_();
   Logger.log(`McRUN menu access attempt by: ${userEmail}`);
 }
@@ -76,17 +76,17 @@ function onOpen() {
       .addItem('Prettify Main Sheet', prettifyMainUI_.name)
       .addItem('Encode Text from Input', createMemberIDFromInputUI_.name)
       .addItem('Create ID for Last Member', encodeLastRowUI_.name)
-      )
+    )
 
     .addSubMenu(ui.createMenu('Master Scripts')
       .addItem('Create Master', createMasterUI_.name)
       .addItem('Sort by Email', sortMasterByEmailUI_.name)
-      .addItem('Prettify Master Sheet', prettifyMasterUI_.name )
+      .addItem('Prettify Master Sheet', prettifyMasterUI_.name)
       .addItem('Add Last Submission from Main', addLastSubmissionToMasterUI_.name)
       .addItem('Add Specific Sheet Submission (draft)', addMemberFromSheetInRowUI_.name)
     )
     .addToUi()
-  ;
+    ;
 }
 
 
@@ -98,7 +98,7 @@ function onOpen() {
 
 function helpUI_() {
   const ui = SpreadsheetApp.getUi();
-  
+
   const helpMessage = `
     📋 McRUN Menu Help
 
@@ -137,11 +137,11 @@ function confirmAndRunUserChoice_(functionName, sheetName) {
   if (!PERM_USER_.includes(userEmail)) {
     const warningMsgHeader = "🛑 You are not authorized 🛑"
     const warningMsgBody = "Please contact the exec team if you believe this is an error.";
-    
+
     ui.alert(warningMsgHeader, warningMsgBody, ui.ButtonSet.OK);
     return;
   }
-  
+
   // Continue execution if user is authorized
   const message = `
     ⚙️ Now executing ${functionName} in ${sheetName}.
@@ -151,7 +151,7 @@ function confirmAndRunUserChoice_(functionName, sheetName) {
 
   const response = ui.alert(message, ui.ButtonSet.OK_CANCEL);
 
-  if(response == ui.Button.OK) {
+  if (response == ui.Button.OK) {
     this[functionName]();   // executing function with name `functionName`
   }
   else {
@@ -191,7 +191,7 @@ function prettifyMainUI_() {
 }
 
 function encodeLastRowUI_() {
-  const functionName = encodeLastRow.name;
+  const functionName = encodeLastRow_.name;
   const sheetName = SHEET_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }
@@ -206,19 +206,19 @@ function createMemberIDFromInputUI_() {
   const responseButton = response.getSelectedButton();
 
   // Process the user's response.
-  if(responseText === "") {
+  if (responseText === "") {
     ui.alert("INVALID INPUT", "Please enter a non-empty string", ui.ButtonSet.OK);
   }
-  else if(responseButton == ui.Button.OK){
+  else if (responseButton == ui.Button.OK) {
     // User clicked "OK" and response non-empty.
     const encoded = encodeFromInput(responseText);
     ui.alert("Here is the encoded text:", encoded, ui.ButtonSet.OK);
-  }  
+  }
   else {
     // User clicked "Canceled" or X in the title bar.
     ui.alert('Execution cancelled...');
   }
-  
+
   logMenuAttempt_();    // log attempt
 }
 
@@ -246,7 +246,7 @@ function createMasterUI_() {
     // User clicked "No" or X in the title bar.
     ui.alert('Execution cancelled...');
   }
-  
+
   logMenuAttempt_();    // log attempt
 }
 

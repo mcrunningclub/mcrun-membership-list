@@ -73,19 +73,19 @@ const SHEET_COL_MAP = {
 
 // MAPPING FROM FILLOUT REGISTRATION OBJ TO MAIN
 const IMPORT_MAP = {
-  'timestamp' : REGISTRATION_DATE_COL,
-  'email' : EMAIL_COL,
-  'firstName' : FIRST_NAME_COL,
-  'lastName' : LAST_NAME_COL,
-  'preferredName' : PREFERRED_NAME_COL,
-  'year' : YEAR_COL,
-  'program' : PROGRAM_COL,
-  'memberDescription' : DESCRIPTION_COL,
-  'referral' : REFERRAL_COL,
-  'waiver' : WAIVER_COL,
-  'paymentMethod' : PAYMENT_METHOD_COL,
-  'interacRef' : INTERACT_REF_COL,
-  'comments' : COMMENTS_COL,
+  'timestamp': REGISTRATION_DATE_COL,
+  'email': EMAIL_COL,
+  'firstName': FIRST_NAME_COL,
+  'lastName': LAST_NAME_COL,
+  'preferredName': PREFERRED_NAME_COL,
+  'year': YEAR_COL,
+  'program': PROGRAM_COL,
+  'memberDescription': DESCRIPTION_COL,
+  'referral': REFERRAL_COL,
+  'waiver': WAIVER_COL,
+  'paymentMethod': PAYMENT_METHOD_COL,
+  'interacRef': INTERACT_REF_COL,
+  'comments': COMMENTS_COL,
 }
 
 
@@ -107,15 +107,15 @@ const INTERAC_ITEM_COL = 'A3';
 
 function getInteracItem() {
   return SpreadsheetApp
-  .getActiveSpreadsheet()
-  .getSheetByName("Internal Fee Collection")
-  .getRange(INTERAC_ITEM_COL)
-  .getValue();
+    .getActiveSpreadsheet()
+    .getSheetByName("Internal Fee Collection")
+    .getRange(INTERAC_ITEM_COL)
+    .getValue();
 }
 
 
 // GSheet formula for IS_FEE_PAID_COL in `MASTER`
-const isFeePaidFormula =`
+const isFeePaidFormula = `
   LET(row, ROW(),
       last_payment_sem, GET_FEE_EXPIRATION_DATE(INDIRECT("S" & row)), 
       expiration_date, SEMESTER_TO_DATE(last_payment_sem),
@@ -161,7 +161,7 @@ function getCurrentUserEmail_() {
  * @return {Boolean}  Parsed value.
  */
 
-function parseBool(val) { 
+function parseBool(val) {
   return val === true || val === "true";
 }
 

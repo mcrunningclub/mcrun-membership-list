@@ -25,7 +25,7 @@ function createPassFile(passInfo) {
     let placeHolder = `{{${key}}}`;
     copyFilePtr.replaceAllText(placeHolder, value);
   }
-  
+
   // Open the presentation and get the first slide
   const slide = copyFilePtr.getSlides()[0];
 
@@ -86,26 +86,26 @@ function generateMemberPass(memberEmail) {
   const memberData = sheet.getRange(row, 1, 1, endCol).getValues()[0];
 
   // Add entry to beginning to allow 1-indexed data access like for GSheet
-  memberData.unshift('');  
+  memberData.unshift('');
 
   // Get membership expiration date
   const membershipExpiration = getExpirationDate(memberData[MASTER_LAST_REG_SEM]);
 
   // Map member info to pass info
   const passInfo = {
-    firstName : memberData[MASTER_FIRST_NAME_COL],
-    lastName : memberData[MASTER_LAST_NAME_COL],
-    memberID : memberData[MASTER_MEMBER_ID_COL],
-    memberStatus : 'Active',    // If email not found, then membership expired
-    feeStatus : memberData[MASTER_FEE_STATUS],
-    expiry : membershipExpiration,
+    firstName: memberData[MASTER_FIRST_NAME_COL],
+    lastName: memberData[MASTER_LAST_NAME_COL],
+    memberID: memberData[MASTER_MEMBER_ID_COL],
+    memberStatus: 'Active',    // If email not found, then membership expired
+    feeStatus: memberData[MASTER_FEE_STATUS],
+    expiry: membershipExpiration,
   }
 
   createPassFile(passInfo);
 
   // Record the end time
   const endTime = new Date().getTime();
-  
+
   // Calculate the runtime in milliseconds
   const runtime = endTime - startTime;
 
@@ -129,9 +129,9 @@ function getExpirationDate(semCode) {
   const expirationYear = '20' + (parseInt(semCode.slice(-2)) + validDuration)
 
   switch (semester) {
-    case ('F') : return `Sep ${expirationYear}`;
-    case ('W') : return `Jan ${expirationYear}`;
-    case ('S') : return `Jun ${expirationYear}`;
+    case ('F'): return `Sep ${expirationYear}`;
+    case ('W'): return `Jan ${expirationYear}`;
+    case ('S'): return `Jun ${expirationYear}`;
     default: return null;
   };
 
@@ -147,7 +147,7 @@ function getImage(url) {
 }
 
 
-function loadImageBytes(id){
+function loadImageBytes(id) {
   var bytes = DriveApp.getFileById(id).getBlob().getBytes();
   return Utilities.base64Encode(bytes);
 }
@@ -158,7 +158,7 @@ function testQRGenerator() {
   const passFolder = DriveApp.getFolderById(FOLDER_ID);
 
   const memberId = '1zIQfQzTj1h5FNSTttXn';
-  
+
   const qrCodeUrl = generateQrUrl(memberId);
   const qrCodeBlob = UrlFetchApp.fetch(qrCodeUrl).getBlob();
 

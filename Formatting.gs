@@ -49,12 +49,12 @@ function sortMainByName() {
 
   const numRows = sheet.getLastRow() - 1;     // Remove header row from count
   const numCols = sheet.getLastColumn();
-  
+
   // Sort all the way to the last row, without the header row
   const range = sheet.getRange(2, 1, numRows, numCols);
-  
+
   // Sorts values by `First Name` then by `Last Name`
-  range.sort([{column: 3, ascending: true}, {column: 4, ascending: true}]);
+  range.sort([{ column: 3, ascending: true }, { column: 4, ascending: true }]);
 }
 
 
@@ -70,13 +70,13 @@ function formatMainView() {
   const sheet = MAIN_SHEET;
 
   // Helper fuction to improve readability
-  const getThisRange = (ranges) => 
+  const getThisRange = (ranges) =>
     Array.isArray(ranges) ? sheet.getRangeList(ranges) : sheet.getRange(ranges);
-  
+
   // 1. Freeze panes
   sheet.setFrozenRows(1);
   sheet.setFrozenColumns(2);
-  
+
   // 2. Bold formatting
   getThisRange([
     'A1:T1',  // Header Row
@@ -108,7 +108,7 @@ function formatMainView() {
   getThisRange('O2:O').setNumberFormat('mmm d, yyyy');
 
   // 6. Text wrapping set to 'Clip' (for Referral + Waiver + Payment Choice)
-  getThisRange(['I2:I', 'J1:J', 'K2:K']).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);   
+  getThisRange(['I2:I', 'J1:J', 'K2:K']).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
 
 
   // 7. Horizontal and vertical alignment
@@ -120,7 +120,7 @@ function formatMainView() {
     .setVerticalAlignment('middle');
 
   getThisRange(['A2:A', 'I1']).setHorizontalAlignment('right');   // Align right
-  
+
   // 8. Column width mapping
   const sizeMap = {
     [REGISTRATION_DATE_COL]: 140,
@@ -157,15 +157,15 @@ function addMissingItems_(row) {
   const sheet = MAIN_SHEET;
 
   // Add checkboxes to target columns
-  [ IS_FEE_PAID_COL, 
-    IS_INTERNAL_COLLECTED_COL, 
+  [IS_FEE_PAID_COL,
+    IS_INTERNAL_COLLECTED_COL,
     ATTENDANCE_STATUS_COL
-  ].forEach(col =>sheet.getRange(row, col).insertCheckboxes());
-  
+  ].forEach(col => sheet.getRange(row, col).insertCheckboxes());
+
   // Copy the list item  in 'Collection Person' col from first entry
   //var collectorItem = sheet.getRange(5, COLLECTION_PERSON_COL).getDataValidation();
   //var targetCell = sheet.getRange(row, COLLECTION_PERSON_COL);
-  
+
   // Set the collector item
   //targetCell.setDataValidation(collectorItem);
 }
@@ -182,11 +182,11 @@ function addMissingItems_(row) {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Dec 11, 2024
- * @update  Dec 11, 2024
+ * @update  Feb 16, 2025
  * 
  */
 
-function fixLetterCaseInRow_(row=getLastSubmissionInMain()) {
+function fixLetterCaseInRow_(row = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
 
   // Set to lower case
@@ -196,15 +196,36 @@ function fixLetterCaseInRow_(row=getLastSubmissionInMain()) {
 
   // Set to Capitalized (first letter of word is UPPER)
   const rangeToCapitalize = sheet.getRange(row, FIRST_NAME_COL, 1, 5);
-  const valuesToCapitalize = rangeToCapitalize.getValues()[0]   // Flatten array
-  
+
   // Capitalize each value in array
-  const capitalizedValues = valuesToCapitalize.map(value => 
-    value.replace(/\b\w/g, l => l.toUpperCase())
+  const capitalizedValues = rangeToCapitalize.getValues()[0].map(
+    value => formatName(value)
   );
 
   // Now replace raw values with capitalized ones
-  rangeToCapitalize.setValues([ capitalizedValues ]); // setValues requires 2d array
+  rangeToCapitalize.setValues([capitalizedValues]);
+}
+
+
+function formatName(name) {
+  // Step 1: Trim whitespace from the beginning and end
+  let formattedName = name.trim();
+
+  // Step 2: Normalize the string to NFC (Canonical Composition)
+  formattedName = formattedName.normalize("NFC");
+
+  // Step 3: Split by spaces and hyphens to handle individual words
+  formattedName = formattedName.split(/[\s-]+/).map(word => {
+    // Capitalize the first letter and lowercase the rest of each word
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  }).join(" ");
+
+  // Step 4: Handle hyphenated names by rejoining with the correct hyphen case
+  formattedName = formattedName.replace(/(\w)-(\w)/g, (match, p1, p2) => {
+    return p1.toUpperCase() + '-' + p2.toLowerCase();
+  });
+
+  return formattedName;
 }
 
 
@@ -223,12 +244,12 @@ function sortMasterByEmail() {
   const sheet = MASTER_SHEET;
   const numRows = sheet.getLastRow() - 1;   // Remove Header from count
   const numCols = sheet.getLastColumn();
-    
+
   // Sort all the way to the last row, without the header row
   const range = sheet.getRange(2, 1, numRows, numCols);
-    
+
   // Sorts values by email
-  range.sort([{column: 1, ascending: true}]);
+  range.sort([{ column: 1, ascending: true }]);
 }
 
 
@@ -249,7 +270,7 @@ function formatMasterView() {
   const rangeListToBold = sheet.getRangeList([
     'K2:K',   // Latest Reg Semester
     'N2:N',   // Fee Paid
-  ]);   
+  ]);
   rangeListToBold.setFontWeight('bold');
 
   // Reduce Font to 9
@@ -377,7 +398,7 @@ function cleanMasterRegistration() {
  * 
  */
 
-function formatFeeCollection(row=MASTER_SHEET.getLastRow()) {
+function formatFeeCollection(row = MASTER_SHEET.getLastRow()) {
   var sheet = MASTER_SHEET;
 
   // STEP 1: Check for current fee status to flag for later
@@ -386,14 +407,14 @@ function formatFeeCollection(row=MASTER_SHEET.getLastRow()) {
 
   const regex = new RegExp('unpaid', "i"); // Case insensitive
   const isUnpaid = feeStatus.includes("unpaid")           // FIX LINE!!
-  
+
   //.search(regex);
-  
+
   // STEP 2: Insert fee status formula in `Fee Paid` col
   rangeFeeStatus.setFormula(isFeePaidFormula);    // Formula found in `Semester Variables.gs`
 
   // If feeStatus is unpaid, formatting is completed.
-  if(isUnpaid) return;
+  if (isUnpaid) return;
 
   // STEP 3: Format collection date correctly;
   const rangeCollectionDate = sheet.getRange(row, MASTER_COLLECTION_DATE);
@@ -403,7 +424,7 @@ function formatFeeCollection(row=MASTER_SHEET.getLastRow()) {
   rangeCollectionDate.setValue(formattedDate);
 
   // STEP 4: Append semester code if collection date non-empty
-  if(!collectionDate) return;
+  if (!collectionDate) return;
 
   const rangePaymentHistory = sheet.getRange(row, MASTER_PAYMENT_HIST);
   const semCode = getSemesterCode_(SHEET_NAME);   // Get semCode from `MAIN_SHEET`
@@ -411,7 +432,7 @@ function formatFeeCollection(row=MASTER_SHEET.getLastRow()) {
 }
 
 
-function insertRegistrationSem(row=MASTER_SHEET.getLastRow()) {
+function insertRegistrationSem(row = MASTER_SHEET.getLastRow()) {
   var sheet = MASTER_SHEET;
   const rangeLatestRegSem = sheet.getRange(row, MASTER_LAST_REG_SEM);
 
@@ -442,9 +463,9 @@ function encodeFromInput(input) {
  * @update Feb 5, 2025
  */
 
-function encodeLastRow(newSubmissionRow = getLastSubmissionInMain()) {
+function encodeLastRow_(newSubmissionRow = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
-  
+
   const email = sheet.getRange(newSubmissionRow, EMAIL_COL).getValue();
   const memberID = MD5(email);
   sheet.getRange(newSubmissionRow, MEMBER_ID_COL).setValue(memberID);
@@ -488,7 +509,7 @@ function encodeList(sheet) {
  * @update  Dec 18, 2024
  */
 
-function encodeByRow(sheet, row=sheet.getLastRow()) {
+function encodeByRow(sheet, row = sheet.getLastRow()) {
   const sheetName = sheet.getSheetName();
   let sheetCols = GET_COL_MAP_(sheetName);
 

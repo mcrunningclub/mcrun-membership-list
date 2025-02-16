@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,7 +31,7 @@
       padding: 10px;
       border-radius: 10px;
     }
-    
+
     .header h1 {
       font-size: 24px;
       margin: 5px 0;
@@ -80,6 +81,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="id-card">
     <!-- Header -->
@@ -93,15 +95,21 @@
     <!-- Details Section -->
     <div class="details">
       <p>NAME</p>
-      <h2><?= name ?></h2>
+      <h2>
+        <?= name ?>
+      </h2>
       <p>RUN POINTS</p>
-      <div class="points"><?=runPoints?></div>
+      <div class="points">
+        <?=runPoints?>
+      </div>
     </div>
 
     <!-- QR Code Section -->
     <div class="qr-section">
       <img src= "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAAA8AXHiAAAAAklEQVR4AewaftIAAAPySURBVO3BQa7bWBAEwayG7n/lHC8Jbp6/wJY8dkXEX6h62FC1YKhaMFQtGKoWDFULhqoFQ9WCoWrBULVgqFowVC0YqhYMVQuGqgVD1YKhasFQtWCoWvDiQUn4JpWrJJyo3CXhRGVLEr5F5QlD1YKhasFQteDFIpUtSfgUlZMk3KlcJeFO5URlSxI2DFULhqoFQ9WCoWrBiw9Lwk+pPEXlROUkCVcqd0nYkoSfUvmUoWrBULVgqFrw4i+mcpeE2jdULRiqFgxVC4aqBS/+Ykm4UzlJwonKVRLuVK6S8K8YqhYMVQuGqgUvPkzlU1TeobJB5Skqf7KhasFQtWCoWjBULXixKAnflIQ7lask3KlcJeFO5aeScKdykoT/m6FqwVC1YKhaMFQtiL/wD0nClcpJEk5U7pJwpfKvGKoWDFULhqoFLx6UhCuVkyR8kspVEu5UTlSekIQ7lZMkXKncJeGnVJ4wVC0YqhYMVQuGqgUvPiwJJypXSbhTuUvCT6ncJeFK5S4JVyrvUDlJwkkS7lS+ZahaMFQtGKoWvPgylbskXKncJeFE5QlJuFPZkoQrlZMkvCMJVypPGKoWDFULhqoFQ9WCFw9S+akkvEPlLglXSbhTuUrCncpPJeFO5R0qT0jClcqnDFULhqoFQ9WCFw9KwpXKicpdEk6ScKLyhCS8IwknKndJuFJ5h8q3DFULhqoFQ9WCoWpB/IWHJOFK5R1JuFJ5RxJOVN6RhCuVuyRcqTwlCT+l8ilD1YKhasFQteDFoiTcqTwhCe9QOUnCn07lKgknSThRecJQtWCoWjBULRiqFrxYpHKXhCeo3CXhJAlXKicqJ0m4U7lKwjtU7pLwUyp3SdgwVC0YqhYMVQtefJnKSRJ+h8pVEu5UTlSekIQnJOEJSbhT2TBULRiqFgxVC4aqBfEX/lJJ+BSVuyScqLwjCScqV0m4U9kwVC0YqhYMVQuGqgUvHpSEb1I5UblKwonKXRJOVK6S8DuScKVyonKicpeEK5UnDFULhqoFQ9WCF4tUtiThCSonSfgklf+7oWrBULVgqFowVC148WFJ+CmVLUm4UzlROUnCSRKekIQ7laskfMpQtWCoWjBULXhRRyp3SfgUlZMk3CXhW4aqBUPVgqFqwVC14MVfTOVE5SQJdyo/lYTfoXKVhHeoXCXhU4aqBUPVgqFqwYsPU/mmJFypnKi8IwlXKk9RuUrCXRK+ZahaMFQtGKoWDFULXixKwjcl4QlJeEISfofKlco7VE6SsGGoWjBULRiqFsRfqHrYULVgqFowVC0YqhYMVQuGqgVD1YKhasFQtWCoWjBULRiqFgxVC4aqBUPVgqFqwVC14D8yI3pA+4L/EgAAAABJRU5ErkJggg==" alt="QR Code">
-      <p>Valid until: <?= validUntil ?></p>
+      <p>Valid until:
+        <?= validUntil ?>
+      </p>
     </div>
 
     <!-- Footer -->
@@ -110,27 +118,47 @@
     </div>
   </div>
 </body>
+
 </html>
 
 
 <!DOCTYPE html>
 <html>
-  <title>Print multiple Id in one click</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<title>Print multiple Id in one click</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-  <style>
-    table{font-size:12px;width:100%;border: 1px solid #CCC;font-family:times;} 
-    td{padding: 0px; margin: 0px; border: 1px solid #CCC;} 
-    th{ background-color: #232C8B; color: #FFF; font-weight: bold;}
-    .b{font-weight:bold;text-transform:capitalize;}
-  </style>
+<style>
+  table {
+    font-size: 12px;
+    width: 100%;
+    border: 1px solid #CCC;
+    font-family: times;
+  }
 
-  <body>
-    <div class="w3-row-padding w3-border-bottom">
-      <div class="w3-col s5">
-          <select id="clv" onchange="iList()" class="w3-select w3-col s8">
+  td {
+    padding: 0px;
+    margin: 0px;
+    border: 1px solid #CCC;
+  }
+
+  th {
+    background-color: #232C8B;
+    color: #FFF;
+    font-weight: bold;
+  }
+
+  .b {
+    font-weight: bold;
+    text-transform: capitalize;
+  }
+</style>
+
+<body>
+  <div class="w3-row-padding w3-border-bottom">
+    <div class="w3-col s5">
+      <select id="clv" onchange="iList()" class="w3-select w3-col s8">
             <option value="">CLASS</option>
             <option value="I">I</option>
             <option value="II">II</option>
@@ -138,32 +166,32 @@
             <option value="IV">IV</option>
             <option value="V">V</option>
           </select>
-          <select id="sec" onchange="iList()"class="w3-select w3-col s4">
+      <select id="sec" onchange="iList()"class="w3-select w3-col s4">
             <option value="ALL">All</option>
             <option value="A">A</option>
             <option value="B">B</option>
             <option value="C">C</option>
             <option value="D">D</option>
           </select>
-      </div>
-
-      <div class="w3-col s1 w3-center">
-        <i id="spin" class="fa fa-refresh fa-0"onclick="iList()" style="font-size:20px"></i>
-      </div>
-      <div class="w3-col s4 w3-left">
-        <i id="info"></i>
-      </div>
-      <div class="w3-col s1 w3-right">
-        <input type="button" name="btnprint" value="Print" onclick="pPrint('result')" class="w3-btn w3-teal w3-hover-red">
-      </div>
     </div>
 
-    <div style="overflow: auto;height:520px;">
-      <div id="result"align="center"></div>
+    <div class="w3-col s1 w3-center">
+      <i id="spin" class="fa fa-refresh fa-0"onclick="iList()" style="font-size:20px"></i>
     </div>
+    <div class="w3-col s4 w3-left">
+      <i id="info"></i>
+    </div>
+    <div class="w3-col s1 w3-right">
+      <input type="button" name="btnprint" value="Print" onclick="pPrint('result')" class="w3-btn w3-teal w3-hover-red">
+    </div>
+  </div>
 
-    <script>
-      var spn  = document.getElementById('spin');
+  <div style="overflow: auto;height:520px;">
+    <div id="result" align="center"></div>
+  </div>
+
+  <script>
+    var spn  = document.getElementById('spin');
       var info = document.getElementById('info');
       var resu = document.getElementById('result');
 
@@ -198,6 +226,7 @@
                             .idList(clv,sec);
         }
       };
-    </script>
-  </body>
+  </script>
+</body>
+
 </html>

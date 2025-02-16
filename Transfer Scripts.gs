@@ -5,7 +5,7 @@ function onChange(e) {
   // Get details of edit event's sheet
   console.log(e);
   const thisSource = e.source;
-  
+
   // Try-catch to prevent errors when sheetId cannot be found
   try {
     const thisSheetID = thisSource.getSheetId();
@@ -45,26 +45,24 @@ function onEdit(e) {
 
   var debug_e = {
     //authMode:  e.authMode,
-    range:  e.range.getA1Notation(),
-    sheetName : e.range.getSheet().getSheetName(),
+    range: e.range.getA1Notation(),
+    sheetName: e.range.getSheet().getSheetName(),
     //source:  e.source,
-    value:  e.value,
+    value: e.value,
     oldValue: e.oldValue
   }
-  console.log({test: 2, eventObject: debug_e});
+  console.log({ test: 2, eventObject: debug_e });
 
-
-
-  if(thisRange.getNumRows() > 2) return;  // prevent sheet-wide changes
-  else if(thisRange.getNumColumns() > CELL_EDIT_LIMIT) {
+  if (thisRange.getNumRows() > 2) return;  // prevent sheet-wide changes
+  else if (thisRange.getNumColumns() > CELL_EDIT_LIMIT) {
     // TODO: add function to individually process changes
     Logger.log(`More than ${CELL_EDIT_LIMIT} columns edited at once`);
   }
 
   console.log(`onEdit 1 -> thisSheetName: ${thisSheetName}`);
-  
+
   // Check if legal sheet
-  if(thisSheetName != SHEET_NAME && thisSheetName != MASTER_NAME) return;
+  if (thisSheetName != SHEET_NAME && thisSheetName != MASTER_NAME) return;
 
   console.log("onEdit 1a -> Passed first check");
 
@@ -73,7 +71,7 @@ function onEdit(e) {
   console.log("onEdit 1b -> Passed second check");
 
   // Check if legal edit
-  if(!verifyLegalEditInRange(e, thisSheet)) return;
+  if (!verifyLegalEditInRange(e, thisSheet)) return;
 
   console.log("onEdit 2 -> Passed \`verifyLegalEditInRange()\`");
 
@@ -94,7 +92,7 @@ function onEdit(e) {
   const targetRow = findMemberByEmail(email, targetSheet);  // Find row of member in `targetSheet` using their email
 
   // Throw error message if member not in `targetSheet`
-  if(targetRow == null) {
+  if (targetRow == null) {
     const errorMessage = `
       --- onEdit() ---
       targetRow not found in ${targetSheet}. 
@@ -105,7 +103,7 @@ function onEdit(e) {
   }
 
   console.log(`onEdit 5 -> targetRow: ${targetRow} found by \`findMemberByEmail()\``);
-    
+
   updateFeeInfo(e, thisSheetName, targetRow, targetSheet);
   console.log(`onEdit 6 -> successfully completed trigger check`);
 }
@@ -122,18 +120,18 @@ function verifyLegalEditInRange(e, sheet) {
   var thisRow = e.range.getRow();
   var thisCol = e.range.getColumn();
   Logger.log(`verifyLegalEditInRange 1 -> sheetName: ${sheetName}`);
-  
+
   // Function to get column mappings
   const feeStatus = GET_COL_MAP_(sheetName).feeStatus;
   const isInternalCollected = GET_COL_MAP_(sheetName).isInternalCollected;
 
   Logger.log(`verifyLegalEditInRange 2 -> feeStatusCol: ${feeStatus}, isInternalCollected: ${isInternalCollected}`);
-  
+
   const feeEditRange = {
-    top : 2,    // Skip header row
-    bottom : sheet.getLastRow(),
-    leftmost : feeStatus,
-    rightmost : isInternalCollected,
+    top: 2,    // Skip header row
+    bottom: sheet.getLastRow(),
+    leftmost: feeStatus,
+    rightmost: isInternalCollected,
   }
 
   // Helper function to log error message and exit function
@@ -142,7 +140,7 @@ function verifyLegalEditInRange(e, sheet) {
   // Exit if we're out of range
   if (thisRow < feeEditRange.top || thisRow > feeEditRange.bottom) logAndExitFalse("Row");
   if (thisCol < feeEditRange.left || thisCol > feeEditRange.right) logAndExitFalse("Column");
-  
+
   return true;    // edit e is within legal edit range
 }
 
@@ -176,11 +174,11 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
 
   // Find respective column where `targetCol` contains same data as `sourceCol`.
   const getTargetCol = (source) => {
-    switch(source) {
-      case(sourceCols.feeStatus) : return targetCols.feeStatus;
-      case(sourceCols.collectionDate) : return targetCols.collectionDate;
-      case(sourceCols.collector) : return targetCols.collector;
-      case(sourceCols.isInternalCollected) : return targetCols.isInternalCollected;
+    switch (source) {
+      case (sourceCols.feeStatus): return targetCols.feeStatus;
+      case (sourceCols.collectionDate): return targetCols.collectionDate;
+      case (sourceCols.collector): return targetCols.collector;
+      case (sourceCols.isInternalCollected): return targetCols.isInternalCollected;
     }
   };
 
@@ -193,23 +191,23 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
   // Special case: MASTER stores payment history as semesterCode(s).
   // If isPaid, then add semesterCode to payment history, i.e. bool -> str
   // Otherwise, nothing to modify in MASTER for member's payment history
-  if(targetSheetName == MASTER_NAME && targetCol == MASTER_PAYMENT_HIST) {
+  if (targetSheetName == MASTER_NAME && targetCol == MASTER_PAYMENT_HIST) {
     console.log("updateFeeInfo 3 -> entering if statement");
     const value = thisRange.getValue() || "";
     const isPaid = parseBool(value);    // convert to bool
     console.log(`updateFeeInfo 3b -> Value: ${value} isPaid: ${isPaid}`);
 
     // Only modify payment history if isPaid == true.
-    if(isPaid) {
+    if (isPaid) {
       console.log("updateFeeInfo 3c -> entering isPaid");
       addPaidSemesterToHistory(targetRow, sourceSheetName);
     }
     else {
       console.log("updateFeeInfo 3c -> entering NOT(isPaid)");
     }
-    
+
   }
-  else if(sourceSheetName == MASTER_NAME && thisCol == MASTER_PAYMENT_HIST) {
+  else if (sourceSheetName == MASTER_NAME && thisCol == MASTER_PAYMENT_HIST) {
     // CASE 2: Add history payment to sheet
     console.log("updateFeeInfo 3 ->  entering else if statement");
     const paymentHistory = thisRange.getValue() || "";
@@ -217,7 +215,7 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
   }
   else {
     console.log("updateFeeInfo 3 ->  entering else statement");
-    thisRange.copyTo(targetRange, {contentsOnly: true});
+    thisRange.copyTo(targetRange, { contentsOnly: true });
   }
 
   console.log("updateFeeInfo 4 ->  finished updating payment history");
@@ -232,11 +230,11 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
- * @update  Feb 10, 2025
+ * @update  Feb 16, 2025
  * 
  */
 
-function copyToMain(registration, row=getLastSubmissionInMain()) {
+function copyToMain(registration, row = getLastSubmissionInMain()) {
   const mainSheet = MAIN_SHEET;
   const importMap = IMPORT_MAP;
 
@@ -260,18 +258,16 @@ function copyToMain(registration, row=getLastSubmissionInMain()) {
     registrationObj['timestamp'] = formattedTimestamp;   // replace with formatted
   }
 
-
   const removeRegex = /^[,\s\n\r\t-]+|[,\s\n\r\t-]+$/g;
 
-  for (const [key, value] of Object.entries(registrationObj)) {
+  for (let [key, value] of Object.entries(registrationObj)) {
     if (key in importMap) {
+      value = (typeof (value) === 'object') ? Object.values(value).join(', ') : value;
       let indexInMain = importMap[key] - 1;   // Set 1-index to 0-index
       valuesByIndex[indexInMain] = value.replace(removeRegex, ''); // Remove all unwanted
     }
   }
 
-  Logger.log(valuesByIndex[REFERRAL_COL-1]);
-  
   // Set values of registration
   const rangeToImport = mainSheet.getRange(startRow, 1, 1, colSize);
   rangeToImport.setValues([valuesByIndex]);
@@ -281,17 +277,29 @@ function copyToMain(registration, row=getLastSubmissionInMain()) {
 
 
 function testMigrate() {
-  const ex = `{"timestamp":"2025-02-03T22:31:55.196Z",
-  "email":"charlotte.bodart@mail.mcgill.ca",
-  "firstName":"Charlotte",
-  "lastName":"Bodart",
-  "preferredName":"",
-  "year":"U2",
-  "program":"Bachelor of Arts in Economics and Psychology",
-  "memberDescription":"I used to run regularly before i started university, but i havent been going very often since im not too good at managing my time and finding the motivation to go for runs. I feel like running with a group would definitely motivate me much more. ",
-  "paymentMethod":"Interac e-Transfer", "interacRef":"C1AARqkBBs6u",
-  "comments":"",
-  "referral":",Activities Night Instagram "}`;
+  const ex = `{"timestamp":"2025-02-04T00:09:01.010Z",
+    "email":"jane.doe@mail.mcgill.ca",
+    "firstName":"Jane",
+    "lastName":"DOe",
+    "preferredName":"",
+    "year":"",
+    "program":"",
+    "memberDescription":"its fun!",
+    "paymentAmount":"5",
+    "paymentMethod":"Interac e-Transfer", 
+    "interacRef":"test123",
+    "comments":"not really!",
+    "referral":
+    {
+    "name":"Caleb",
+    "sources":"Social Media,Activities Night,Referral (e.g. friend, classmate, professor...),test2",
+    "platform":"Instagram,Reddit"
+    },
+    "discountFriendEmail": "" }`
+    ;
+
+  const testMe = JSON.parse(ex);
+  console.log(testMe);
 
   const newRowIndex = copyToMain(ex);
   Logger.log(newRowIndex);
@@ -301,15 +309,15 @@ function testMigrate() {
 function doPost(e) {
   var apiKey = e.parameter.apiKey;
   var expectedApiKey = 'your-secret-api-key';
-  
+
   if (apiKey !== expectedApiKey) {
     return ContentService.createTextOutput('Unauthorized').setMimeType(ContentService.MimeType.TEXT);
   }
-  
+
   try {
     // Parse incoming request data
     var data = JSON.parse(e.postData.contents);
-    
+
     // Validate the incoming data
     if (!data.name || !data.email || !data.message) {
       throw new Error('Missing required fields');
@@ -318,7 +326,7 @@ function doPost(e) {
     // Open the sheet and append data
     var sheet = SpreadsheetApp.openById('your-spreadsheet-id').getSheetByName('targetSheet');
     sheet.appendRow([data.name, data.email, data.message]);
-    
+
     // Respond with success message
     return ContentService.createTextOutput('Row added successfully').setMimeType(ContentService.MimeType.TEXT);
 
