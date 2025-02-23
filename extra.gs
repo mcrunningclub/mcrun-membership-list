@@ -72,6 +72,37 @@ function extractFeeStatus() {
 }
 
 
+function doPostTest_(e) {
+  var apiKey = e.parameter.apiKey;
+  var expectedApiKey = 'your-secret-api-key';
+
+  if (apiKey !== expectedApiKey) {
+    return ContentService.createTextOutput('Unauthorized').setMimeType(ContentService.MimeType.TEXT);
+  }
+
+  try {
+    // Parse incoming request data
+    var data = JSON.parse(e.postData.contents);
+
+    // Validate the incoming data
+    if (!data.name || !data.email || !data.message) {
+      throw new Error('Missing required fields');
+    }
+
+    // Open the sheet and append data
+    var sheet = SpreadsheetApp.openById('your-spreadsheet-id').getSheetByName('targetSheet');
+    sheet.appendRow([data.name, data.email, data.message]);
+
+    // Respond with success message
+    return ContentService.createTextOutput('Row added successfully').setMimeType(ContentService.MimeType.TEXT);
+
+  } catch (error) {
+    // Handle errors and send an error response
+    return ContentService.createTextOutput('Error: ' + error.message).setMimeType(ContentService.MimeType.TEXT);
+  }
+}
+
+
 /* DEPRICATED OR JUNK FUNCTIONS */
 function drafts_() {
   return;

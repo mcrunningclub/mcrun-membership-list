@@ -11,6 +11,9 @@ function onChange(e) {
     const thisSheetID = thisSource.getSheetId();
     const thisLastRow = thisSource.getLastRow();
 
+    const thisChange = e.changeType;
+    console.log(`Change Type: ${thisChange}`);
+
     if (thisSheetID == IMPORT_SHEET_ID) {
       const importSheet = thisSource.getSheetById(thisSheetID);
       const registrationObj = importSheet.getRange(thisLastRow, 1).getValue();
@@ -230,7 +233,7 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
- * @update  Feb 16, 2025
+ * @update  Feb 23, 2025
  * 
  */
 
@@ -238,7 +241,7 @@ function copyToMain(registration, row = getLastSubmissionInMain()) {
   const mainSheet = MAIN_SHEET;
   const importMap = IMPORT_MAP;
 
-  const registrationObj = JSON.parse(registration);
+  const registrationObj = JSON.parse(registration.replace(/[\n\r\t]/g, ' '));
   console.log(registrationObj);
 
   const startRow = row + 1;
@@ -258,7 +261,7 @@ function copyToMain(registration, row = getLastSubmissionInMain()) {
     registrationObj['timestamp'] = formattedTimestamp;   // replace with formatted
   }
 
-  const removeRegex = /^[,\s\n\r\t-]+|[,\s\n\r\t-]+$/g;
+  const removeRegex = /^[,\s-]+|[,\s-]+$/g;
 
   for (let [key, value] of Object.entries(registrationObj)) {
     if (key in importMap) {
@@ -277,63 +280,38 @@ function copyToMain(registration, row = getLastSubmissionInMain()) {
 
 
 function testMigrate() {
-  const ex = `{"timestamp":"2025-02-04T00:09:01.010Z",
-    "email":"jane.doe@mail.mcgill.ca",
-    "firstName":"Jane",
-    "lastName":"DOe",
-    "preferredName":"",
-    "year":"",
-    "program":"",
-    "memberDescription":"its fun!",
-    "paymentAmount":"5",
-    "paymentMethod":"Interac e-Transfer", 
-    "interacRef":"test123",
-    "comments":"not really!",
-    "referral":
-    {
-    "name":"Caleb",
-    "sources":"Social Media,Activities Night,Referral (e.g. friend, classmate, professor...),test2",
-    "platform":"Instagram,Reddit"
-    },
-    "discountFriendEmail": "" }`
+  let ex = `{"timestamp":"2025-02-22T22:34:26.899Z",
+  "email":"jiangforrest1@gmail.com",
+  "firstName":"Forrest",
+  "lastName":"Jiang",
+  "preferredName":"",
+  "year":"Non-McGillian",
+  "program":"N/A",
+  "memberDescription":"Fresh graduate from Hong Kong just landed in Montreal, enjoy running as part of my sporting mix.
+  Running semi-regularly for two years, registered for 2025 half and full marathons in Montreal
+  ",
+  "paymentAmount":"10",
+  "paymentMethod":"Interac e-Transfer", 
+  "interacRef":"C1AqtpGKhzgD",
+  "comments":"",
+  "referral": 
+  {
+  "name":"",
+  "sources":"Social Media",
+  "platform":""
+  },
+  "discountFriendEmail": ""
+  }`
     ;
 
+  Logger.log(ex);
+  ex = ex.replace(/[\n\r\t]/g, ' ');
+
+  console.log(ex);
   const testMe = JSON.parse(ex);
   console.log(testMe);
 
   const newRowIndex = copyToMain(ex);
   Logger.log(newRowIndex);
 }
-
-
-function doPost(e) {
-  var apiKey = e.parameter.apiKey;
-  var expectedApiKey = 'your-secret-api-key';
-
-  if (apiKey !== expectedApiKey) {
-    return ContentService.createTextOutput('Unauthorized').setMimeType(ContentService.MimeType.TEXT);
-  }
-
-  try {
-    // Parse incoming request data
-    var data = JSON.parse(e.postData.contents);
-
-    // Validate the incoming data
-    if (!data.name || !data.email || !data.message) {
-      throw new Error('Missing required fields');
-    }
-
-    // Open the sheet and append data
-    var sheet = SpreadsheetApp.openById('your-spreadsheet-id').getSheetByName('targetSheet');
-    sheet.appendRow([data.name, data.email, data.message]);
-
-    // Respond with success message
-    return ContentService.createTextOutput('Row added successfully').setMimeType(ContentService.MimeType.TEXT);
-
-  } catch (error) {
-    // Handle errors and send an error response
-    return ContentService.createTextOutput('Error: ' + error.message).setMimeType(ContentService.MimeType.TEXT);
-  }
-}
-
 
