@@ -304,13 +304,15 @@ function testMigrate() {
   }`
     ;
 
-  Logger.log(ex);
-  ex = ex.replace(/[\n\r\t]/g, ' ');
+  if (false) {
+    Logger.log(ex);
+    ex = ex.replace(/[\n\r\t]/g, ' ');
+    console.log(ex);
 
-  console.log(ex);
-  const testMe = JSON.parse(ex);
-  console.log(testMe);
-
+    const testMe = JSON.parse(ex);
+    console.log(testMe);
+  }
+  
   const newRowIndex = copyToMain(ex);
   Logger.log(newRowIndex);
 }

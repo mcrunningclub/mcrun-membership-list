@@ -16,7 +16,8 @@ function createPassFile(passInfo) {
   passInfo['cYear'] = Utilities.formatDate(today, TIMEZONE, 'yyyy');
 
   // Make a copy to edit
-  const copyRef = template.makeCopy(`${memberName}-pass-copy`, passFolder);
+  const fileDate = Utilities.formatDate(today, TIMEZONE, 'yyyyMMdd');
+  const copyRef = template.makeCopy(`${memberName}-McRun-Pass-${fileDate}`, passFolder);
   const copyID = copyRef.getId();
   const copyFilePtr = SlidesApp.openById(copyID);
 
@@ -49,8 +50,12 @@ function createPassFile(passInfo) {
   // Save anc close copy template
   copyFilePtr.saveAndClose();
 
-  // Export the copy presentation as PNG
-  const exportUrl = `https://docs.google.com/presentation/d/${copyID}/export/png`;
+  // Set permissions to general to allow downloading
+  copyRef.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
+
+  // Create download link for member
+  return `https://docs.google.com/presentation/d/${copyID}/export/png`;   // Download link for user
+
 
   const token = ScriptApp.getOAuthToken();
   const response = UrlFetchApp.fetch(exportUrl, {
@@ -62,17 +67,51 @@ function createPassFile(passInfo) {
 
   // Save the PNG file to the folder
   const blob = response.getBlob();
-  const fileDate = Utilities.formatDate(today, TIMEZONE, 'yyyyMMdd');
-  passFolder.createFile(blob).setName(`${memberName}-McRun-Pass-${fileDate}.png`);
+  //const fileDate = Utilities.formatDate(today, TIMEZONE, 'yyyyMMdd');
+  const file = passFolder.createFile(blob).setName(`${memberName}-McRun-Pass-${fileDate}.png`);
+  
+  // Set permissions to general to allow downloading
+  file.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
+  
 
   // Moves the file to the trash
   copyRef.setTrashed(true);
+  return file.getDownloadUrl();
+}
+
+
+function testPass() {
+  /**
+   * 3:46:30 AM	Info	https://docs.google.com/presentation/d/1zYTdKOvjqb90KwjhmcZxiqS-UlnWFO61EDZIqxhm-VQ/export/png
+   * 3:46:35 AM	Info	https://drive.google.com/uc?id=1aLeRsQ25FK3IDBWuUn2ym4TGSGrMNpMA&export=download
+   * 
+   * 4:13:29 AM	Info	https://docs.google.com/presentation/d/1SxrZtzp_LaqBjVdcfGjoxrt7t-1Hggdwl0gewWpC_Mw/export/png
+   * 4:13:30 AM	Info	Direct Download Link: https://drive.google.com/uc?export=download&id=1SxrZtzp_LaqBjVdcfGjoxrt7t-1Hggdwl0gewWpC_Mw
+   */
+}
+
+
+function testRuntime() {
+  const memberEmail = 'emerson.darling@mail.mcgill.ca';
+  const startTime = new Date().getTime();
+
+  // Runtime if creating and sharing as png: 10351 ms
+  // If only creating Slides file and sharing download link: 5906 ms
+  const url = generateMemberPass(memberEmail);
+  console.log(url);
+  
+  // Record the end time
+  const endTime = new Date().getTime();
+  
+  // Calculate the runtime in milliseconds
+  const runtime = endTime - startTime;
+  
+  // Log the runtime
+  Logger.log(`Function runtime: ${runtime} ms`);
 }
 
 
 function generateMemberPass(memberEmail) {
-  const startTime = new Date().getTime();
-
   const sheet = MASTER_SHEET;
   const row = findMemberByEmail(memberEmail, sheet);
 
@@ -101,16 +140,7 @@ function generateMemberPass(memberEmail) {
     expiry: membershipExpiration,
   }
 
-  createPassFile(passInfo);
-
-  // Record the end time
-  const endTime = new Date().getTime();
-
-  // Calculate the runtime in milliseconds
-  const runtime = endTime - startTime;
-
-  // Log the runtime
-  Logger.log(`Function runtime: ${runtime} ms`);
+  return createPassFile(passInfo);    // Get download url for member
 }
 
 
