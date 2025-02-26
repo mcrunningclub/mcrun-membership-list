@@ -3,7 +3,12 @@ const CELL_EDIT_LIMIT = 4;   // set number of cells that can be edited at once
 // USED TO IMPORT NEW REGISTRATION FROM FILLOUT FORM
 function onChange(e) {
   // Get details of edit event's sheet
-  console.log(e);
+  console.log({
+    authMode:  e.authMode.toString(),
+    changeType: e.changeType,
+    user: e.user,
+  });
+
   const thisSource = e.source;
 
   // Try-catch to prevent errors when sheetId cannot be found
@@ -14,16 +19,21 @@ function onChange(e) {
     const thisChange = e.changeType;
     console.log(`Change Type: ${thisChange}`);
 
-    if (thisSheetID == IMPORT_SHEET_ID) {
+    if (thisSheetID === IMPORT_SHEET_ID && thisChange === 'INSERT_ROW') {
+      console.log('Executing if-statement now...');
       const importSheet = thisSource.getSheetById(thisSheetID);
       const registrationObj = importSheet.getRange(thisLastRow, 1).getValue();
 
       const lastRow = copyToMain(registrationObj);
       onFormSubmit(lastRow);
+      console.log('Exiting if-statement successfully!');
     }
   }
   catch (error) {
     console.error(error);
+  }
+  finally {
+    console.log(e);
   }
 
 }
@@ -51,10 +61,10 @@ function onEdit(e) {
     range: e.range.getA1Notation(),
     sheetName: e.range.getSheet().getSheetName(),
     //source:  e.source,
-    value: e.value,
+    newValue: e.value,
     oldValue: e.oldValue
   }
-  console.log({ test: 2, eventObject: debug_e });
+  console.log(debug_e);
 
   if (thisRange.getNumRows() > 2) return;  // prevent sheet-wide changes
   else if (thisRange.getNumColumns() > CELL_EDIT_LIMIT) {
@@ -87,7 +97,7 @@ function onEdit(e) {
   // Get email from `thisRow` and `thisEmailCol`
   const email = thisSheet.getRange(thisRow, thisEmailCol).getValue();
 
-  const isMainSheet = (thisSheetName == SHEET_NAME);
+  const isMainSheet = (thisSheetName === SHEET_NAME);
   console.log(`onEdit 4 -> email: ${email} isMainSheet: ${isMainSheet}`);
 
   const sourceSheet = isMainSheet ? MAIN_SHEET : MASTER_SHEET;
@@ -142,7 +152,7 @@ function verifyLegalEditInRange(e, sheet) {
 
   // Exit if we're out of range
   if (thisRow < feeEditRange.top || thisRow > feeEditRange.bottom) logAndExitFalse("Row");
-  if (thisCol < feeEditRange.left || thisCol > feeEditRange.right) logAndExitFalse("Column");
+  if (thisCol < feeEditRange.leftmost || thisCol > feeEditRange.rightmost) logAndExitFalse("Column");
 
   return true;    // edit e is within legal edit range
 }

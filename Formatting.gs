@@ -133,7 +133,7 @@ function formatMainView() {
     [DESCRIPTION_COL]: 400,
     [REFERRAL_COL]: 145,
     [WAIVER_COL]: 185,
-    [PAYMENT_METHOD_COL]: 139,
+    [PAYMENT_METHOD_COL]: 155,
     [INTERACT_REF_COL]: 155,
     [EMPTY_COL]: 40,
     [IS_FEE_PAID_COL]: 75,
