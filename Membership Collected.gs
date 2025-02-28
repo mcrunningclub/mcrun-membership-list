@@ -16,9 +16,21 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
   formatMainView();
   getInteracRefNumberFromEmail_(newRow);
 
-  // Must add and sort AFTER extracting Interac info from email
-  addLastSubmissionToMaster();
-  sortMainByName();
+  // Wrap around try-catch since GAS does not support async calls
+  try {
+    const memberInfo =  packageMemberInfoInRow_(newRow);
+    console.log(memberInfo);
+    NewMemberCommunications.createNewMemberCommunications(memberInfo);
+  }
+  catch (e) {
+    console.log(`Could not transfer new registration to external sheet 'New Member Comms'`);
+    throw e;
+  }
+  finally {
+    // Must add and sort AFTER extracting Interac info from email
+    addLastSubmissionToMaster();
+    sortMainByName();
+  }
 }
 
 
@@ -338,4 +350,20 @@ function extractInteracRef_(emailBody) {
   }
 
   return null;
+}
+
+
+function getExpirationDate(semCode) {
+  const validDuration = MEMBERSHIP_DURATION;
+
+  const semester = semCode.charAt(0);
+  const expirationYear = '20' + (parseInt(semCode.slice(-2)) + validDuration)
+
+  switch (semester) {
+    case ('F'): return `Sep ${expirationYear}`;
+    case ('W'): return `Jan ${expirationYear}`;
+    case ('S'): return `Jun ${expirationYear}`;
+    default: return null;
+  };
+
 }

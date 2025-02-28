@@ -9,6 +9,7 @@ const IMPORT_SHEET_ID = 973209987;
 
 const TIMEZONE = getUserTimeZone_();
 const MCRUN_EMAIL = 'mcrunningclub@ssmu.ca';
+const MEMBERSHIP_DURATION = 1;    // 1 year
 
 // LIST OF COLUMNS IN SHEET_NAME
 // Please update any changes made in active sheet

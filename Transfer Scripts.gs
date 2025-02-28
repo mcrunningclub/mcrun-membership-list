@@ -289,6 +289,39 @@ function copyToMain(registration, row = getLastSubmissionInMain()) {
 }
 
 
+function packageMemberInfoInRow_(row) {
+  const sheet = MAIN_SHEET;
+  const semesterName = SHEET_NAME;
+
+  // Get member data to populate pass template
+  const endCol = MEMBER_ID_COL; // From first name to id col
+  const memberData = sheet.getSheetValues(row, 1, 1, endCol)[0];
+
+  // Add entry to front to allow 1-indexed data access like for GSheet
+  memberData.unshift('');
+
+  // Stringify fee status
+  const memberFeeStatus = parseBool(memberData[IS_FEE_PAID_COL]) ? 'Paid' : 'Unpaid';
+
+  // Get membership expiration date via sheet name
+  const semesterCode = getSemesterCode_(semesterName); // Get the semester code based on the sheet name
+  const membershipExpiration = getExpirationDate(semesterCode);
+
+  // Map member info to pass info
+  const memberInfo = {
+    email: memberData[EMAIL_COL],
+    firstName: memberData[FIRST_NAME_COL],
+    lastName: memberData[LAST_NAME_COL],
+    memberId: memberData[MEMBER_ID_COL],
+    memberStatus: 'Active',    // If email not found, then membership expired
+    feeStatus: memberFeeStatus,
+    expiry: membershipExpiration,
+  }
+
+  return memberInfo;
+}
+
+
 function testMigrate() {
   let ex = `{"timestamp":"2025-02-22T22:34:26.899Z",
   "email":"jiangforrest1@gmail.com",
