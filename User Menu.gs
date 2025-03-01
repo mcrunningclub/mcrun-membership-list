@@ -53,14 +53,14 @@ function changeSheetView_(sheetName) {
  * 
  * Extracting function name using `name` property to allow for refactoring.
  * 
- * Cannot check if user authorized, or custom menu will not be displayed
- * due to Google App Script limitation.
+ * Cannot check if user authorized, or custom menu will not be displayed.
+ * This is due to Google App Script limitation.
  * 
  * @trigger Open Google Spreadsheet.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 21, 2024
- * @update  Nov 22, 2024
+ * @update  March 1, 2025
  */
 
 function onOpen() {
@@ -69,13 +69,16 @@ function onOpen() {
   ui.createMenu('🏃‍♂️ McRUN Menu')
     .addItem('📢 Custom menu. Click for help.', helpUI_.name)
     .addSeparator()
+    .addItem('Encode Text from Input', createMemberIDFromInputUI_.name)
+    .addSeparator()
 
     .addSubMenu(ui.createMenu('Main Scripts')
       .addItem('Sort by Name', sortByNameUI_.name)
       .addItem('Submit Form', onFormSubmitUI_.name)
       .addItem('Prettify Main Sheet', prettifyMainUI_.name)
-      .addItem('Encode Text from Input', createMemberIDFromInputUI_.name)
+      .addItem('Find Waiver Url', findWaiverLinkUI_.name)
       .addItem('Create ID for Last Member', encodeLastRowUI_.name)
+      
     )
 
     .addSubMenu(ui.createMenu('Master Scripts')
@@ -86,7 +89,7 @@ function onOpen() {
       .addItem('Add Specific Sheet Submission (draft)', addMemberFromSheetInRowUI_.name)
     )
     .addToUi()
-    ;
+  ;
 }
 
 
@@ -123,17 +126,23 @@ function helpUI_() {
  * 
  * @param {string} functionName  Name of function to execute.
  * @param {string} sheetName  Name of sheet where `functionName` will run.
+ * @param {string}  [additionalMsg=""]  Custom message for executing function.
+ *                                      Defaults to empty string.
+ * @param {string}  [funcArg=""]  Function argument to pass with `functionName`.
+ *                                Defaults to empty string.
+ * 
+ * @return {string}  Return value of the executed function.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 21, 2024
- * @update  Nov 21, 2024
+ * @update  March 1, 2025
  */
 
-function confirmAndRunUserChoice_(functionName, sheetName) {
+function confirmAndRunUserChoice_(functionName, sheetName, additionalMsg = "", funcArg = "") {
   const ui = SpreadsheetApp.getUi();
   const userEmail = getCurrentUserEmail_();
 
-  // Check if authorized user to prevent illegal execution
+  // Check if authorized user to prevent illegal executi on
   if (!PERM_USER_.includes(userEmail)) {
     const warningMsgHeader = "🛑 You are not authorized 🛑"
     const warningMsgBody = "Please contact the exec team if you believe this is an error.";
@@ -143,16 +152,22 @@ function confirmAndRunUserChoice_(functionName, sheetName) {
   }
 
   // Continue execution if user is authorized
-  const message = `
+  let message = `
     ⚙️ Now executing ${functionName} in ${sheetName}.
   
     🚨 Press cancel to stop.
   `;
 
+  // Append additional message if non-empty
+  message += additionalMsg ? `\n🔔 ${additionalMsg}` : "";
+
+  // Save user response
   const response = ui.alert(message, ui.ButtonSet.OK_CANCEL);
+  let retValue = "";
 
   if (response == ui.Button.OK) {
-    this[functionName]();   // executing function with name `functionName`
+    // Execute function `functionName` (with arg if non-empty)
+    retValue = funcArg ? this[functionName](funcArg) : this[functionName]();
   }
   else {
     ui.alert('Execution cancelled...');
@@ -163,6 +178,32 @@ function confirmAndRunUserChoice_(functionName, sheetName) {
 
   // Log attempt in console using active user email
   logMenuAttempt_(userEmail);
+
+  // Return value from executed function if required
+  return retValue;
+}
+
+
+/**
+ * Returns true if row is int and found in `sheet`.
+ *
+ * Helper function for UI functions for McRUN menu.
+ *
+ * @param {number}  The row number in `sheet` 1-indexed.
+ * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.
+ * 
+ * @return {boolean}  The input is a number.
+ *
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
+ * @date  March 1, 2025
+ * @update  March 1, 2025
+ */
+
+function isValidRow_(row, sheet = MAIN_SHEET) {
+  const lastRow = sheet.getLastRow();
+  const rowInt = parseInt(row);
+
+  return (Number.isInteger(rowInt) && rowInt >= 2 && rowInt <= lastRow);
 }
 
 
@@ -194,6 +235,38 @@ function encodeLastRowUI_() {
   const functionName = encodeLastRow_.name;
   const sheetName = SHEET_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
+}
+
+function findWaiverLinkUI_() {
+  const ui = SpreadsheetApp.getUi();
+  const headerMsg = "Which row do you want to search for a waiver link?";
+  const textMsg = "Enter the row number, or leave empty for the last row.";
+
+  const response = ui.prompt(headerMsg, textMsg, ui.ButtonSet.OK);
+  const responseText = response.getResponseText().trim();
+
+  const sheetName = SHEET_NAME;
+  const functionName = findWaiverLink_.name;
+ 
+  let customMsg = "";
+  const rowNumber = Number.parseInt(responseText);
+
+  if (responseText === "") {
+    // User did not enter a row number; check last row only
+    customMsg = "This function will only run in the last row.";
+  }
+  else if (isValidRow_(rowNumber)) {
+    // Row is valid, can continue execution
+    customMsg = `This function will run in row ${rowNumber}.`;
+  }
+  else {
+    // Input value is invalid row. Stop execution.
+    ui.alert("Incorrect row number, please try again with a valid row number.");
+    return;
+  }
+
+  // Run respective function depending if-statement above
+  confirmAndRunUserChoice_(functionName, sheetName, customMsg, rowNumber);
 }
 
 function createMemberIDFromInputUI_() {

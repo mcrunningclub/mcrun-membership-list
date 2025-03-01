@@ -28,6 +28,7 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
   }
   finally {
     // Must add and sort AFTER extracting Interac info from email
+    setWaiverUrl(newRow);
     addLastSubmissionToMaster();
     sortMainByName();
   }
@@ -355,6 +356,37 @@ function extractInteracRef_(emailBody) {
 }
 
 
+function setWaiverUrl(row = MAIN_SHEET.getLastRow()) {
+  const sheet = MAIN_SHEET;
+
+  // Search for waiver link using member name
+  const memberName = sheet.getSheetValues(row, FIRST_NAME_COL, 1, 2)[0].join(' ');
+  const waiverUrl = findWaiverLink_(memberName);
+
+  // Set value of waiver url
+  sheet.getRange(row, WAIVER_COL).setValue(waiverUrl);
+}
+
+
+function findWaiverLink_(name) {
+  const folderId = WAIVER_DRIVE_ID;
+  const waiverFolder = DriveApp.getFolderById(folderId);
+
+  console.log(`Now searching for waiver with name ${name}`);
+  const files = waiverFolder.searchFiles(`title contains \"${name}\"`);
+
+  const results = [];
+
+  while (files.hasNext()) {
+    const file = files.next();
+    console.log(file.getName());
+    results.push(file.getUrl());
+  }
+
+  return results.join('\n');
+}
+
+
 function getExpirationDate(semCode) {
   const validDuration = MEMBERSHIP_DURATION;
 
@@ -369,3 +401,4 @@ function getExpirationDate(semCode) {
   };
 
 }
+

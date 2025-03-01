@@ -11,6 +11,9 @@ const TIMEZONE = getUserTimeZone_();
 const MCRUN_EMAIL = 'mcrunningclub@ssmu.ca';
 const MEMBERSHIP_DURATION = 1;    // 1 year
 
+// DRIVE URL CONTAINING WAIVERS; NOT CONFIDENTIAL
+const WAIVER_DRIVE_ID = '1lNAvGMsm-ixa7rAQHqTdd_gV-W4WNwpOdx4Zx7S_AZ8_6EQ8ammSEwy3A3xzbPsPp7eUnvnf';
+
 // LIST OF COLUMNS IN SHEET_NAME
 // Please update any changes made in active sheet
 const REGISTRATION_DATE_COL = 1;      // Column 'A'
