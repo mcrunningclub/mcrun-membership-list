@@ -309,15 +309,17 @@ function getInteracRefNumberFromEmail_(row = MAIN_SHEET.getLastRow()) {
   }
 
   if (checkTheseRef.length > 0) {
-    var errorEmail = {
+    const errorEmail = {
       to: 'mcrunningclub@ssmu.ca',
       subject: 'ATTENTION: Interac Reference(s) to CHECK!',
-      body: `
-      Cannot identify new Interac e-Transfer Reference number(s): ${checkTheseRef.join(', ')}
+      body: 
+  `
+  Cannot identify new Interac e-Transfer Reference number(s): ${checkTheseRef.join(', ')}
       
-      Please check the newest entry of the membership list.
+  Please check the newest entry of the membership list.
       
-      Automatic email created by 'Membership Collected (main)' script.`
+  Automatic email created by 'Membership Collected (main)' script.
+  `
     };
 
     // Send warning email for unlabeled interac emails in inbox
