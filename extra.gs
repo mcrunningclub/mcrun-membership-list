@@ -102,6 +102,45 @@ function doPostTest_(e) {
   }
 }
 
+// This was to test if passing range as argument refers to original range
+// after sorting. Conclusion: it does not... :(
+/* 
+function testRangeRef_() {
+  const THIS_SHEET = 'testMe';
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(THIS_SHEET);
+  
+  const timezone = getUserTimeZone_();
+  const time = Utilities.formatDate(new Date(), timezone, 'HH:mm:ss.SSS');
+
+  const lastRow = sheet.getLastRow() + 1;
+
+  const info = [`${time}`, 'hello', 'world'];
+  const newRange = sheet.getRange(lastRow, 1, 1, info.length);
+  console.log(`Expected values: `, info);
+
+  newRange.setValues([info]);
+
+  callMe(sheet);
+  Utilities.sleep(3000);
+  displayValues(newRange, sheet);
+
+  
+  function callMe(mySheet) {
+    const myTime = 'c-' + Utilities.formatDate(new Date(), timezone, 'HH:mm:ss.SSS');
+    const newInfo = [`${myTime}`, 'goodbye', 'world'];
+
+    sheet.appendRow(newInfo);
+    const range = sheet.getRange(1, 1, mySheet.getLastRow(), 3);
+    range.sort({column: 1, ascending: false});
+  }
+
+}
+
+function displayValues_(targetRange, sheet) {
+  console.log('Received values:', targetRange.getDisplayValues());
+  const thisRange = sheet.getRange(sheet.getLastRow(), 1, 1, 3)
+  console.log(thisRange.getDisplayValues());
+} */
 
 /* DEPRICATED OR JUNK FUNCTIONS */
 function drafts_() {
