@@ -18,17 +18,17 @@ function trimWhitespace_(lastRow = MAIN_SHEET.getLastRow()) {
 
 
 /**
- * Returns reg expression for target string.
+ * Returns normalize str without accents.
  * 
- * @param {string}  targetSubstring  String used to create regex.
- * @return {RegExp}   Returns regular expression.
+ * @param {string}  str  String to normalize.
+ * @return {string}   Stripped str.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
- * @date  Oct 8, 2023
+ * @date  Mar 5, 2025
  */
 
-function getRegEx_(targetSubstring) {
-  return RegExp(targetSubstring, 'g');
+function removeDiacritics(str) {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 

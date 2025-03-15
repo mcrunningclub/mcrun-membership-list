@@ -16,7 +16,7 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
 
   addMissingItems_(newRow);
   formatMainView();
-  getInteracRefNumberFromEmail_(newRow);
+  checkAndSetPaymentRef_(newRow);
 
   // Wrap around try-catch since GAS does not support async calls
   try {
