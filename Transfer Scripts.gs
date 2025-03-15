@@ -26,6 +26,8 @@ function onChange(e) {
 
       const lastRow = copyToMain(registrationObj);
       onFormSubmit(lastRow);
+      
+      // Successful execution...
       console.log('Exiting if-statement successfully!');
     }
   }

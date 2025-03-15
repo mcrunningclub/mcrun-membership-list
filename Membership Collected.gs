@@ -31,6 +31,7 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
     setWaiverUrl(newRow);
     addLastSubmissionToMaster();
     sortMainByName();
+    SpreadsheetApp.flush();   // Applies all pending changes before executing again
   }
 }
 

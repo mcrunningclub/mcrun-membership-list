@@ -102,8 +102,12 @@ function doPostTest_(e) {
   }
 }
 
-// This was to test if passing range as argument refers to original range
-// after sorting. Conclusion: it does not... :(
+
+
+function fixConcurrentRuns() {
+// TEST 1
+// Does `let r = range` refer to the same row when used as argument
+// after sorting? Conclusion: it does not... :(
 /* 
 function testRangeRef_() {
   const THIS_SHEET = 'testMe';
@@ -124,7 +128,6 @@ function testRangeRef_() {
   Utilities.sleep(3000);
   displayValues(newRange, sheet);
 
-  
   function callMe(mySheet) {
     const myTime = 'c-' + Utilities.formatDate(new Date(), timezone, 'HH:mm:ss.SSS');
     const newInfo = [`${myTime}`, 'goodbye', 'world'];
@@ -141,6 +144,58 @@ function displayValues_(targetRange, sheet) {
   const thisRange = sheet.getRange(sheet.getLastRow(), 1, 1, 3)
   console.log(thisRange.getDisplayValues());
 } */
+
+
+// TEST 2
+// Trying to prevent concurrent running, but limit is 30 sec (including time waited for lock)
+// When adding new member, it takes around 20 sec to run.
+/* 
+function testLock() {
+  const lock = LockService.getScriptLock();
+  
+  if (lock.tryLock(30000)) { // Try getting lock for up to 30 seconds
+    try {
+      Logger.log("Script started: " + new Date());
+      Utilities.sleep(20000); // Simulate a long-running process (20 sec)
+      Logger.log("Script finished: " + new Date());
+
+    } finally {
+      lock.releaseLock();
+    }
+  } else {
+    Logger.log("Another script is still running. Exiting...");
+  }
+}
+
+
+function testLockWithLogs() {
+  const lock = LockService.getScriptLock();
+
+  let waitedTime = 0;
+  const maxWaitTime = 75000; // Max wait time in ms (75 sec)
+
+  // Wait until the lock is free
+  while (!lock.tryLock(1000)) { // Try to get the lock every second
+    Logger.log("Waiting for another script to finish... " + (waitedTime / 1000) + "s");
+    waitedTime += 1000;
+    
+    if (waitedTime >= maxWaitTime) {
+      Logger.log("Timeout! Another script is still running. Exiting...");
+      return;
+    }
+  }
+
+  try {
+    Logger.log("Script locked! " + new Date());
+    Utilities.sleep(20000); // Simulate script execution for 20s
+    
+  } finally {
+    lock.releaseLock();
+    Logger.log("Script unlocked. " + new Date());
+  }
+} */
+}
+
 
 /* DEPRICATED OR JUNK FUNCTIONS */
 function drafts_() {
