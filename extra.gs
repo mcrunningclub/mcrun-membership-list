@@ -59,6 +59,18 @@ function printFunctions() {
   Logger.log(getFunctionNames_());
 }
 
+
+function onMemberAddedByApp_() {
+  cleanMasterRegistration();
+  encodeByRow(MASTER_SHEET);
+  insertRegistrationSem();
+
+  // Allow onEdit to trigger and transfer target data
+  Utilities.sleep(1 * 60 * 100);   // ~6 sec
+  sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
+}
+
+
 function extractFeeStatus() {
   const rangeFeeStatus = sheet.getRange(lastRow, MASTER_FEE_STATUS);
   const feeStatus = rangeFeeStatus.getValue();
@@ -104,7 +116,7 @@ function doPostTest_(e) {
 
 
 
-function fixConcurrentRuns() {
+function fixConcurrentRuns_() {
 // TEST 1
 // Does `let r = range` refer to the same row when used as argument
 // after sorting? Conclusion: it does not... :(
@@ -287,7 +299,7 @@ function drafts_() {
    * @WARNING: no longer in use since `MASTER` deleted
    */   
 
-  function _deleteEmptyRows() {
+  function deleteEmptyRows_() {
     Utilities.sleep(3000);
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = spreadsheet.getSheetByName("MASTER");

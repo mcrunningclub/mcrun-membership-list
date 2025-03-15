@@ -59,6 +59,31 @@ function sortMainByName() {
 
 
 /**
+ * Sort main sheet iff lock is free. This prevents sorting while
+ * another process runs, expecting latest registration in last row.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
+ * @date  Mar 15, 2025
+ * @update  Mar 15, 2025
+ */
+
+function tryAndSortMain() {
+  const lock = LockService.getScriptLock();
+
+  // Try getting lock for up to 10 seconds
+  if (lock.tryLock(10000)) { 
+    try {
+      sortMainByName();
+    } finally {
+      lock.releaseLock();
+    }
+  } else {
+    console.log("Another script is running. Unable to sort now");
+  }
+}
+
+
+/**
  * Formats `MAIN_SHEET` for simple and uniform UX.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
@@ -182,7 +207,7 @@ function addMissingItems_(row) {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Dec 11, 2024
- * @update  Feb 16, 2025
+ * @update  March 15, 2025
  * 
  */
 
@@ -204,28 +229,28 @@ function fixLetterCaseInRow_(row = getLastSubmissionInMain()) {
 
   // Now replace raw values with capitalized ones
   rangeToCapitalize.setValues([capitalizedValues]);
-}
 
+  // Helper function
+  function formatName(name) {
+    // Step 1: Trim whitespace from the beginning and end
+    let formattedName = name.trim();
 
-function formatName(name) {
-  // Step 1: Trim whitespace from the beginning and end
-  let formattedName = name.trim();
+    // Step 2: Normalize the string to NFC (Canonical Composition)
+    formattedName = formattedName.normalize("NFC");
 
-  // Step 2: Normalize the string to NFC (Canonical Composition)
-  formattedName = formattedName.normalize("NFC");
+    // Step 3: Split by spaces and hyphens to handle individual words
+    formattedName = formattedName.split(/[\s-]+/).map(word => {
+      // Capitalize the first letter and lowercase the rest of each word
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(" ");
 
-  // Step 3: Split by spaces and hyphens to handle individual words
-  formattedName = formattedName.split(/[\s-]+/).map(word => {
-    // Capitalize the first letter and lowercase the rest of each word
-    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-  }).join(" ");
+    // Step 4: Handle hyphenated names by rejoining with the correct hyphen case
+    formattedName = formattedName.replace(/(\w)-(\w)/g, (match, p1, p2) => {
+      return p1.toUpperCase() + '-' + p2.toLowerCase();
+    });
 
-  // Step 4: Handle hyphenated names by rejoining with the correct hyphen case
-  formattedName = formattedName.replace(/(\w)-(\w)/g, (match, p1, p2) => {
-    return p1.toUpperCase() + '-' + p2.toLowerCase();
-  });
-
-  return formattedName;
+    return formattedName;
+  }
 }
 
 

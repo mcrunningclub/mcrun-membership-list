@@ -1,6 +1,8 @@
 /**
  * Run formatting functions after new member submits a registration form.
  * 
+ * Prevents sorting in main if concurrent runs.
+ * 
  * https://developers.google.com/apps-script/samples/automations/event-session-signup
  * 
  * https://stackoverflow.com/questions/62246016/how-to-check-if-current-form-submission-is-editing-response
@@ -29,9 +31,9 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
   finally {
     // Must add and sort AFTER extracting Interac info from email
     setWaiverUrl(newRow);
-    addLastSubmissionToMaster();
-    sortMainByName();
-    SpreadsheetApp.flush();   // Applies all pending changes before executing again
+    addLastSubmissionToMaster(newRow);
+    tryAndSortMain();   // Can only sort if lock not acquired (to prevent concurrent sorting)
+    SpreadsheetApp.flush();   // Applies all pending changes
   }
 }
 
@@ -357,7 +359,20 @@ function extractInteracRef_(emailBody) {
 }
 
 
-function setWaiverUrl(row = MAIN_SHEET.getLastRow()) {
+/**
+ * Find and set waiver url to new member registration.
+ * 
+ * Waiver is automatically saved by Fillout to a specific folder.
+ * 
+ * @param {number} [row=getLastSubmissionInMain()]  Row index to find and set url.
+ *                                                  Defaults to the last row in main sheet.
+ *  
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Mar 1, 2025
+ * @update  Mar 15, 2025
+ */
+
+function setWaiverUrl(row = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
 
   // Search for waiver link using member name
@@ -368,6 +383,18 @@ function setWaiverUrl(row = MAIN_SHEET.getLastRow()) {
   sheet.getRange(row, WAIVER_COL).setValue(waiverUrl);
 }
 
+
+/**
+ * Find waiver using member's name. Helper function for setWaiverUrl
+ * 
+ * Waiver is automatically saved by Fillout to folder with id `WAIVER_DRIVE_ID`.
+ * 
+ * @param {string} name  The name of member.
+ *  
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Mar 1, 2025
+ * @update  Mar 15, 2025
+ */
 
 function findWaiverLink_(name) {
   const folderId = WAIVER_DRIVE_ID;
@@ -386,6 +413,17 @@ function findWaiverLink_(name) {
 
   return results.join('\n');
 }
+
+
+/**
+ * Get expiration date of member fee using `semCode` and `MEMBERSHIP_DURATION`.
+ * 
+ * @param {string} semCode  The 3-char code representing the semester and year.
+ *  
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Feb 28, 2025
+ * @update  Feb 28, 2025
+ */
 
 
 function getExpirationDate(semCode) {

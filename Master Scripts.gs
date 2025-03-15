@@ -35,20 +35,11 @@ function createMaster() {
   consolidateMemberData();
 }
 
-function addLastSubmissionToMaster() {
-  consolidateLastSubmission();
+function addLastSubmissionToMaster(lastRow = getLastSubmissionInMain()) {
+  consolidateLastSubmission(lastRow);
   sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
 }
 
-function onMemberAddedByApp() {
-  cleanMasterRegistration();
-  encodeByRow(MASTER_SHEET);
-  insertRegistrationSem();
-
-  // Allow onEdit to trigger and transfer target data
-  Utilities.sleep(1 * 60 * 100);   // ~6 sec
-  sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
-}
 
 /**
  * Updates Payment History in `MASTER` from the member's semester sheet where they registered.
@@ -118,17 +109,17 @@ function updateIsFeePaid(payHistory, memberRow, isFeePaidCol, semesterSheet) {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 21, 2024
+ * @update Mar 15, 2025
  * 
  * ```javascript
  * // Sample Script ➜ Storing processed submission.
- * const processedData = processLastSubmission();
+ * const processedData = processLastSubmission(21);
  * ```
  */
 
-function processLastSubmission() {
-  const lastRowNum = getLastSubmissionInMain();     // Last row num from 'MAIN_SHEET'
+function processLastSubmission(lastRow = getLastSubmissionInMain()) {
   const semesterCode = getSemesterCode_(SHEET_NAME); // Get the semester code based on the sheet name
-  var lastSubmission = MAIN_SHEET.getSheetValues(lastRowNum, 1, 1, MASTER_COL_SIZE)[0];
+  var lastSubmission = MAIN_SHEET.getSheetValues(lastRow, 1, 1, MASTER_COL_SIZE)[0];
 
   const indicesToProcess = [PROCESSED_ARR.MEMBER_DESCR, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
 
@@ -162,11 +153,12 @@ function processLastSubmission() {
  *
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 21, 2024
+ * @update Mar 15, 2025
  */
 
-function consolidateLastSubmission() {
+function consolidateLastSubmission(lastRow = getLastSubmissionInMain()) {
   var sheet = MASTER_SHEET;
-  var processedLastSubmission = processLastSubmission();
+  var processedLastSubmission = processLastSubmission(lastRow);
 
   // Search for user in 'MASTER'
   const lastEmail = processedLastSubmission[PROCESSED_ARR.EMAIL];
