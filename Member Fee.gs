@@ -36,6 +36,18 @@ function checkAndSetPaymentRef_(row = getLastSubmissionInMain()) {
 }
 
 
+// @TODO: combine with Interac version
+function setZeffyPaid_(row) {
+  const sheet = MAIN_SHEET;
+  const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
+
+  sheet.getRange(row, IS_FEE_PAID_COL).check();
+  sheet.getRange(row, COLLECTION_DATE_COL).setValue(currentDate);
+  sheet.getRange(row, COLLECTION_PERSON_COL).setValue('(Online Payment)');
+  sheet.getRange(row, IS_INTERNAL_COLLECTED_COL).check();
+}
+
+
 function getMatchingPayments_(sender) {
   const searchStr = getGmailSearchString(sender);
   let threads = [];
@@ -49,13 +61,13 @@ function getMatchingPayments_(sender) {
   }
 
   return threads;
+}
 
-  // Get threads from search (from:sender, starting:yesterday, in:inbox)
-  function getGmailSearchString(sender) {
-    const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
-    const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd');
-    return `from:(${sender}) in:inbox after:${formattedYesterday}`;
-  }
+// Get threads from search (from:sender, starting:yesterday, in:inbox)
+function getGmailSearchString(sender) {
+  const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
+  const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd');
+  return `from:(${sender}) in:inbox after:${formattedYesterday}`;
 }
 
 
@@ -81,79 +93,67 @@ function checkAndSetZeffyPayment(row, member) {
   const sender = ZEFFY_EMAIL;
   const threads = getMatchingPayments_(sender);
 
+  let isFound = threads.some(thread => processThread(thread, member));
+  if (isFound) {
+    setZeffyPaid_(row);
+  }
+
+  return isFound;
+}
+
+/**
+ * Process a single Gmail thread to find a matching member's payment.
+ */
+function processThread(thread, member) {
+  const messages = thread.getMessages();
+  let starredCount = 0;
   let isFound = false;
 
-  // Zeffy emails are grouped by day (single thread). 
-  // One thread might have multiple messages, each a different member's payment confirmation.
-  for (let i = 0; (!isFound && i < threads.length); i++) {
-    const thread = threads[i];
-    const messages = thread.getMessages();
-
-    let starredCount = 0;   // Counter of starred messages in thread
-
-    for (const message of messages) {
-      // Check if message starred, i.e. has been previously matched with another member
-      if (message.isStarred()) {
-        starredCount++;
-      }
-      else {
-        const emailBody = message.getPlainBody();
-        isFound = isMemberMatchedInEmail(member, emailBody);
-
-        if (isFound) {
-          setZeffyPaid_(row);
-          message.star();   // Star message since is used
-          starredCount++;   // Increment count since starred
-        }
-      }
+  for (const message of messages) {
+    if (message.isStarred()) {
+      starredCount++; // Already processed, skip
+      continue;
     }
 
-    if (starredCount === messages.length) {
-      cleanUpMatchedThread(thread);
+    const emailBody = message.getPlainBody();
+    isFound = matchMemberInEmail(member, emailBody);
+
+    if (isFound) {
+      message.star();
+      starredCount++;
     }
   }
 
-  // Has the transaction been found?
+  if (starredCount === messages.length) {
+    cleanUpMatchedThread(thread);
+  }
+
   return isFound;
 
 
-  ///  👉  HELPER FUNCTIONS BELOW   \\\
-
-  // Return true if member matched in body of email
-  // Only discerning information in Zeffy email is member name and email
-  function isMemberMatchedInEmail(member, emailBody) {
+  /**
+   * Checks if a member's name or email is present in the email body.
+   */
+  function matchMemberInEmail(member, emailBody) {
     const strippedName = removeDiacritics(member.name);
-
-    const searchPattern = new RegExp(
-      `${member.email}|${member.name}|${strippedName}`, 'i');
-
-    return (emailBody.match(searchPattern) !== null);
+    const searchPattern = new RegExp(`\\b(${member.email}|${member.name}|${strippedName})\\b`, 'i');
+    return searchPattern.test(emailBody);
   }
 
-  
-  // THREAD CLEANUP: Once all messages in thread starred, it can be
-  // removed from inbox, marked read and moved to `zeffyLabel` folder
+  /**
+   * Marks a fully processed thread as read, archives it, and moves it to the Zeffy folder.
+   */
   function cleanUpMatchedThread(thread) {
     thread.markRead();
     thread.moveToArchive();
 
-    // Move to Zeffy folder
     const zeffyLabel = GmailApp.getUserLabelByName(ZEFFY_LABEL);
-    thread.addLabel(zeffyLabel);
+    if (zeffyLabel) {
+      thread.addLabel(zeffyLabel);
+    }
 
     console.log('Thread fully matched. Now removed from inbox');
   }
-}
-
-// @TODO: combine with Interac version
-function setZeffyPaid_(row) {
-  const sheet = MAIN_SHEET;
-  const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
-
-  sheet.getRange(row, IS_FEE_PAID_COL).check();
-  sheet.getRange(row, COLLECTION_DATE_COL).setValue(currentDate);
-  sheet.getRange(row, COLLECTION_PERSON_COL).setValue('(Online Payment)');
-  sheet.getRange(row, IS_INTERNAL_COLLECTED_COL).check();
 }
 
 
