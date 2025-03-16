@@ -106,18 +106,6 @@ const FEE_STATUS_ENUM = [
   "Expired"
 ];
 
-// Found in `Internal Fee Collection` sheet
-const INTERAC_ITEM_COL = 'A3';
-const ONLINE_PAYMENT_ITEM_COL = 'A4';
-
-function getPaymentItem(colIndex) {
-  return SpreadsheetApp
-    .getActiveSpreadsheet()
-    .getSheetByName("Internal Fee Collection")
-    .getRange(colIndex)
-    .getValue();
-}
-
 
 // GSheet formula for IS_FEE_PAID_COL in `MASTER`
 const isFeePaidFormula = `
