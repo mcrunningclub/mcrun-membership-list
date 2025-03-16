@@ -13,9 +13,9 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
   trimWhitespace_(newRow);
   fixLetterCaseInRow_(newRow);
   encodeLastRow_(newRow);   // create unique member ID
-
   addMissingItems_(newRow);
-  formatMainView();
+
+  // Get payment information from Interac or Zeffy email
   checkAndSetPaymentRef_(newRow);
 
   // Wrap around try-catch since GAS does not support async calls
@@ -32,7 +32,7 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
     // Must add and sort AFTER extracting Interac info from email
     setWaiverUrl(newRow);
     addLastSubmissionToMaster(newRow);
-    tryAndSortMain();   // Can only sort if lock not acquired (to prevent concurrent sorting)
+    tryAndSortMain();   // Can only sort and format view if lock not acquired (to prevent concurrent runs)
     SpreadsheetApp.flush();   // Applies all pending changes
   }
 }

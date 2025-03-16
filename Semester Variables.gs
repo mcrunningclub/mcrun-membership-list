@@ -27,7 +27,7 @@ const DESCRIPTION_COL = 8;            // Column 'H'
 const REFERRAL_COL = 9;               // Column 'I'
 const WAIVER_COL = 10;                // Column 'J'
 const PAYMENT_METHOD_COL = 11;        // Column 'K'
-const INTERACT_REF_COL = 12;          // Column 'L'
+const INTERAC_REF_COL = 12;          // Column 'L'
 const EMPTY_COL = 13;                 // Column 'M'
 const IS_FEE_PAID_COL = 14;           // Column 'N'
 const COLLECTION_DATE_COL = 15;       // Column 'O'
@@ -88,7 +88,7 @@ const IMPORT_MAP = {
   'referral': REFERRAL_COL,
   'waiver': WAIVER_COL,
   'paymentMethod': PAYMENT_METHOD_COL,
-  'interacRef': INTERACT_REF_COL,
+  'interacRef': INTERAC_REF_COL,
   'comments': COMMENTS_COL,
 }
 
@@ -108,12 +108,13 @@ const FEE_STATUS_ENUM = [
 
 // Found in `Internal Fee Collection` sheet
 const INTERAC_ITEM_COL = 'A3';
+const ONLINE_PAYMENT_ITEM_COL = 'A4';
 
-function getInteracItem() {
+function getPaymentItem(colIndex) {
   return SpreadsheetApp
     .getActiveSpreadsheet()
     .getSheetByName("Internal Fee Collection")
-    .getRange(INTERAC_ITEM_COL)
+    .getRange(colIndex)
     .getValue();
 }
 

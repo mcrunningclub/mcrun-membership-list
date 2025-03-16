@@ -74,6 +74,7 @@ function tryAndSortMain() {
   if (lock.tryLock(10000)) { 
     try {
       sortMainByName();
+      formatMainView();
     } finally {
       lock.releaseLock();
     }
@@ -159,7 +160,7 @@ function formatMainView() {
     [REFERRAL_COL]: 145,
     [WAIVER_COL]: 185,
     [PAYMENT_METHOD_COL]: 155,
-    [INTERACT_REF_COL]: 155,
+    [INTERAC_REF_COL]: 155,
     [EMPTY_COL]: 40,
     [IS_FEE_PAID_COL]: 75,
     [COLLECTION_DATE_COL]: 150,

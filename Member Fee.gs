@@ -3,105 +3,145 @@
 const ZEFFY_EMAIL = 'contact@zeffy.com';
 const INTERAC_EMAIL = 'interac.ca';    // Interac email address end in "interac.ca"
 
-const ZEFFY_LABEL = 'Fee Payments/Zeffy Emails';
-const INTERAC_LABEL = 'Fee Payments/Interac Emails';
+const ZEFFY_LABEL = 'fee-payments-zeffy-emails';
+const INTERAC_LABEL = 'fee-payments-interac-emails';
 
 
 function checkAndSetPaymentRef_(row = getLastSubmissionInMain()) {
+  // Get values of member's registration
   const sheet = MAIN_SHEET;
+  const values = sheet.getSheetValues(row, 1, 1, sheet.getLastColumn())[0].unshift('');
 
-  const numCol = EMAIL_COL - PAYMENT_METHOD_COL + 1;
-  const values = sheet.getSheetValues(row, EMAIL_COL, 1, numCol)[0].unshift('');
-  const paymentMethod = values[PAYMENT_METHOD_COL];
+  const memberEmail = values[EMAIL_COL];
+  const memberName = `${values[FIRST_NAME_COL]} ${values[LAST_NAME_COL]}`;
+  const memberPaymentMethod = values[PAYMENT_METHOD_COL];
+  const memberInteracRef = values[INTERAC_REF_COL];
 
-  if (paymentMethod.includes('CC')) {
-    const email = values[EMAIL_COL];
-    const name = `${values[FIRST_NAME_COL]} ${values[LAST_NAME_COL]}`;
-    checkZeffyEmail({ name: name, email: email }, row)
-  }
-  else if (paymentMethod.includes('Interac')) {
-    getAndSetInteracRef_(row);
-  }
-  else {
-    console.log('checkAndSetPaymentRef : what to do for else...?');
+  // Has the payment been found in inbox?
+  const isFound = checkPayment(memberPaymentMethod);
+
+  if (!isFound) {
+    throw new Error(`Unable to find Zeffy email for member ${memberName}. Please verify again.`);
   }
 
+  function checkPayment(paymentMethod) {
+    if (paymentMethod.includes('CC')) {
+      return checkAndSetZeffyPayment(row, { name: memberName, email: memberEmail });
+    }
+    else if (paymentMethod.includes('Interac')) {
+      return checkAndSetInteracRef(row, memberInteracRef);
+    }
+    return false;
+  }
+}
+
+
+function getMatchingPayments_(sender) {
+  const searchStr = getGmailSearchString(sender);
+  let threads = [];
+  let delay = 10000; // Start with 10 seconds
+
+  // Search inbox until successful (max 3 tries)
+  for (let tries = 0; tries < 3 && threads.length === 0; tries++) {
+    if (tries > 0) Utilities.sleep(delay);  // Wait only on retries
+    threads = GmailApp.search(searchStr, 0, 3);
+    delay *= 2; // Exponential backoff (10s → 20s → 40s)
+  }
+
+  return threads;
+
+  // Get threads from search (from:sender, starting:yesterday, in:inbox)
+  function getGmailSearchString(sender) {
+    const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
+    const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd');
+    return `from:(${sender}) in:inbox after:${formattedYesterday}`;
+  }
 }
 
 
 ///  👉 FUNCTIONS HANDLING ZEFFY TRANSACTIONS 👈  \\\
 
-
 /**
- * Verify zeffy payment for latest registration.
+ * Verify Zeffy payment transaction for latest registration.
  * 
- * Must have the member submission in last row of `MAIN` to work.
+ * Must have the member submission in last row of main sheet to work.
  * 
- * @param {Object<String>} member  The member's information.
+ * @param {integer} row  Member's row index in GSheet.
+ * 
+ * @param {Object} member  Member information.
+ * @param {string} member.name  Name of member.
+ * @param {string} member.email  Email of member.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 15, 2025
- * @update  Mar 15, 2025
+ * @update  Mar 16, 2025
  */
 
-function checkZeffyEmail(member, row) {
-  // Format start search date (yesterday) for GmailApp.search()
-  const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
-  const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd');
+function checkAndSetZeffyPayment(row, member) {
+  const sender = ZEFFY_EMAIL;
+  const threads = getMatchingPayments_(sender);
 
-  const zeffyLabelName = ZEFFY_LABEL;
-  const searchStr = `from:(${ZEFFY_EMAIL}) in:inbox after:${formattedYesterday}`;
-  const threads = GmailApp.search(searchStr, 0, 3);
+  let isFound = false;
 
-  if (threads.length === 0) {
-    throw new Error(`No Zeffy payment emails in inbox. Please verify again for latest member registration.`);
-  }
-
-  // Zeffy emails are grouped by day (single thread). One email might have multiple messages then.
-  for (thread of threads) {
+  // Zeffy emails are grouped by day (single thread). 
+  // One thread might have multiple messages, each a different member's payment confirmation.
+  for (let i = 0; (!isFound && i < threads.length); i++) {
+    const thread = threads[i];
     const messages = thread.getMessages();
-    let starredCount = 0;   // Counter of starred messages in thread
-    let isFound = false;
 
-    for (let i = 0; i < messages.length; i++) {
-      const message = messages[i];
-      // Check if message starred, i.e. has been used before
+    let starredCount = 0;   // Counter of starred messages in thread
+
+    for (const message of messages) {
+      // Check if message starred, i.e. has been previously matched with another member
       if (message.isStarred()) {
         starredCount++;
       }
-      else if (!message.isStarred() && !isFound) {
+      else {
         const emailBody = message.getPlainBody();
-        const match = extractZeffyRef_(member, emailBody);
+        isFound = isMemberMatchedInEmail(member, emailBody);
 
-        if (match) {
+        if (isFound) {
           setZeffyPaid_(row);
           message.star();   // Star message since is used
           starredCount++;   // Increment count since starred
-          isFound = true;
         }
       }
     }
 
-    // Once thread has all starred messages, it can be removed
-    // from inbox, marked read and moved to `zeffyLabel` folder
     if (starredCount === messages.length) {
-      thread.markRead();
-      thread.moveToArchive();
-      console.log('Removed from inbox');
-
-      const zeffyLabel = GmailApp.getUserLabelByName(zeffyLabelName);
-      thread.addLabel(zeffyLabel);
+      cleanUpMatchedThread(thread);
     }
   }
 
+  // Has the transaction been found?
+  return isFound;
+
+
+  ///  👉  HELPER FUNCTIONS BELOW   \\\
+
+  // Return true if member matched in body of email
   // Only discerning information in Zeffy email is member name and email
-  function extractZeffyRef_(member, emailBody) {
+  function isMemberMatchedInEmail(member, emailBody) {
     const strippedName = removeDiacritics(member.name);
 
     const searchPattern = new RegExp(
       `${member.email}|${member.name}|${strippedName}`, 'i');
 
-    return emailBody.match(searchPattern);
+    return (emailBody.match(searchPattern) !== null);
+  }
+
+  
+  // THREAD CLEANUP: Once all messages in thread starred, it can be
+  // removed from inbox, marked read and moved to `zeffyLabel` folder
+  function cleanUpMatchedThread(thread) {
+    thread.markRead();
+    thread.moveToArchive();
+
+    // Move to Zeffy folder
+    const zeffyLabel = GmailApp.getUserLabelByName(ZEFFY_LABEL);
+    thread.addLabel(zeffyLabel);
+
+    console.log('Thread fully matched. Now removed from inbox');
   }
 }
 
@@ -120,7 +160,6 @@ function setZeffyPaid_(row) {
 
 ///  👉 FUNCTIONS HANDLING INTERAC TRANSACTIONS 👈  \\\
 
-
 /**
  * Checks if new submission paid using Interac e-Transfer and completes collection info.
  * 
@@ -129,32 +168,26 @@ function setZeffyPaid_(row) {
  * Helper function for getReferenceNumberFromEmail_()
  * 
  * @param {string} emailInteracRef  The Interac e-Transfer reference found in email.
- * @return {integer}  Returns status code.
+ * @param {number} [row=getLastSubmissionInMain()]  Row index to enter Interac ref.
+ *                                                  Defaults to the last row in main sheet.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
- * @update  Feb 10, 2025
+ * @update  March 16, 2025
  */
 
-function enterInteracRef_(emailInteracRef, row = getLastSubmissionInMain()) {
+function enterInteracRef_(row = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
 
   const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
-  const userInteracRef = sheet.getRange(row, INTERACT_REF_COL);
 
-  if (userInteracRef.getValue() != emailInteracRef) {
-    return false;
-  }
-
-  // Copy the '(isInterac)' list item in `Internal Fee Collection` to set in 'Collection Person' col
-  const interacItem = getInteracItem();
+  // Copy the '(e-Transfer)' list item in `Internal Fee Collection` to set in 'Collection Person' col
+  const interacItem = getPaymentItem(INTERAC_ITEM_COL);
 
   sheet.getRange(row, IS_FEE_PAID_COL).check();
   sheet.getRange(row, COLLECTION_DATE_COL).setValue(currentDate);
   sheet.getRange(row, COLLECTION_PERSON_COL).setValue(interacItem);
   sheet.getRange(row, IS_INTERNAL_COLLECTED_COL).check();
-
-  return true;   // Success!
 }
 
 
@@ -169,24 +202,18 @@ function enterInteracRef_(emailInteracRef, row = getLastSubmissionInMain()) {
  * @update  Feb 11, 2025
  */
 
-function getAndSetInteracRef_(row = MAIN_SHEET.getLastRow()) {
-  const paymentForm = MAIN_SHEET.getRange(row, PAYMENT_METHOD_COL).getValue();
+function checkAndSetInteracRef(row = MAIN_SHEET.getLastRow()) {
+  const sheet = MAIN_SHEET;
+  const userInteracRef = sheet.getRange(row, INTERAC_REF_COL).getValue();
 
-  if (!(String(paymentForm).includes('Interac'))) {
-    return;
-  }
-  // else if (getCurrentUserEmail_() !== MCRUN_EMAIL) {
-  //   throw new Error('Please verify the club\'s inbox to search for the Interac email');
-  // }
+  Utilities.sleep(30 * 1000);   // If payment by Interac, allow *30 sec* for Interac email confirmation to arrive
 
-  Utilities.sleep(30 * 1000);   // If payment by Interac, allow *60 sec* for Interac email confirmation to arrive
+  getGmailSearchString_(sender)
 
   // Format start search date (yesterday) for GmailApp.search()
-  const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
-  const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd');
-
   const interacLabelName = INTERAC_LABEL;
-  const searchStr = `from:(${INTERAC_EMAIL}) in:inbox after:${formattedYesterday}`;
+
+  const searchStr = getGmailSearchString_(INTERAC_EMAIL);
   const threads = GmailApp.search(searchStr, 0, 10);
 
   if (threads.length === 0) {
@@ -203,10 +230,15 @@ function getAndSetInteracRef_(row = MAIN_SHEET.getLastRow()) {
 
       // Extract Interac e-transfer reference
       const interacRef = extractInteracRef_(emailBody);
-      const isSuccess = enterInteracRef_(interacRef);
+
+      if (userInteracRef.getValue() != emailInteracRef) {
+        return false;
+      }
 
       // Success: Mark thread as read and archive it
-      if (isSuccess) {
+      if (userInteracRef === emailInteracRef) {
+        enterInteracRef_(interacRef);
+
         thread.markRead();
         thread.moveToArchive();
         thread.addLabel(interacLabel);
