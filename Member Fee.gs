@@ -1,16 +1,16 @@
-// LAST UPDATED: MAR 15, 2025
+// LAST UPDATED: MAR 16, 2025
 // PLEASE UPDATE WHEN NEEDED
 const ZEFFY_EMAIL = 'contact@zeffy.com';
-const INTERAC_EMAIL = 'interac.ca';    // Interac email address end in "interac.ca"
+const INTERAC_EMAIL = 'interac.ca';    // Interac email addresses end in "interac.ca"
 
-const ZEFFY_LABEL = 'fee-payments-zeffy-emails';
-const INTERAC_LABEL = 'fee-payments-interac-emails';
+const ZEFFY_LABEL = 'Fee Payments/Zeffy Emails';
+const INTERAC_LABEL = 'Fee Payments/Interac Emails';
 
 // Found in `Internal Fee Collection` sheet
 const INTERAC_ITEM_COL = 'A3';
 const ONLINE_PAYMENT_ITEM_COL = 'A4';
 
-function getPaymentItem(colIndex) {
+function getPaymentItem_(colIndex) {
   return SpreadsheetApp
     .getActiveSpreadsheet()
     .getSheetByName("Internal Fee Collection")
@@ -18,15 +18,18 @@ function getPaymentItem(colIndex) {
     .getValue();
 }
 
-function getGmailLabel(labelName) {
+function getGmailLabel_(labelName) {
   return GmailApp.getUserLabelByName(labelName);
 }
 
 
-function checkAndSetPaymentRef_(row = getLastSubmissionInMain()) {
-  // Get values of member's registration
+function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
-  const values = sheet.getSheetValues(row, 1, 1, sheet.getLastColumn())[0].unshift('');
+  console.log('Entering checkAndSetPaymentRef...');
+
+  // Get values of member's registration
+  const values = sheet.getSheetValues(row, 1, 1, sheet.getLastColumn())[0]
+  values.unshift('');   // Set 0-index array to 1-index for easy accessing
 
   const memberEmail = values[EMAIL_COL];
   const memberName = `${values[FIRST_NAME_COL]} ${values[LAST_NAME_COL]}`;
@@ -45,7 +48,7 @@ function checkAndSetPaymentRef_(row = getLastSubmissionInMain()) {
       return checkAndSetZeffyPayment(row, { name: memberName, email: memberEmail });
     }
     else if (paymentMethod.includes('Interac')) {
-      return checkAndSetInteracRef(row, memberInteracRef);
+      return checkAndSetInteracRef(row, { name: memberName, interacRef: memberInteracRef } );
     }
     return false;
   }
@@ -63,7 +66,7 @@ function checkAndSetPaymentRef_(row = getLastSubmissionInMain()) {
  * @update  March 16, 2025
  */
 
-function setFeeDetails(row, listItem) {
+function setFeeDetails_(row, listItem) {
   const sheet = MAIN_SHEET;
   const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
 
@@ -75,9 +78,14 @@ function setFeeDetails(row, listItem) {
 
 
 function getMatchingPayments_(sender, maxMatches) {
+  // Ensure that correct mailbox is used
+  if (getCurrentUserEmail_() !== MCRUN_EMAIL) {
+    throw new Error ('Wrong account! Please switch to McRUN\'s Gmail account');
+  }
+
   const searchStr = getGmailSearchString_(sender);
   let threads = [];
-  let delay = 10000; // Start with 10 seconds
+  let delay = 10 * 1000; // Start with 10 seconds
 
   // Search inbox until successful (max 3 tries)
   for (let tries = 0; tries < 3 && threads.length === 0; tries++) {
@@ -102,7 +110,7 @@ function getGmailSearchString_(sender) {
  * Marks a fully processed thread as read, archives it, and moves it to the `label` folder.
  */
 
-function cleanUpMatchedThread(thread, label) {
+function cleanUpMatchedThread_(thread, label) {
   thread.markRead();
   thread.moveToArchive();
   thread.addLabel(label);
@@ -110,13 +118,42 @@ function cleanUpMatchedThread(thread, label) {
   console.log('Thread cleaned up. Now removed from inbox');
 }
 
+/**
+ * Checks if a member's name, email or reference number is present in the email body.
+ */
+
+function matchMemberInPaymentEmail_(member, emailBody) {
+  const searchTerms = [
+    member.name,
+    removeDiacritics(member.name),
+    member.email,
+    member.interacRef
+  ].filter(Boolean); // Removes undefined, null, or empty strings
+
+  if (searchTerms.length === 0) return false; // Prevent empty regex errors
+
+  const searchPattern = new RegExp(`\\b(${searchTerms.join('|')})\\b`, 'i');
+  return searchPattern.test(emailBody);
+
+  // PREVIOUS CODE
+  // const strippedName = removeDiacritics(member.name);
+  // let searchStr= `${member.name}|${strippedName}`;
+
+  // // Add email of Interac ref if available
+  // if(member.email) searchStr += `|${member.email}`;
+  // if(member.interacRef) searchStr += `|${member.interacRef}`;
+
+  // const searchPattern = new RegExp(`\\b(${searchStr})\\b`, 'i');
+  // return searchPattern.test(emailBody);
+}
+
 
 
 ///  👉 FUNCTIONS HANDLING ZEFFY TRANSACTIONS 👈  \\\
 
 function setZeffyPaid_(row) {
-  const onlinePaymentItem = getPaymentItem(ONLINE_PAYMENT_ITEM_COL);
-  setFeeDetails(row, onlinePaymentItem);
+  const onlinePaymentItem = getPaymentItem_(ONLINE_PAYMENT_ITEM_COL);
+  setFeeDetails_(row, onlinePaymentItem);
 }
 
 
@@ -140,7 +177,7 @@ function checkAndSetZeffyPayment(row, member) {
   const sender = ZEFFY_EMAIL;
   const threads = getMatchingPayments_(sender);
 
-  let isFound = threads.some(thread => processZeffyThread(thread, member));
+  let isFound = threads.some(thread => processZeffyThread_(thread, member));
   if (isFound) {
     setZeffyPaid_(row);
   }
@@ -152,10 +189,11 @@ function checkAndSetZeffyPayment(row, member) {
 /**
  * Process a single Gmail thread to find a matching member's payment.
  */
-function processZeffyThread(thread, member) {
+
+function processZeffyThread_(thread, member) {
   const messages = thread.getMessages();
   let starredCount = 0;
-  let isFound = false;
+  let isFoundInMessage = false;
 
   for (const message of messages) {
     if (message.isStarred()) {
@@ -164,42 +202,31 @@ function processZeffyThread(thread, member) {
     }
 
     const emailBody = message.getPlainBody();
-    isFound = matchMemberInZeffyEmail(member, emailBody);
+    //isFound = matchMemberInZeffyEmail_(member, emailBody);
+    isFoundInMessage = matchMemberInPaymentEmail_(member, emailBody);
 
-    if (isFound) {
+    if (isFoundInMessage) {
       message.star();
       starredCount++;
     }
   }
 
   if (starredCount === messages.length) {
-    const zeffyLabel = getGmailLabel(ZEFFY_LABEL);
-    cleanUpMatchedThread(thread, zeffyLabel);
+    const zeffyLabel = getGmailLabel_(ZEFFY_LABEL);
+    cleanUpMatchedThread_(thread, zeffyLabel);
   }
 
-  return isFound;
-
-
-  /**
-   * Checks if a member's name or email is present in the email body.
-   */
-  function matchMemberInZeffyEmail(member, emailBody) {
-    const strippedName = removeDiacritics(member.name);
-    const searchPattern = new RegExp(`\\b(${member.email}|${member.name}|${strippedName})\\b`, 'i');
-    return searchPattern.test(emailBody);
-  }
+  return isFoundInMessage;
 }
 
 
 
 ///  👉 FUNCTIONS HANDLING INTERAC TRANSACTIONS 👈  \\\
 
-
 function setInteractPaid_(row) {
-  const interacItem = getPaymentItem(INTERAC_ITEM_COL);
-  setFeeDetails(row, interacItem);
+  const interacItem = getPaymentItem_(INTERAC_ITEM_COL);
+  setFeeDetails_(row, interacItem);
 }
-
 
 /**
  * Look for new emails from Interac starting yesterday (cannot search from same day) and extract ref number.
@@ -212,53 +239,56 @@ function setInteractPaid_(row) {
  * @update  Mar 16, 2025
  */
 
-function checkAndSetInteracRef(row, memberInteracRef) {
+function checkAndSetInteracRef(row, member) {
   const sender = INTERAC_EMAIL;
   const maxMatches = 10;
   const threads = getMatchingPayments_(sender, maxMatches);
 
   // Save results of thread processing
-  const store = { isFound : false, unidentified : [] };
+  let thisIsFound = false;
+  const thisUnidentified = [];
 
   // Most Interac email threads only have 1 message, so O(n) instead of O(n**2). Coded as safeguard.
   for (const thread of threads) {
-    const result = processInteracThreads_(thread, memberInteracRef);
+    const result = processInteracThreads_(thread, member);
 
     // Set store.isFound to true iff result.isFound=true
-    if (result.isFound) store.isFound = true;
-    unidentified.push(...result.unidentified);
+    if (result.isFound) thisIsFound = true;
+    thisUnidentified.push(...result.unidentified);
   }
 
   // Update member's payment information
-  if (isFound) {
+  if (thisIsFound) {
     setInteractPaid_(row);
   }
   // Notify McRUN about references not identified
-  else if (unidentified.length > 0){
-    emailUnidentifiedRef(unidentified);
+  else if (thisUnidentified.length > 0){
+    emailInteracRef_(thisUnidentified);
   }
 
-  return store.isFound;
+  return thisIsFound;
 }
 
-
-function processInteracThreads_(thread, memberInteracRef) {
+// Interac e-Transfer emails can be matched by a reference number
+// Or by a member's full name
+function processInteracThreads_(thread, member) {
   const messages = thread.getMessages();
   const result = {isFound : false, unidentified : []};
 
   for (message of messages) {
     const emailBody = message.getPlainBody();
 
-    // Extract Interac e-Transfer reference from email
-    const emailInteracRef = extractInteracRef_(emailBody);
+    // Try matching Interac e-Transfer email with member's reference number or name
+    const isFoundInMessage = matchMemberInPaymentEmail_(member, emailBody);
 
-    if (memberInteracRef === emailInteracRef) {
+    if (isFoundInMessage) {
       result.isFound = true;
-      cleanUpMatchedThread(thread, getGmailLabel(INTERAC_LABEL));
+      cleanUpMatchedThread_(thread, getGmailLabel_(INTERAC_LABEL));
       continue;
     }
-
-    // Store unidentified Interac references
+    
+    // If not found, store email's Interac references for later
+    const emailInteracRef = extractInteracRef_(emailBody);
     (result.unidentified).push(emailInteracRef);
   }
 
@@ -272,11 +302,11 @@ function processInteracThreads_(thread, memberInteracRef) {
  * Helper function for getReferenceNumberFromEmail_().
  * 
  * @param {string} emailBody  The body of the Interac e-Transfer email.
- * @return {string || null}  Returns extracted Interac Ref from `emailBody`, otherwise null.
+ * @return {string}  Returns extracted Interac Ref from `emailBody`, otherwise empty string.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 13, 2024
- * @update  Feb 10, 2025
+ * @update  Mar 16, 2025
  */
 
 function extractInteracRef_(emailBody) {
@@ -284,16 +314,16 @@ function extractInteracRef_(emailBody) {
   const match = emailBody.match(searchPattern);
 
   // If a reference is found, return it. Otherwise, return null
-  // The interac reference is in the second capturing group i.e. match[2];
+  // The Interac reference is in the second capturing group i.e. match[2];
   if (match && match[2]) {
     return match[2].trim();
   }
 
-  return null;
+  return '';
 }
 
 
-function emailUnidentifiedRef(references) {
+function emailInteracRef_(references) {
   const emailBody =
   `
   Cannot identify new Interac e-Transfer Reference number(s): ${references.join(', ')}
@@ -311,6 +341,4 @@ function emailUnidentifiedRef(references) {
   // Send warning email for unlabeled interac emails in inbox
   GmailApp.sendEmail(errorEmail.to, errorEmail.subject, errorEmail.body);
 }
-
-
 

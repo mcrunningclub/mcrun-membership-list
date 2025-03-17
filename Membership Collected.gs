@@ -16,7 +16,7 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
   addMissingItems_(newRow);
 
   // Get payment information from Interac or Zeffy email
-  checkAndSetPaymentRef_(newRow);
+  checkAndSetPaymentRef(newRow);
 
   // Wrap around try-catch since GAS does not support async calls
   try {

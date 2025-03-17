@@ -35,7 +35,8 @@ function onChange(e) {
     console.error(error);
   }
   finally {
-    console.log(e);
+    console.log('Entered finally clause');
+    //console.log(e);
   }
 
 }
@@ -69,7 +70,7 @@ function onEdit(e) {
   console.log(debug_e);
 
   if (thisRange.getNumRows() > 2) return;  // prevent sheet-wide changes
-  else if (thisRange.getNumColumns() > CELL_EDIT_LIMIT) {
+  else if (thisRange.getNumColumns() >= CELL_EDIT_LIMIT) {
     // TODO: add function to individually process changes
     Logger.log(`More than ${CELL_EDIT_LIMIT} columns edited at once`);
   }
@@ -107,7 +108,7 @@ function onEdit(e) {
   const targetRow = findMemberByEmail(email, targetSheet);  // Find row of member in `targetSheet` using their email
 
   // Throw error message if member not in `targetSheet`
-  if (targetRow == null) {
+  if (targetRow === null) {
     const errorMessage = `
       --- onEdit() ---
       targetRow not found in ${targetSheet}. 
@@ -212,7 +213,7 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
     const isPaid = parseBool(value);    // convert to bool
     console.log(`updateFeeInfo 3b -> Value: ${value} isPaid: ${isPaid}`);
 
-    // Only modify payment history if isPaid == true.
+    // Only modify payment history if isPaid=true.
     if (isPaid) {
       console.log("updateFeeInfo 3c -> entering isPaid");
       addPaidSemesterToHistory(targetRow, sourceSheetName);
