@@ -4,9 +4,9 @@ const CELL_EDIT_LIMIT = 4;   // set number of cells that can be edited at once
 function onChange(e) {
   // Get details of edit event's sheet
   console.log({
-    authMode:  e.authMode.toString(),
+    authMode: e.authMode.toString(),
     changeType: e.changeType,
-    user: e.user,
+    user: e.user.email,
   });
 
   const thisSource = e.source;
@@ -20,22 +20,23 @@ function onChange(e) {
     console.log(`Change Type: ${thisChange}`);
 
     if (thisSheetID === IMPORT_SHEET_ID && thisChange === 'INSERT_ROW') {
-      console.log('Executing if-statement now...');
+      console.log('Executing if block from onChange(e)...');
       const importSheet = thisSource.getSheetById(thisSheetID);
       const registrationObj = importSheet.getRange(thisLastRow, 1).getValue();
 
       const lastRow = copyToMain(registrationObj);
       onFormSubmit(lastRow);
-      
+
       // Successful execution...
-      console.log('Exiting if-statement successfully!');
+      console.log('Exiting `onFormSubmit` from onChange(e) successfully!');
     }
   }
   catch (error) {
-    console.error(error);
+    console.log('Whoops! Error raised in onChange(e)');
+    Logger.log(error);
   }
   finally {
-    console.log('Entered finally clause');
+    console.log('Entered finally clause in onChange(e)');
     //console.log(e);
   }
 
@@ -358,7 +359,7 @@ function testMigrate() {
     const testMe = JSON.parse(ex);
     console.log(testMe);
   }
-  
+
   const newRowIndex = copyToMain(ex);
   Logger.log(newRowIndex);
 }

@@ -71,7 +71,7 @@ function tryAndSortMain() {
   const lock = LockService.getScriptLock();
 
   // Try getting lock for up to 10 seconds
-  if (lock.tryLock(10000)) { 
+  if (lock.tryLock(10000)) {
     try {
       sortMainByName();
       formatMainView();

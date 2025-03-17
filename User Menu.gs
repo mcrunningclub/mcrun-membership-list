@@ -78,7 +78,7 @@ function onOpen() {
       .addItem('Prettify Main Sheet', prettifyMainUI_.name)
       .addItem('Find Waiver Url', findWaiverLinkUI_.name)
       .addItem('Create ID for Last Member', encodeLastRowUI_.name)
-      
+
     )
 
     .addSubMenu(ui.createMenu('Master Scripts')
@@ -89,7 +89,7 @@ function onOpen() {
       .addItem('Add Specific Sheet Submission (draft)', addMemberFromSheetInRowUI_.name)
     )
     .addToUi()
-  ;
+    ;
 }
 
 
@@ -247,7 +247,7 @@ function findWaiverLinkUI_() {
 
   const sheetName = SHEET_NAME;
   const functionName = findWaiverLink_.name;
- 
+
   let customMsg = "";
   const rowNumber = Number.parseInt(responseText);
 

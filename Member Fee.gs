@@ -25,7 +25,7 @@ function getGmailLabel_(labelName) {
 
 function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
-  console.log('Entering checkAndSetPaymentRef...');
+  console.log('Entering `checkAndSetPaymentRef()` now...');
 
   // Get values of member's registration
   const values = sheet.getSheetValues(row, 1, 1, sheet.getLastColumn())[0]
@@ -40,15 +40,18 @@ function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
   const isFound = checkPayment(memberPaymentMethod);
 
   if (!isFound) {
-    throw new Error(`Unable to find Zeffy email for member ${memberName}. Please verify again.`);
+    throw new Error(`Unable to find payment confirmation email for ${memberName}. Please verify again.`);
   }
+
+  // Log success message
+  console.log(`Successfully found transaction email for ${memberName}!`);
 
   function checkPayment(paymentMethod) {
     if (paymentMethod.includes('CC')) {
       return checkAndSetZeffyPayment(row, { name: memberName, email: memberEmail });
     }
     else if (paymentMethod.includes('Interac')) {
-      return checkAndSetInteracRef(row, { name: memberName, interacRef: memberInteracRef } );
+      return checkAndSetInteracRef(row, { name: memberName, interacRef: memberInteracRef });
     }
     return false;
   }
@@ -80,7 +83,7 @@ function setFeeDetails_(row, listItem) {
 function getMatchingPayments_(sender, maxMatches) {
   // Ensure that correct mailbox is used
   if (getCurrentUserEmail_() !== MCRUN_EMAIL) {
-    throw new Error ('Wrong account! Please switch to McRUN\'s Gmail account');
+    throw new Error('Wrong account! Please switch to McRUN\'s Gmail account');
   }
 
   const searchStr = getGmailSearchString_(sender);
@@ -134,17 +137,6 @@ function matchMemberInPaymentEmail_(member, emailBody) {
 
   const searchPattern = new RegExp(`\\b(${searchTerms.join('|')})\\b`, 'i');
   return searchPattern.test(emailBody);
-
-  // PREVIOUS CODE
-  // const strippedName = removeDiacritics(member.name);
-  // let searchStr= `${member.name}|${strippedName}`;
-
-  // // Add email of Interac ref if available
-  // if(member.email) searchStr += `|${member.email}`;
-  // if(member.interacRef) searchStr += `|${member.interacRef}`;
-
-  // const searchPattern = new RegExp(`\\b(${searchStr})\\b`, 'i');
-  // return searchPattern.test(emailBody);
 }
 
 
@@ -170,12 +162,13 @@ function setZeffyPaid_(row) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 15, 2025
- * @update  Mar 16, 2025
+ * @update  Mar 17, 2025
  */
 
 function checkAndSetZeffyPayment(row, member) {
   const sender = ZEFFY_EMAIL;
-  const threads = getMatchingPayments_(sender);
+  const maxMatches = 3;
+  const threads = getMatchingPayments_(sender, maxMatches);
 
   let isFound = threads.some(thread => processZeffyThread_(thread, member));
   if (isFound) {
@@ -262,7 +255,7 @@ function checkAndSetInteracRef(row, member) {
     setInteractPaid_(row);
   }
   // Notify McRUN about references not identified
-  else if (thisUnidentified.length > 0){
+  else if (thisUnidentified.length > 0) {
     emailInteracRef_(thisUnidentified);
   }
 
@@ -273,7 +266,7 @@ function checkAndSetInteracRef(row, member) {
 // Or by a member's full name
 function processInteracThreads_(thread, member) {
   const messages = thread.getMessages();
-  const result = {isFound : false, unidentified : []};
+  const result = { isFound: false, unidentified: [] };
 
   for (message of messages) {
     const emailBody = message.getPlainBody();
@@ -286,7 +279,7 @@ function processInteracThreads_(thread, member) {
       cleanUpMatchedThread_(thread, getGmailLabel_(INTERAC_LABEL));
       continue;
     }
-    
+
     // If not found, store email's Interac references for later
     const emailInteracRef = extractInteracRef_(emailBody);
     (result.unidentified).push(emailInteracRef);
@@ -325,7 +318,7 @@ function extractInteracRef_(emailBody) {
 
 function emailInteracRef_(references) {
   const emailBody =
-  `
+    `
   Cannot identify new Interac e-Transfer Reference number(s): ${references.join(', ')}
       
   Please check the newest entry of the membership list.
