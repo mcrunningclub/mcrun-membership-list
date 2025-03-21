@@ -15,10 +15,10 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
   encodeLastRow_(newRow);   // create unique member ID
   addMissingItems_(newRow);
 
+  checkAndSetPaymentRef(newRow);   // Get payment information from Interac or Zeffy email
+
   // Wrap around try-catch since GAS does not support async calls
   try {
-    checkAndSetPaymentRef(newRow);   // Get payment information from Interac or Zeffy email
-
     // Transfer new member's value to external sheet, responsible of new member communications
     const memberInfo = packageMemberInfoInRow_(newRow);
     console.log(`Member info to export to 'NewMemberComms'\n`, memberInfo);
@@ -26,7 +26,7 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
   }
   catch (e) {
     console.log(`Could not verify payment or transfer new registration to 'New Member Comms'`);
-    throw e;
+    throw Error(e);
   }
   finally {
     // Must add and sort AFTER extracting payment info from email

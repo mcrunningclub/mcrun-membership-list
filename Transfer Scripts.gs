@@ -6,7 +6,7 @@ function onChange(e) {
   console.log({
     authMode: e.authMode.toString(),
     changeType: e.changeType,
-    user: e.user.email,
+    user: e.user,
   });
 
   const thisSource = e.source;

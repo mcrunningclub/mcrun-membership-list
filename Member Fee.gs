@@ -23,6 +23,18 @@ function getGmailLabel_(labelName) {
 }
 
 
+/**
+ * Verify if member has paid fee using notification email sent by Interac or Zeffy
+ * 
+ * Update member's information in MAIN_SHEET as required.
+ * 
+ * @param {number} Row index of member.
+ *  
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Mar 16, 2025
+ * @update  Mar 21, 2025
+ */
+
 function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
   console.log('Entering `checkAndSetPaymentRef()` now...');
@@ -32,26 +44,34 @@ function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
   values.unshift('');   // Set 0-index array to 1-index for easy accessing
 
   const memberEmail = values[EMAIL_COL];
-  const memberName = `${values[FIRST_NAME_COL]} ${values[LAST_NAME_COL]}`;
+  const memberFirstName = values[FIRST_NAME_COL];
+  const memberLastName = values[LAST_NAME_COL];
+  const memberName = `${memberFirstName} ${memberLastName}`;
   const memberPaymentMethod = values[PAYMENT_METHOD_COL];
   const memberInteracRef = values[INTERAC_REF_COL];
 
   // Has the payment been found in inbox?
   const isFound = checkPayment(memberPaymentMethod);
 
-  if (!isFound) {
-    throw new Error(`Unable to find payment confirmation email for ${memberName}. Please verify again.`);
+  if (isFound) {
+    console.log(`Successfully found transaction email for ${memberName}!`);  // Log success message
+    return;
+    
   }
 
-  // Log success message
-  console.log(`Successfully found transaction email for ${memberName}!`);
-
+  // Notify McRUN of missing payment
+  notifyUnidentifiedPayment_(memberName);  
+  console.error(`Unable to find payment confirmation email for ${memberName}. Please verify again.`);
+  
+  // Helper function for Interac and Zeffy cases
   function checkPayment(paymentMethod) {
     if (paymentMethod.includes('CC')) {
-      return checkAndSetZeffyPayment(row, { name: memberName, email: memberEmail });
+      return checkAndSetZeffyPayment(row, 
+      { firstName: memberFirstName, lastName: memberLastName, email: memberEmail });
     }
     else if (paymentMethod.includes('Interac')) {
-      return checkAndSetInteracRef(row, { name: memberName, interacRef: memberInteracRef });
+      return checkAndSetInteracRef(row, 
+      { firstName: memberFirstName, lastName: memberLastName, interacRef: memberInteracRef });
     }
     return false;
   }
@@ -66,7 +86,7 @@ function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
- * @update  March 16, 2025
+ * @update  Mar 16, 2025
  */
 
 function setFeeDetails_(row, listItem) {
@@ -79,6 +99,19 @@ function setFeeDetails_(row, listItem) {
   sheet.getRange(row, IS_INTERNAL_COLLECTED_COL).check();
 }
 
+
+/**
+ * Return latest emails of payment notification.
+ * 
+ * If not found, wait multiple times for email to arrive in McRUN inbox.
+ * 
+ * @param {string} sender  Email of sender (Interac or Zeffy).
+ * @param {number} maxMatches  Number of max tries.
+ *  
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Mar 16, 2025
+ * @update  Mar 16, 2025
+ */
 
 function getMatchingPayments_(sender, maxMatches) {
   // Ensure that correct mailbox is used
@@ -122,23 +155,58 @@ function cleanUpMatchedThread_(thread, label) {
 }
 
 /**
- * Checks if a member's name, email or reference number is present in the email body.
+ * Checks if a member's information is present in the email body.
+ * 
+ * @param {string[]}  searchTerms. Search terms for match regex.
+ * @param {string} emailBody  The body of the payment.
+ *  
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Mar 15, 2025
+ * @update Mar 21, 2025
+ * 
  */
 
-function matchMemberInPaymentEmail_(member, emailBody) {
+function matchMemberInPaymentEmail_(searchTerms, emailBody) {
+  const formatedBody = emailBody.replace(/\*/g, '');    // Remove astericks around terms
+  console.log(formatedBody);
+
+  if (searchTerms.length === 0) return false; // Prevent empty regex errors
+
+  const searchPattern = new RegExp(`\\b(${searchTerms.join('\\b|\\b')})\\b`, 'i');
+  return searchPattern.test(formatedBody);
+}
+
+
+/**
+ * Creates search terms for regex using member information.
+ * 
+ * Matches lastName whether hyphenated or not.
+ * 
+ * @param {Object}  Member information.
+ * @param {string} member.firstName  Member's first name.
+ * @param {string} member.lastName  Member's last name.
+ * @param {string} [member.email]  Member's email address (if applicable).
+ * @param {string} [member.interacRef]  Reference number of Interac e-Transfer (if applicable).
+ *  
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Mar 21, 2025
+ * @update Mar 21, 2025
+ * 
+ */
+
+function createSearchTerms(member) {
+  const lastNameHyphenated = (member.lastName).replace(/[-\s]/, '[-\\s]?'); // handle hyphenated last names
+  const fullName = `${member.firstName}\\s+${lastNameHyphenated}`;
+
   const searchTerms = [
-    member.name,
-    removeDiacritics(member.name),
+    fullName,
+    removeDiacritics(fullName),
     member.email,
     member.interacRef
   ].filter(Boolean); // Removes undefined, null, or empty strings
 
-  if (searchTerms.length === 0) return false; // Prevent empty regex errors
-
-  const searchPattern = new RegExp(`\\b(${searchTerms.join('|')})\\b`, 'i');
-  return searchPattern.test(emailBody);
+  return searchTerms;
 }
-
 
 
 ///  👉 FUNCTIONS HANDLING ZEFFY TRANSACTIONS 👈  \\\
@@ -157,12 +225,13 @@ function setZeffyPaid_(row) {
  * @param {integer} row  Member's row index in GSheet.
  * 
  * @param {Object} member  Member information.
- * @param {string} member.name  Name of member.
+ * @param {string} member.firstName  First name of member.
+ * @param {string} member.lastName  Last name of member.
  * @param {string} member.email  Email of member.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 15, 2025
- * @update  Mar 17, 2025
+ * @update  Mar 21, 2025
  */
 
 function checkAndSetZeffyPayment(row, member) {
@@ -188,6 +257,8 @@ function processZeffyThread_(thread, member) {
   let starredCount = 0;
   let isFoundInMessage = false;
 
+  const searchTerms = createSearchTerms(member);
+
   for (const message of messages) {
     if (message.isStarred()) {
       starredCount++; // Already processed, skip
@@ -195,8 +266,7 @@ function processZeffyThread_(thread, member) {
     }
 
     const emailBody = message.getPlainBody();
-    //isFound = matchMemberInZeffyEmail_(member, emailBody);
-    isFoundInMessage = matchMemberInPaymentEmail_(member, emailBody);
+    isFoundInMessage = matchMemberInPaymentEmail_(searchTerms, emailBody);
 
     if (isFoundInMessage) {
       message.star();
@@ -256,7 +326,7 @@ function checkAndSetInteracRef(row, member) {
   }
   // Notify McRUN about references not identified
   else if (thisUnidentified.length > 0) {
-    emailInteracRef_(thisUnidentified);
+    notifyUnidentifiedInteracRef_(thisUnidentified);
   }
 
   return thisIsFound;
@@ -268,11 +338,13 @@ function processInteracThreads_(thread, member) {
   const messages = thread.getMessages();
   const result = { isFound: false, unidentified: [] };
 
+  const searchTerms = createSearchTerms(member);
+
   for (message of messages) {
     const emailBody = message.getPlainBody();
 
     // Try matching Interac e-Transfer email with member's reference number or name
-    const isFoundInMessage = matchMemberInPaymentEmail_(member, emailBody);
+    const isFoundInMessage = matchMemberInPaymentEmail_(searchTerms, emailBody);
 
     if (isFoundInMessage) {
       result.isFound = true;
@@ -316,7 +388,7 @@ function extractInteracRef_(emailBody) {
 }
 
 
-function emailInteracRef_(references) {
+function notifyUnidentifiedInteracRef_(references) {
   const emailBody =
     `
   Cannot identify new Interac e-Transfer Reference number(s): ${references.join(', ')}
@@ -335,3 +407,23 @@ function emailInteracRef_(references) {
   GmailApp.sendEmail(errorEmail.to, errorEmail.subject, errorEmail.body);
 }
 
+
+function notifyUnidentifiedPayment_(name) {
+  const emailBody =
+    `
+  Cannot find the payment notification for member: ${name}
+      
+  Please manually check the inbox and updated membership registry as required.
+
+  If email not found, please notify member of outstanding member fee.
+      
+  Automatic email created by 'Membership Collected (main)' script.
+  `
+  const errorEmail = {
+    to: 'mcrunningclub@ssmu.ca',
+    subject: 'ATTENTION: Missing Member Payment!',
+    body: emailBody
+  };
+
+  GmailApp.sendEmail(errorEmail.to, errorEmail.subject, errorEmail.body);
+}
