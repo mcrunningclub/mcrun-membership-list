@@ -24,22 +24,39 @@ function onChange(e) {
       const importSheet = thisSource.getSheetById(thisSheetID);
       const registrationObj = importSheet.getRange(thisLastRow, 1).getValue();
 
-      const lastRow = copyToMain(registrationObj);
+      const lastRow = copyFilloutRegToMain(registrationObj);
       onFormSubmit(lastRow);
 
       // Successful execution...
       console.log('Exiting `onFormSubmit` from onChange(e) successfully!');
+    }
+
+    else if (thisSheetID === MASTER_SHEET.getSheetId() && thisChange === 'INSERT_ROW') {
+      console.log('Executing else-if block from onChange(e)...');
+      console.log('New row added to Master sheet');
+
+      // Add formula, then copy submission to main sheet
+      if(!isNewMemberViaApp(thisLastRow)) {
+        console.log('Exiting because member *not* added by app');
+      }
+      formatFeeCollection(thisLastRow);
+      setMemberIdInRow(MASTER_SHEET, thisLastRow);
+      copyToMainFromMaster(thisLastRow);
+      console.log('Added registration to main sheet from master!');
+
+      notifyNewAppSubmission(thisLastRow);
+      console.log('Sent an email notification!');
+
+      sortMasterByEmail(); // Sort 'MASTER' by email once formatting completed
+      
+      // Successful execution...
+      console.log('Exiting `formatFeeCollection` from onChange(e) successfully!');
     }
   }
   catch (error) {
     console.log('Whoops! Error raised in onChange(e)');
     Logger.log(error);
   }
-  finally {
-    console.log('Entered finally clause in onChange(e)');
-    //console.log(e);
-  }
-
 }
 
 function transferLastImport() {
@@ -49,8 +66,41 @@ function transferLastImport() {
 
 function transferThisRow(row) {
   const registrationObj = IMPORT_SHEET.getRange(row, 1).getValue();
-  const lastRow = copyToMain(registrationObj);
+  const lastRow = copyFilloutRegToMain(registrationObj);
   onFormSubmit(lastRow);
+}
+
+
+function isNewMemberViaApp(row) {
+  const sheet = MASTER_SHEET;
+
+  // STEP 1: Check if 3-char code for registration semester exists
+  const rangeRegSem = sheet.getRange(row, MASTER_LAST_REG_SEM);
+  const isBlank = rangeRegSem.trimWhitespace().isBlank();
+  if (!isBlank) return false;   // Reg sem exists... not added via app
+
+  // STEP 2: Get regSem using `SHEET_NAME`, then add to target row
+  const regSem = getSemesterCode_(SHEET_NAME);   // Get semCode from `MAIN_SHEET`
+  rangeRegSem.setValue(regSem);
+  
+  // STEP 3: Finally return true once added
+  return true;
+}
+
+
+function setMemberIdInRow(sheet, row) {
+  // STEP 1: Get email col in target sheet
+  const sheetName = sheet.getSheetName();
+  const colMap = GET_COL_MAP_(sheetName);
+  const thisEmailCol = colMap.emailCol;
+
+  // STEP 2: Encode email using `encodeFromInput`
+  const email = sheet.getRange(row, thisEmailCol).getValue();
+  const memberId = encodeFromInput(email);
+
+  // STEP 3: Set member id in target row
+  const thisIdCol = colMap.memberIdCol;
+  sheet.getRange(row, thisIdCol).setValue(memberId);
 }
 
 
@@ -71,7 +121,7 @@ function onEdit(e) {
   console.log(debug_e);
 
   if (thisRange.getNumRows() > 2) return;  // prevent sheet-wide changes
-  else if (thisRange.getNumColumns() >= CELL_EDIT_LIMIT) {
+  else if (thisRange.getNumColumns() > CELL_EDIT_LIMIT) {
     // TODO: add function to individually process changes
     Logger.log(`More than ${CELL_EDIT_LIMIT} columns edited at once`);
   }
@@ -251,7 +301,7 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
  * 
  */
 
-function copyToMain(registration, row = getLastSubmissionInMain()) {
+function copyFilloutRegToMain(registration, row = getLastSubmissionInMain()) {
   const mainSheet = MAIN_SHEET;
   const importMap = IMPORT_MAP;
 
@@ -326,41 +376,12 @@ function packageMemberInfoInRow_(row) {
 }
 
 
-function testMigrate() {
-  let ex = `{"timestamp":"2025-02-22T22:34:26.899Z",
-  "email":"jiangforrest1@gmail.com",
-  "firstName":"Forrest",
-  "lastName":"Jiang",
-  "preferredName":"",
-  "year":"Non-McGillian",
-  "program":"N/A",
-  "memberDescription":"Fresh graduate from Hong Kong just landed in Montreal, enjoy running as part of my sporting mix.
-  Running semi-regularly for two years, registered for 2025 half and full marathons in Montreal
-  ",
-  "paymentAmount":"10",
-  "paymentMethod":"Interac e-Transfer", 
-  "interacRef":"C1AqtpGKhzgD",
-  "comments":"",
-  "referral": 
-  {
-  "name":"",
-  "sources":"Social Media",
-  "platform":""
-  },
-  "discountFriendEmail": ""
-  }`
-    ;
+function copyToMainFromMaster(row) {
+  //@todo: complete function!!!
+}
 
-  if (false) {
-    Logger.log(ex);
-    ex = ex.replace(/[\n\r\t]/g, ' ');
-    console.log(ex);
-
-    const testMe = JSON.parse(ex);
-    console.log(testMe);
-  }
-
-  const newRowIndex = copyToMain(ex);
-  Logger.log(newRowIndex);
+function notifyNewAppSubmission(row) {
+  //@todo: complete function!!!
+  //STEP 1: Notify member to complete reg
 }
 

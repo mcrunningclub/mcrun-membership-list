@@ -139,7 +139,6 @@ function processLastSubmission(lastRow = getLastSubmissionInMain()) {
   lastSubmission.push(semesterCode);  // For MASTER.LAST_REG_CODE column
   lastSubmission.push("");            // For MASTER.REGISTRATION_HIST column
 
-
   return lastSubmission;
 }
 

@@ -74,6 +74,9 @@ const SHEET_COL_MAP = {
   },
 };
 
+// Function to get column mappings
+function GET_COL_MAP_(sheet) { return SHEET_COL_MAP[sheet] || null };
+
 
 // MAPPING FROM FILLOUT REGISTRATION OBJ TO MAIN
 const IMPORT_MAP = {
@@ -92,9 +95,6 @@ const IMPORT_MAP = {
   'comments': COMMENTS_COL,
 }
 
-
-// Function to get column mappings
-function GET_COL_MAP_(sheet) { return SHEET_COL_MAP[sheet] || null };
 
 const SEMESTER_CODE_MAP = new Map();
 const ALL_SEMESTERS = ['Winter 2025', 'Fall 2024', 'Summer 2024', 'Winter 2024'];

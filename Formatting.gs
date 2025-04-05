@@ -425,16 +425,14 @@ function cleanMasterRegistration() {
  */
 
 function formatFeeCollection(row = MASTER_SHEET.getLastRow()) {
-  var sheet = MASTER_SHEET;
+  const sheet = MASTER_SHEET;
 
   // STEP 1: Check for current fee status to flag for later
   const rangeFeeStatus = sheet.getRange(row, MASTER_FEE_STATUS);
   const feeStatus = rangeFeeStatus.getValue().toString();
 
   const regex = new RegExp('unpaid', "i"); // Case insensitive
-  const isUnpaid = feeStatus.includes("unpaid")           // FIX LINE!!
-
-  //.search(regex);
+  const isUnpaid = regex.test(feeStatus);
 
   // STEP 2: Insert fee status formula in `Fee Paid` col
   rangeFeeStatus.setFormula(isFeePaidFormula);    // Formula found in `Semester Variables.gs`
