@@ -56,7 +56,6 @@ function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
   if (isFound) {
     console.log(`Successfully found transaction email for ${memberName}!`);  // Log success message
     return;
-    
   }
 
   // Notify McRUN of missing payment

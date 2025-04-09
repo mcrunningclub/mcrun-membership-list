@@ -24,7 +24,7 @@ function onChange(e) {
       const importSheet = thisSource.getSheetById(thisSheetID);
       const registrationObj = importSheet.getRange(thisLastRow, 1).getValue();
 
-      const lastRow = copyFilloutRegToMain(registrationObj);
+      const lastRow = copyFilloutRegToMain_(registrationObj);
       onFormSubmit(lastRow);
 
       // Successful execution...
@@ -36,11 +36,11 @@ function onChange(e) {
       console.log('New row added to Master sheet');
 
       // Add formula, then copy submission to main sheet
-      if(!isNewMemberViaApp(thisLastRow)) {
+      if(!isNewMemberViaApp_(thisLastRow)) {
         console.log('Exiting because member *not* added by app');
       }
       formatFeeCollection(thisLastRow);
-      setMemberIdInRow(MASTER_SHEET, thisLastRow);
+      setMemberIdInRow_(MASTER_SHEET, thisLastRow);
       copyToMainFromMaster(thisLastRow);
       console.log('Added registration to main sheet from master!');
 
@@ -61,17 +61,17 @@ function onChange(e) {
 
 function transferLastImport() {
   const thisLastRow = IMPORT_SHEET.getLastRow();
-  transferThisRow(thisLastRow);
+  transferThisRow_(thisLastRow);
 }
 
-function transferThisRow(row) {
+function transferThisRow_(row) {
   const registrationObj = IMPORT_SHEET.getRange(row, 1).getValue();
-  const lastRow = copyFilloutRegToMain(registrationObj);
+  const lastRow = copyFilloutRegToMain_(registrationObj);
   onFormSubmit(lastRow);
 }
 
 
-function isNewMemberViaApp(row) {
+function isNewMemberViaApp_(row) {
   const sheet = MASTER_SHEET;
 
   // STEP 1: Check if 3-char code for registration semester exists
@@ -88,7 +88,7 @@ function isNewMemberViaApp(row) {
 }
 
 
-function setMemberIdInRow(sheet, row) {
+function setMemberIdInRow_(sheet, row) {
   // STEP 1: Get email col in target sheet
   const sheetName = sheet.getSheetName();
   const colMap = GET_COL_MAP_(sheetName);
@@ -138,7 +138,7 @@ function onEdit(e) {
   console.log("onEdit 1b -> Passed second check");
 
   // Check if legal edit
-  if (!verifyLegalEditInRange(e, thisSheet)) return;
+  if (!verifyLegalEditInRange_(e, thisSheet)) return;
 
   console.log("onEdit 2 -> Passed \`verifyLegalEditInRange()\`");
 
@@ -171,7 +171,7 @@ function onEdit(e) {
 
   console.log(`onEdit 5 -> targetRow: ${targetRow} found by \`findMemberByEmail()\``);
 
-  updateFeeInfo(e, thisSheetName, targetRow, targetSheet);
+  updateFeeInfo_(e, thisSheetName, targetRow, targetSheet);
   console.log(`onEdit 6 -> successfully completed trigger check`);
 }
 
@@ -181,7 +181,7 @@ function onEdit(e) {
  * @param {SpreadsheetApp.Sheet} sheet  Sheet where edit occurred.
  */
 
-function verifyLegalEditInRange(e, sheet) {
+function verifyLegalEditInRange_(e, sheet) {
   Logger.log("NOW ENTERING verifyLegalEditInRange()...");
   const sheetName = sheet.getName();
   var thisRow = e.range.getRow();
@@ -201,12 +201,15 @@ function verifyLegalEditInRange(e, sheet) {
     rightmost: isInternalCollected,
   }
 
-  // Helper function to log error message and exit function
-  const logAndExitFalse = (cell) => { Logger.log(`${cell} is out of bounds`); return false; }
-
   // Exit if we're out of range
-  if (thisRow < feeEditRange.top || thisRow > feeEditRange.bottom) logAndExitFalse("Row");
-  if (thisCol < feeEditRange.leftmost || thisCol > feeEditRange.rightmost) logAndExitFalse("Column");
+  if (thisRow < feeEditRange.top || thisRow > feeEditRange.bottom) {
+    Logger.log("Row is out of bounds");
+    return false;
+  }
+  if (thisCol < feeEditRange.leftmost || thisCol > feeEditRange.rightmost) {
+    Logger.log("Column is out of bounds");
+    return false;
+  }
 
   return true;    // edit e is within legal edit range
 }
@@ -226,7 +229,7 @@ function verifyLegalEditInRange(e, sheet) {
  * 
  */
 
-function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
+function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
   const thisRange = e.range;
   const thisCol = thisRange.getColumn();
   const targetSheetName = targetSheet.getSheetName();
@@ -297,11 +300,11 @@ function updateFeeInfo(e, sourceSheetName, targetRow, targetSheet) {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
- * @update  Feb 23, 2025
+ * @update  Apr 9, 2025
  * 
  */
 
-function copyFilloutRegToMain(registration, row = getLastSubmissionInMain()) {
+function copyFilloutRegToMain_(registration, row = getLastSubmissionInMain()) {
   const mainSheet = MAIN_SHEET;
   const importMap = IMPORT_MAP;
 
@@ -323,6 +326,15 @@ function copyFilloutRegToMain(registration, row = getLastSubmissionInMain()) {
     );
 
     registrationObj['timestamp'] = formattedTimestamp;   // replace with formatted
+  }
+
+  // Add additional information for payments occuring in other forms
+  if (registrationObj['paymentAmount'] == 0) {
+    const event = (registrationObj['referral'])['sources'] ?? "";
+    const method = registrationObj['paymentMethod'];
+
+    // Set new value
+    registrationObj['paymentMethod'] = `${[event, method].join(': ')}`;
   }
 
   const removeRegex = /^[,\s-]+|[,\s-]+$/g;

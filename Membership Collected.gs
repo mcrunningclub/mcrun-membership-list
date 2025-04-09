@@ -37,7 +37,7 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
   }
 }
 
-function sendNewMemberCommunications(row = 14) {
+function sendNewMemberCommunications(row) {
   const memberInfo = packageMemberInfoInRow_(row);
   console.log(`Member info to export to 'NewMemberComms'\n`, memberInfo);
   NewMemberCommunications.createNewMemberCommunications(memberInfo);   // Transfer new member's value to external sheet
