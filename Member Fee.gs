@@ -230,7 +230,7 @@ function setZeffyPaid_(row) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 15, 2025
- * @update  Mar 21, 2025
+ * @update  Apr 29, 2025
  */
 
 function checkAndSetZeffyPayment(row, member) {
@@ -238,7 +238,9 @@ function checkAndSetZeffyPayment(row, member) {
   const maxMatches = 3;
   const threads = getMatchingPayments_(sender, maxMatches);
 
-  let isFound = threads.some(thread => processZeffyThread_(thread, member));
+  const searchTerms = createSearchTerms(member);
+
+  let isFound = threads.some(thread => processZeffyThread_(thread, searchTerms));
   if (isFound) {
     setZeffyPaid_(row);
   }
@@ -251,12 +253,10 @@ function checkAndSetZeffyPayment(row, member) {
  * Process a single Gmail thread to find a matching member's payment.
  */
 
-function processZeffyThread_(thread, member) {
+function processZeffyThread_(thread, searchTerms) {
   const messages = thread.getMessages();
   let starredCount = 0;
   let isFoundInMessage = false;
-
-  const searchTerms = createSearchTerms(member);
 
   for (const message of messages) {
     if (message.isStarred()) {
@@ -298,7 +298,7 @@ function setInteractPaid_(row) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
- * @update  Mar 16, 2025
+ * @update  Apr 29, 2025
  */
 
 function checkAndSetInteracRef(row, member) {
@@ -310,9 +310,12 @@ function checkAndSetInteracRef(row, member) {
   let thisIsFound = false;
   const thisUnidentified = [];
 
+  // Construct search terms once
+  const searchTerms = createSearchTerms(member);
+
   // Most Interac email threads only have 1 message, so O(n) instead of O(n**2). Coded as safeguard.
   for (const thread of threads) {
-    const result = processInteracThreads_(thread, member);
+    const result = processInteracThreads_(thread, searchTerms);
 
     // Set store.isFound to true iff result.isFound=true
     if (result.isFound) thisIsFound = true;
@@ -331,13 +334,10 @@ function checkAndSetInteracRef(row, member) {
   return thisIsFound;
 }
 
-// Interac e-Transfer emails can be matched by a reference number
-// Or by a member's full name
-function processInteracThreads_(thread, member) {
+// Interac e-Transfer emails can be matched by a reference number or full name
+function processInteracThreads_(thread, searchTerms) {
   const messages = thread.getMessages();
   const result = { isFound: false, unidentified: [] };
-
-  const searchTerms = createSearchTerms(member);
 
   for (message of messages) {
     const emailBody = message.getPlainBody();
@@ -389,7 +389,7 @@ function extractInteracRef_(emailBody) {
 
 function notifyUnidentifiedInteracRef_(references) {
   const emailBody =
-    `
+  `
   Cannot identify new Interac e-Transfer Reference number(s): ${references.join(', ')}
       
   Please check the newest entry of the membership list.
@@ -399,7 +399,7 @@ function notifyUnidentifiedInteracRef_(references) {
   const errorEmail = {
     to: 'mcrunningclub@ssmu.ca',
     subject: 'ATTENTION: Interac Reference(s) to CHECK!',
-    body: emailBody
+    body: emailBody.replace(/[ \t]{2,}/g, '')
   };
 
   // Send warning email for unlabeled interac emails in inbox
@@ -409,8 +409,8 @@ function notifyUnidentifiedInteracRef_(references) {
 
 function notifyUnidentifiedPayment_(name) {
   const emailBody =
-    `
-  Cannot find the payment notification for member: ${name}
+  `
+  Cannot find the Interac or Zeffy payment confirmation email for member: ${name}
       
   Please manually check the inbox and updated membership registry as required.
 
@@ -421,7 +421,7 @@ function notifyUnidentifiedPayment_(name) {
   const errorEmail = {
     to: 'mcrunningclub@ssmu.ca',
     subject: 'ATTENTION: Missing Member Payment!',
-    body: emailBody
+    body: emailBody.replace(/[ \t]{2,}/g, '')
   };
 
   GmailApp.sendEmail(errorEmail.to, errorEmail.subject, errorEmail.body);
