@@ -1,10 +1,12 @@
-// LAST UPDATED: MAR 16, 2025
+// LAST UPDATED: MAY 15, 2025
 // PLEASE UPDATE WHEN NEEDED
 const ZEFFY_EMAIL = 'contact@zeffy.com';
 const INTERAC_EMAIL = 'interac.ca';    // Interac email addresses end in "interac.ca"
+const STRIPE_EMAIL = 'stripe.com'
 
 const ZEFFY_LABEL = 'Fee Payments/Zeffy Emails';
 const INTERAC_LABEL = 'Fee Payments/Interac Emails';
+const STRIPE_LABEL = 'Fee Payments/Stripe Emails';
 
 // Found in `Internal Fee Collection` sheet
 const INTERAC_ITEM_COL = 'A3';
@@ -230,11 +232,11 @@ function setZeffyPaid_(row) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 15, 2025
- * @update  Apr 29, 2025
+ * @update  May 15, 2025
  */
 
 function checkAndSetZeffyPayment(row, member) {
-  const sender = ZEFFY_EMAIL;
+  const sender = `${ZEFFY_EMAIL} OR ${STRIPE_EMAIL}`;
   const maxMatches = 3;
   const threads = getMatchingPayments_(sender, maxMatches);
 
@@ -410,9 +412,9 @@ function notifyUnidentifiedInteracRef_(references) {
 function notifyUnidentifiedPayment_(name) {
   const emailBody =
   `
-  Cannot find the Interac or Zeffy payment confirmation email for member: ${name}
+  Cannot find the Interac, Zeffy or Stripe payment confirmation email for member: ${name}
       
-  Please manually check the inbox and updated membership registry as required.
+  Please manually check the inbox and update membership registry if required.
 
   If email not found, please notify member of outstanding member fee.
       
