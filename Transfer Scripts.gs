@@ -363,28 +363,26 @@ function packageMemberInfoInRow_(row) {
   const endCol = MEMBER_ID_COL; // From first name to id col
   const memberData = sheet.getSheetValues(row, 1, 1, endCol)[0];
 
-  // Add entry to front to allow 1-indexed data access like for GSheet
-  memberData.unshift('');
+  // Create function to access elements in arr as 0-index (GSheet is 1-indexed)
+  const extractValues = (index) => memberData[index - 1].toString().trim();
 
   // Stringify fee status
-  const memberFeeStatus = parseBool(memberData[IS_FEE_PAID_COL]) ? 'Paid' : 'Unpaid';
+  const memberFeeStatus = parseBool(extractValues(IS_FEE_PAID_COL)) ? 'Paid' : 'Unpaid';
 
   // Get membership expiration date via sheet name
-  const semesterCode = getSemesterCode_(semesterName); // Get the semester code based on the sheet name
+  const semesterCode = getSemesterCode_(semesterName);  // Get the semester code based on the sheet name
   const membershipExpiration = getExpirationDate(semesterCode);
 
   // Map member info to pass info
-  const memberInfo = {
-    email: memberData[EMAIL_COL],
-    firstName: memberData[FIRST_NAME_COL],
-    lastName: memberData[LAST_NAME_COL],
-    memberId: memberData[MEMBER_ID_COL],
+  return {
+    email: extractValues(EMAIL_COL),
+    firstName: extractValues(FIRST_NAME_COL),
+    lastName: extractValues(LAST_NAME_COL),
+    memberId: extractValues(MEMBER_ID_COL),
     memberStatus: 'Active',    // If email not found, then membership expired
     feeStatus: memberFeeStatus,
     expiry: membershipExpiration,
   }
-
-  return memberInfo;
 }
 
 
@@ -396,4 +394,3 @@ function notifyNewAppSubmission(row) {
   //@todo: complete function!!!
   //STEP 1: Notify member to complete reg
 }
-

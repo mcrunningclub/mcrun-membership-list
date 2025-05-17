@@ -33,7 +33,7 @@ function getGmailLabel_(labelName) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 16, 2025
- * @update  Mar 21, 2025
+ * @update  Apr 17, 2025
  */
 
 function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
@@ -59,9 +59,12 @@ function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
     return;
   }
 
-  // Notify McRUN of missing payment
+  // If not found, 1) create a scheduled trigger to recheck email inbox
+  // 2) If failure, send an email notification to RUN for missing payment
   notifyUnidentifiedPayment_(memberName);  
   console.error(`Unable to find payment confirmation email for ${memberName}. Please verify again.`);
+
+
   
   // Helper function for Interac and Stripe/Zeffy cases
   function checkPayment(paymentMethod) {
@@ -110,16 +113,16 @@ function setFeeDetails_(row, listItem) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 16, 2025
- * @update  Mar 16, 2025
+ * @update  Mar 17, 2025
  */
 
-function getMatchingPayments_(sender, maxMatches) {
+function getMatchingPayments_(sender, maxMatches, subject='') {
   // Ensure that correct mailbox is used
   if (getCurrentUserEmail_() !== MCRUN_EMAIL) {
     throw new Error('Wrong account! Please switch to McRUN\'s Gmail account');
   }
 
-  const searchStr = getGmailSearchString_(sender);
+  const searchStr = getGmailSearchString_(sender, subject);
   let threads = [];
   let delay = 10 * 1000; // Start with 10 seconds
 
@@ -134,11 +137,11 @@ function getMatchingPayments_(sender, maxMatches) {
 }
 
 
-// Get threads from search (from:sender, starting:yesterday, in:inbox)
-function getGmailSearchString_(sender) {
+// Get threads from search (from:sender, starting:yesterday, in:inbox, [subject:partial-email-match])
+function getGmailSearchString_(sender, subject = '') {
   const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
   const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd');
-  return `from:(${sender}) in:inbox after:${formattedYesterday}`;
+  return `from:(${sender}) in:inbox after:${formattedYesterday} subject:"${subject}"`;
 }
 
 
@@ -231,15 +234,16 @@ function setOnlinePaid_(row) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 15, 2025
- * @update  May 16, 2025
+ * @update  May 17, 2025
  */
 
 function checkAndSetOnlinePayment(row, member) {
   const sender = `${ZEFFY_EMAIL} OR ${STRIPE_EMAIL}`;
-  const maxMatches = 3;
-  const threads = getMatchingPayments_(sender, maxMatches);
+  const maxMatches = 5;
+  const threads = getMatchingPayments_(sender, maxMatches, "payment");
 
   const searchTerms = createSearchTerms(member);
+  console.log('Search terms for email body', searchTerms);
 
   let isFound = threads.some(thread => processOnlineThread_(thread, searchTerms));
   if (isFound) {
@@ -313,6 +317,7 @@ function checkAndSetInteracRef(row, member) {
 
   // Construct search terms once
   const searchTerms = createSearchTerms(member);
+  console.log('Search terms for email body', searchTerms);
 
   // Most Interac email threads only have 1 message, so O(n) instead of O(n**2). Coded as safeguard.
   for (const thread of threads) {
