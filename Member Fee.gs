@@ -4,9 +4,8 @@ const ZEFFY_EMAIL = 'contact@zeffy.com';
 const INTERAC_EMAIL = 'interac.ca';    // Interac email addresses end in "interac.ca"
 const STRIPE_EMAIL = 'stripe.com'
 
-const ZEFFY_LABEL = 'Fee Payments/Zeffy Emails';
+const ONLINE_LABEL = 'Fee Payments/Online Emails';
 const INTERAC_LABEL = 'Fee Payments/Interac Emails';
-const STRIPE_LABEL = 'Fee Payments/Stripe Emails';
 
 // Found in `Internal Fee Collection` sheet
 const INTERAC_ITEM_COL = 'A3';
@@ -26,7 +25,7 @@ function getGmailLabel_(labelName) {
 
 
 /**
- * Verify if member has paid fee using notification email sent by Interac or Zeffy
+ * Verify if member has paid fee using notification email sent by Interac, Stripe or Zeffy
  * 
  * Update member's information in MAIN_SHEET as required.
  * 
@@ -64,10 +63,10 @@ function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
   notifyUnidentifiedPayment_(memberName);  
   console.error(`Unable to find payment confirmation email for ${memberName}. Please verify again.`);
   
-  // Helper function for Interac and Zeffy cases
+  // Helper function for Interac and Stripe/Zeffy cases
   function checkPayment(paymentMethod) {
     if (paymentMethod.includes('CC')) {
-      return checkAndSetZeffyPayment(row, 
+      return checkAndSetOnlinePayment(row, 
       { firstName: memberFirstName, lastName: memberLastName, email: memberEmail });
     }
     else if (paymentMethod.includes('Interac')) {
@@ -106,7 +105,7 @@ function setFeeDetails_(row, listItem) {
  * 
  * If not found, wait multiple times for email to arrive in McRUN inbox.
  * 
- * @param {string} sender  Email of sender (Interac or Zeffy).
+ * @param {string} sender  Email of sender (Interac, Stripe or Zeffy).
  * @param {number} maxMatches  Number of max tries.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
@@ -210,16 +209,16 @@ function createSearchTerms(member) {
 }
 
 
-///  👉 FUNCTIONS HANDLING ZEFFY TRANSACTIONS 👈  \\\
+///  👉 FUNCTIONS HANDLING STRIPE/ZEFFY TRANSACTIONS 👈  \\\
 
-function setZeffyPaid_(row) {
+function setOnlinePaid_(row) {
   const onlinePaymentItem = getPaymentItem_(ONLINE_PAYMENT_ITEM_COL);
   setFeeDetails_(row, onlinePaymentItem);
 }
 
 
 /**
- * Verify Zeffy payment transaction for latest registration.
+ * Verify Stripe/Zeffy payment transaction for latest registration.
  * 
  * Must have the member submission in last row of main sheet to work.
  * 
@@ -232,19 +231,19 @@ function setZeffyPaid_(row) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 15, 2025
- * @update  May 15, 2025
+ * @update  May 16, 2025
  */
 
-function checkAndSetZeffyPayment(row, member) {
+function checkAndSetOnlinePayment(row, member) {
   const sender = `${ZEFFY_EMAIL} OR ${STRIPE_EMAIL}`;
   const maxMatches = 3;
   const threads = getMatchingPayments_(sender, maxMatches);
 
   const searchTerms = createSearchTerms(member);
 
-  let isFound = threads.some(thread => processZeffyThread_(thread, searchTerms));
+  let isFound = threads.some(thread => processOnlineThread_(thread, searchTerms));
   if (isFound) {
-    setZeffyPaid_(row);
+    setOnlinePaid_(row);
   }
 
   return isFound;
@@ -255,7 +254,7 @@ function checkAndSetZeffyPayment(row, member) {
  * Process a single Gmail thread to find a matching member's payment.
  */
 
-function processZeffyThread_(thread, searchTerms) {
+function processOnlineThread_(thread, searchTerms) {
   const messages = thread.getMessages();
   let starredCount = 0;
   let isFoundInMessage = false;
@@ -276,8 +275,8 @@ function processZeffyThread_(thread, searchTerms) {
   }
 
   if (starredCount === messages.length) {
-    const zeffyLabel = getGmailLabel_(ZEFFY_LABEL);
-    cleanUpMatchedThread_(thread, zeffyLabel);
+    const onlineLabel = getGmailLabel_(ONLINE_LABEL);
+    cleanUpMatchedThread_(thread, onlineLabel);
   }
 
   return isFoundInMessage;
@@ -412,7 +411,7 @@ function notifyUnidentifiedInteracRef_(references) {
 function notifyUnidentifiedPayment_(name) {
   const emailBody =
   `
-  Cannot find the Interac, Zeffy or Stripe payment confirmation email for member: ${name}
+  Cannot find the Interac, Stripe or Zeffy payment confirmation email for member: ${name}
       
   Please manually check the inbox and update membership registry if required.
 
