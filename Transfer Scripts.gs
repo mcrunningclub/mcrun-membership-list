@@ -297,10 +297,11 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
  * 
  * @trigger  New entry in `Import` sheet.
  * @param {Object} registration  Information on member registration.
+ * @param {integer} [row = getLastSubmissionInMain()]  Gsheet row number to target,
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
- * @update  Apr 9, 2025
+ * @update  May 17, 2025
  * 
  */
 

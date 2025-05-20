@@ -246,7 +246,7 @@ function setWaiverUrl(row = getLastSubmissionInMain()) {
 
 
 /**
- * Find waiver using member's name. Helper function for setWaiverUrl
+ * Find waiver using member's name. Helper function for setWaiverUrl.
  * 
  * Waiver is automatically saved by Fillout to folder with id `WAIVER_DRIVE_ID`.
  * 
@@ -299,6 +299,5 @@ function getExpirationDate(semCode) {
     case ('S'): return `Jun ${expirationYear}`;
     default: return null;
   };
-
 }
 

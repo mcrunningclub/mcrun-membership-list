@@ -2,7 +2,7 @@
 // PLEASE UPDATE WHEN NEEDED
 const ZEFFY_EMAIL = 'contact@zeffy.com';
 const INTERAC_EMAIL = 'interac.ca';    // Interac email addresses end in "interac.ca"
-const STRIPE_EMAIL = 'stripe.com'
+const STRIPE_EMAIL = 'stripe.com';
 
 const ONLINE_LABEL = 'Fee Payments/Online Emails';
 const INTERAC_LABEL = 'Fee Payments/Interac Emails';
@@ -33,51 +33,60 @@ function getGmailLabel_(labelName) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 16, 2025
- * @update  Apr 17, 2025
+ * @update  May 20, 2025
  */
 
 function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
   console.log('Entering `checkAndSetPaymentRef()` now...');
 
-  // Get values of member's registration
-  const values = sheet.getSheetValues(row, 1, 1, sheet.getLastColumn())[0]
-  values.unshift('');   // Set 0-index array to 1-index for easy accessing
+  // Get values of member's registration, and pack fee details for payment verifications
+  const values = sheet.getSheetValues(row, 1, 1, sheet.getLastColumn())[0];
+  const feeDetails = packFeeDetails(values);
 
-  const memberEmail = values[EMAIL_COL];
-  const memberFirstName = values[FIRST_NAME_COL];
-  const memberLastName = values[LAST_NAME_COL];
-  const memberName = `${memberFirstName} ${memberLastName}`;
-  const memberPaymentMethod = values[PAYMENT_METHOD_COL];
-  const memberInteracRef = values[INTERAC_REF_COL];
-
-  // Has the payment been found in inbox?
-  const isFound = checkPayment(memberPaymentMethod);
-
-  if (isFound) {
-    console.log(`Successfully found transaction email for ${memberName}!`);  // Log success message
-    return;
+  // Has the payment been found in inbox? 
+  if (checkThisPayment(row, feeDetails)) {
+    console.log(`Successfully found transaction email for '${feeDetails.memberName}'!`);  // Log success message
+  }
+  else {
+    // 1) Create a scheduled trigger to recheck email inbox
+    // 2) After max tries, send an email notification to RUN for missing payment
+    console.error(`Unable to find payment confirmation email for '${feeDetails.memberName}'. Creating new scheduled trigger to check later.`);
+    createNewFeeTrigger_(row, feeDetails);
   }
 
-  // If not found, 1) create a scheduled trigger to recheck email inbox
-  // 2) If failure, send an email notification to RUN for missing payment
-  notifyUnidentifiedPayment_(memberName);  
-  console.error(`Unable to find payment confirmation email for ${memberName}. Please verify again.`);
-
-
-  
-  // Helper function for Interac and Stripe/Zeffy cases
-  function checkPayment(paymentMethod) {
-    if (paymentMethod.includes('CC')) {
-      return checkAndSetOnlinePayment(row, 
-      { firstName: memberFirstName, lastName: memberLastName, email: memberEmail });
-    }
-    else if (paymentMethod.includes('Interac')) {
-      return checkAndSetInteracRef(row, 
-      { firstName: memberFirstName, lastName: memberLastName, interacRef: memberInteracRef });
-    }
-    return false;
+  /** Helper: pack fee details from GSheet values */
+  function packFeeDetails(values) {
+    // Allows to access 0-index array using GSheet indices (1-indexed)
+    const getThis = (index) => values[index - 1];
+    
+    const obj = {
+      'firstName': getThis(FIRST_NAME_COL), 
+      'lastName': getThis(LAST_NAME_COL),
+      'email': getThis(EMAIL_COL),
+      'paymentMethod': getThis(PAYMENT_METHOD_COL),
+      'interacRef' : getThis(INTERAC_REF_COL),
+    };
+    
+    // Assemble full name for log and email
+    obj.memberName = `${obj.firstName} ${obj.lastName}`;
+    return obj;
   }
+}
+
+// Helper function for Stripe/Zeffy and Interac cases
+function checkThisPayment(row, feeDetails) {
+  const { firstName, lastName, email, paymentMethod, interacRef } = feeDetails;
+
+  if (paymentMethod.includes('CC')) {
+    return checkAndSetOnlinePayment(row, 
+    { firstName: firstName, lastName: lastName, email: email });
+  }
+  else if (paymentMethod.includes('Interac')) {
+    return checkAndSetInteracRef(row, 
+    { firstName: firstName, lastName: lastName, interacRef: interacRef });
+  }
+  return false;
 }
 
 
@@ -124,13 +133,13 @@ function getMatchingPayments_(sender, maxMatches, subject='') {
 
   const searchStr = getGmailSearchString_(sender, subject);
   let threads = [];
-  let delay = 10 * 1000; // Start with 10 seconds
+  let delay = 5 * 1000; // Start with 10 seconds
 
-  // Search inbox until successful (max 3 tries)
-  for (let tries = 0; tries < 3 && threads.length === 0; tries++) {
+  // Search inbox until successful (max 2 tries)
+  for (let tries = 0; tries < 2 && threads.length === 0; tries++) {
     if (tries > 0) Utilities.sleep(delay);  // Wait only on retries
     threads = GmailApp.search(searchStr, 0, maxMatches);
-    delay *= 2; // Exponential backoff (10s → 20s → 40s)
+    delay *= 2; // Exponential backoff (5s → 10s → 20s)
   }
 
   return threads;
@@ -240,7 +249,7 @@ function setOnlinePaid_(row) {
 function checkAndSetOnlinePayment(row, member) {
   const sender = `${ZEFFY_EMAIL} OR ${STRIPE_EMAIL}`;
   const maxMatches = 5;
-  const threads = getMatchingPayments_(sender, maxMatches, "payment");
+  const threads = getMatchingPayments_(sender, maxMatches, 'payment');
 
   const searchTerms = createSearchTerms(member);
   console.log('Search terms for email body', searchTerms);
@@ -416,7 +425,7 @@ function notifyUnidentifiedInteracRef_(references) {
 function notifyUnidentifiedPayment_(name) {
   const emailBody =
   `
-  Cannot find the Interac, Stripe or Zeffy payment confirmation email for member: ${name}
+  Cannot find the payment confirmation email for member: ${name}
       
   Please manually check the inbox and update membership registry if required.
 
