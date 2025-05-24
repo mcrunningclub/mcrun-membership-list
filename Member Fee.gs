@@ -11,6 +11,15 @@ const INTERAC_LABEL = 'Fee Payments/Interac Emails';
 const INTERAC_ITEM_COL = 'A3';
 const ONLINE_PAYMENT_ITEM_COL = 'A4';
 
+/**
+ * Retrieves the payment item from the "Internal Fee Collection" sheet.
+ *
+ * @param {string} colIndex  The cell reference (e.g., 'A3') to retrieve the payment item from.
+ * @return {string}  The payment item value from the specified cell.
+ *
+ * @author Andrey Gonzalez
+ * @date May 24, 2025
+ */
 function getPaymentItem_(colIndex) {
   return SpreadsheetApp
     .getActiveSpreadsheet()
@@ -18,6 +27,16 @@ function getPaymentItem_(colIndex) {
     .getRange(colIndex)
     .getValue();
 }
+
+/**
+ * Retrieves a Gmail label by its name.
+ *
+ * This function fetches a Gmail label object based on the provided label name.
+ *
+ * @param {string} labelName  The name of the Gmail label to retrieve.
+ * @return {GmailApp.GmailLabel} The Gmail label object corresponding to the provided name.
+ *
+ */
 
 function getGmailLabel_(labelName) {
   return GmailApp.getUserLabelByName(labelName);
@@ -29,7 +48,7 @@ function getGmailLabel_(labelName) {
  * 
  * Update member's information in MAIN_SHEET as required.
  * 
- * @param {number} Row index of member.
+ * @param {integer} [row=getLastSubmissionInMain()] index of member.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 16, 2025
@@ -93,7 +112,7 @@ function checkThisPayment(row, feeDetails) {
 /**
  * Updates member's fee information.
  * 
- * @param {number} Row index to enter information.
+ * @param {integer} row  The index to enter information.
  * @param {string} listItem  The list item in `Internal Fee Collection` to set in 'Collection Person' col.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
@@ -118,7 +137,7 @@ function setFeeDetails_(row, listItem) {
  * If not found, wait multiple times for email to arrive in McRUN inbox.
  * 
  * @param {string} sender  Email of sender (Interac, Stripe or Zeffy).
- * @param {number} maxMatches  Number of max tries.
+ * @param {integer} maxMatches  Number of max tries.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 16, 2025
@@ -169,7 +188,7 @@ function cleanUpMatchedThread_(thread, label) {
 /**
  * Checks if a member's information is present in the email body.
  * 
- * @param {string[]}  searchTerms. Search terms for match regex.
+ * @param {string[]} searchTerms  Search terms for match regex.
  * @param {string} emailBody  The body of the payment.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
@@ -203,7 +222,6 @@ function matchMemberInPaymentEmail_(searchTerms, emailBody) {
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 21, 2025
  * @update Mar 21, 2025
- * 
  */
 
 function createSearchTerms(member) {

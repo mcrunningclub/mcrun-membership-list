@@ -129,21 +129,26 @@ function runFeeChecker() {
     scriptProperties.deleteProperty(key);
   }
 
-  /** Helper: delete a trigger by ID */
+  /**
+   * Deletes a trigger by its unique ID.
+   *
+   * This function iterates through all project triggers to find and delete the one
+   * with the specified unique ID. If the trigger is not found, it throws an error.
+   *
+   * @param {string} triggerId - The unique ID of the trigger to delete.
+   */
   function deleteTriggerById(triggerId) {
     const triggers = ScriptApp.getProjectTriggers();
-    let isFound = false;
 
     for (let trigger of triggers) {
       if (trigger.getUniqueId() === triggerId) {
-        isFound = true;
         ScriptApp.deleteTrigger(trigger);
-        break;
+        Logger.log(`Trigger with id ${triggerId} deleted!`);
+        return;
       }
     }
-    // Log success or throw error if not found
-    const raiseError = () => { throw new Error(`⚠️ Trigger with id ${triggerId} not found`) }
-    isFound ? Logger.log(`Trigger with id ${triggerId} deleted!`) : raiseError();
+    // If we reach here, the trigger was not found
+    throw new Error(`⚠️ Trigger with id ${triggerId} not found`);
   }
 }
 

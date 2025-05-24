@@ -75,7 +75,21 @@ const SHEET_COL_MAP = {
 };
 
 // Function to get column mappings
-function GET_COL_MAP_(sheet) { return SHEET_COL_MAP[sheet] || null };
+/**
+ * Retrieves the column mapping for a given sheet.
+ *
+ * This function returns the column mapping object for the specified sheet name.
+ * If the sheet name is not found in the mapping, it returns `null`.
+ *
+ * @param {string} sheet - The name of the sheet to retrieve the column mapping for.
+ * @return {Object|null} The column mapping object for the sheet, or `null` if not found
+ * 
+ * @author Andrey Gonzalez
+ * @date May 24, 2025
+ */
+function GET_COL_MAP_(sheet) {
+  return SHEET_COL_MAP[sheet] || null;
+}
 
 
 // MAPPING FROM FILLOUT REGISTRATION OBJ TO MAIN
@@ -150,7 +164,6 @@ function getCurrentUserEmail_() {
  * Converts a string to a boolean value.
  * 
  * @param {string} val  A string that contains a boolean.
- * 
  * @return {Boolean}  Parsed value.
  */
 

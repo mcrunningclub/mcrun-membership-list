@@ -1,9 +1,16 @@
 /**
- * Trim whitespace from specific columns in last row of `MAIN_SHEET`.
+ * Trims whitespace from specific columns in the last row of `MAIN_SHEET`.
  * 
- * Range is FIRST_NAME_COL to REFERAL_COL (7 columns).
+ * This function targets the range from `FIRST_NAME_COL` to `REFERRAL_COL` (7 columns).
+ * It ensures that unnecessary whitespace is removed from the latest member entry.
  * 
  * @trigger New form submission
+ * 
+ * @param {number} [lastRow=MAIN_SHEET.getLastRow()] - The row number to target for trimming.
+ *                                                     Defaults to the last row in `MAIN_SHEET`.
+ * 
+  * 
+ * @see {@link fixLetterCaseInRow_} for additional formatting applied to the same row.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 17, 2023
@@ -18,13 +25,21 @@ function trimWhitespace_(lastRow = MAIN_SHEET.getLastRow()) {
 
 
 /**
- * Returns normalize str without accents.
+ * Removes diacritics (accents) from a string.
  * 
- * @param {string}  str  String to normalize.
- * @return {string}   Stripped str.
+ * This function normalizes the input string and removes any diacritical marks,
+ * ensuring a clean, ASCII-compatible output.
+ * 
+ * @param {string} str  The string to normalize and strip of diacritics.
+ * @return {string}  The normalized string without diacritics.
+ * 
+ * @example
+ * const result = removeDiacritics("José");
+ * console.log(result); // Outputs: "Jose"
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 5, 2025
+ * @update  Mar 15, 2025
  */
 
 function removeDiacritics(str) {
@@ -37,8 +52,13 @@ function removeDiacritics(str) {
 /**
  * Sorts `MAIN_SHEET` by first name, then last name.
  * 
+ * This function organizes the data in `MAIN_SHEET` by sorting rows alphabetically
+ * based on the `First Name` column (column 3) and then the `Last Name` column (column 4).
+ * 
  * @trigger New form submission or McRUN menu.
- *  
+ * 
+ * @see {@link tryAndSortMain} for a safe way to sort with locking.
+ * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
  * @update  Jan 11, 2025
@@ -47,7 +67,7 @@ function removeDiacritics(str) {
 function sortMainByName() {
   const sheet = MAIN_SHEET;
 
-  const numRows = sheet.getLastRow() - 1;     // Remove header row from count
+  const numRows = sheet.getLastRow() - 1;   // Remove header row from count
   const numCols = sheet.getLastColumn();
 
   // Sort all the way to the last row, without the header row
@@ -59,8 +79,13 @@ function sortMainByName() {
 
 
 /**
- * Sort main sheet iff lock is free. This prevents sorting while
- * another process runs, expecting latest registration in last row.
+ * Sorts `MAIN_SHEET` only if the lock is free.
+ * 
+ * This function prevents concurrent processes from interfering with sorting
+ * by acquiring a script lock before proceeding. If the lock is unavailable,
+ * it logs a message and exits gracefully.
+ *  
+ * @see {@link sortMainByName} for the actual sorting logic.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
  * @date  Mar 15, 2025
@@ -85,7 +110,19 @@ function tryAndSortMain() {
 
 
 /**
- * Formats `MAIN_SHEET` for simple and uniform UX.
+ * Formats `MAIN_SHEET` for a simple and uniform user experience.
+ * 
+ * - Freezing panes
+ * - Adjusting font styles, sizes, and weights
+ * - Setting column widths
+ * - Applying number formats and text wrapping
+ * - Aligning text horizontally and vertically
+ * - Adding checkboxes to specific columns
+ * - Ensuring proper letter casing for names and email addresses * 
+ * - Adding hyperlinks to waivers
+ * - Formatting collection dates
+ * 
+ * @see {@link sortMainByName} for sorting logic applied to the same sheet.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
@@ -95,7 +132,7 @@ function tryAndSortMain() {
 function formatMainView() {
   const sheet = MAIN_SHEET;
 
-  // Helper fuction to improve readability
+  // Helper function to improve readability
   const getThisRange = (ranges) =>
     Array.isArray(ranges) ? sheet.getRangeList(ranges) : sheet.getRange(ranges);
 
@@ -117,13 +154,13 @@ function formatMainView() {
   getThisRange('A1:T1').setFontSize(11);  // Header row to size 11
 
   getThisRange([
-    'E1',   // Prefered Name (Header Cell)
+    'E1',   // Preferred Name (Header Cell)
     'T2:T', // Member ID
     'N1',   // Fee Paid (Header Cell)
     'S1',   // Attendance Status (Header Cell)
   ]).setFontSize(10);
 
-  getThisRange(['Q1', 'T2:T']).setFontSize(9);  // Given to Internal (Header Cell) +  Member ID
+  getThisRange(['Q1', 'T2:T']).setFontSize(9);  // Given to Internal (Header Cell) + Member ID
   getThisRange('K1:L1').setFontSize(8);  // Payment Method headers
 
   // 4. Font family adjustment
@@ -135,7 +172,6 @@ function formatMainView() {
 
   // 6. Text wrapping set to 'Clip' (for Referral + Waiver + Payment Choice)
   getThisRange(['I2:I', 'J1:J', 'K2:K']).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
-
 
   // 7. Horizontal and vertical alignment
   getThisRange([
@@ -169,16 +205,27 @@ function formatMainView() {
     [COMMENTS_COL]: 255,
     [ATTENDANCE_STATUS_COL]: 125,
     [MEMBER_ID_COL]: 140,
-  }
+  };
 
   // Resize columns based on `sizeMap`
   Object.entries(sizeMap).forEach(([col, width]) => {
     sheet.setColumnWidth(col, width);
   });
-
 }
 
 
+/**
+ * Adds checkboxes to specific columns in the last row of `MAIN_SHEET`.
+ * 
+ * This function is used to ensure that the last row of `MAIN_SHEET` has checkboxes
+ * in the `Fee Paid`, `Given to Internal`, and `Attendance Status` columns.
+ * 
+ * @param {number} row  Row number to target for formatting.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Oct 1, 2023
+ * @update  Feb 5, 2025
+ */
 function addMissingItems_(row) {
   const sheet = MAIN_SHEET;
 
@@ -202,14 +249,12 @@ function addMissingItems_(row) {
  *  - Lower Case: [McGill Email Address] 
  *  - Capitalized: [First Name, Last Name, Preferred Name/Pronouns, Year, Program]
  * 
- * @param {number} [row=MASTER_SHEET.getLastRow()] 
- *                    Row number to target fix.
- *                    Defaults to last row (1-indexed).
+ * @param {number} [row=getLastSubmissionInMain()]  Row number to target fix.
+ *                                                  Defaults to last row (1-indexed).
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Dec 11, 2024
- * @update  March 15, 2025
- * 
+ * @update  Mar 15, 2025
  */
 
 function fixLetterCaseInRow_(row = getLastSubmissionInMain()) {
@@ -414,14 +459,12 @@ function cleanMasterRegistration() {
  * 
  * Returns email's row index in GSheet (1-indexed), or null if not found.
  * 
+ * 
+ * @param {number} [row=MASTER_SHEET.getLastRow()]  The starting row index for the search (1-indexed). 
+ *                                                  Defaults to 1 (the first row).
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
  * @date  Nov 22, 2024
- * @update  Nov 22, 2024
- * 
- * @param {number} [row=MASTER_SHEET.getLastRow()]  
- *                      The starting row index for the search (1-indexed). 
- *                      Defaults to 1 (the first row).
- * 
+ * @update  Dec 11, 2024
  */
 
 function formatFeeCollection(row = MASTER_SHEET.getLastRow()) {
@@ -455,6 +498,18 @@ function formatFeeCollection(row = MASTER_SHEET.getLastRow()) {
   rangePaymentHistory.setValue(semCode);
 }
 
+/**
+ * Inserts the 3-char semester code for the registration.
+ * 
+ * @param {number} [row=MASTER_SHEET.getLastRow()] 
+ *                    The row number to target for inserting the semester code.
+ *                    Defaults to the last row in `MASTER_SHEET`.
+ * 
+ *  
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Dec 15, 2024
+ * @update  Dec 15, 2024
+ */
 
 function insertRegistrationSem(row = MASTER_SHEET.getLastRow()) {
   var sheet = MASTER_SHEET;

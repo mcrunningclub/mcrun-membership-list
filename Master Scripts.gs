@@ -25,7 +25,7 @@ const PROCESSED_ARR = {
 /**
  * Creates the master sheet by consolidating member data from selected semester sheets.
  * Calls `consolidateMemberData` to fetch, process, and output data to the `MASTER` sheet.
- * 
+ *
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 23, 2024
  *
@@ -35,6 +35,21 @@ function createMaster() {
   consolidateMemberData();
 }
 
+/**
+ * Adds the last submission from `MAIN_SHEET` to the `MASTER` sheet.
+ *
+ * This function processes the last row of the `MAIN_SHEET`, consolidates the data,
+ * and ensures the `MASTER` sheet is sorted by email after the new entry is added.
+ *
+ * @param {number} [lastRow=getLastSubmissionInMain()] - The row number of the last submission in `MAIN_SHEET`.
+ *
+ *
+ * @see {@link consolidateLastSubmission} for the logic of consolidating the last submission.
+ * @see {@link sortMasterByEmail} for sorting the `MASTER` sheet by email.
+ *
+ * @author Andrey Gonzalez
+ * @date Oct 23, 2024
+ */
 function addLastSubmissionToMaster(lastRow = getLastSubmissionInMain()) {
   consolidateLastSubmission(lastRow);
   sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
@@ -43,16 +58,17 @@ function addLastSubmissionToMaster(lastRow = getLastSubmissionInMain()) {
 
 /**
  * Updates Payment History in `MASTER` from the member's semester sheet where they registered.
- * 
- * Appends semester code to range if non-empty.
- * 
- * @param {number} memberRow  The 1-index of the member in `MASTER`.
+ *
+ * Appends the semester code to the payment history column if it is not already present.
+ *
+ * @param {number} memberRow  The 1-indexed row number of the member in `MASTER`.
  * @param {string} semesterSheetName  The name of the member's latest registration semester sheet.
+ * 
+ * @see {@link getSemesterCode_} for how the semester code is determined.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Dec 17, 2024
  * @update  Dec 17, 2024
- * 
  */
 
 function addPaidSemesterToHistory(memberRow, semesterSheetName) {
@@ -67,25 +83,26 @@ function addPaidSemesterToHistory(memberRow, semesterSheetName) {
   // Otherwise only use `semesterCode`.
   const newHistory = paymentHistory ? `${paymentHistory}\n${semesterCode}` : semesterCode;
 
-  // Only modify if paymentHistory **does not** contains semesterCode to prevent duplicates.
+  // Only modify if paymentHistory **does not** contain semesterCode to prevent duplicates.
   if (!paymentHistory.includes(semesterCode)) rangePaymentHistory.setValue(newHistory);
 }
 
 
 /**
- * Updates `isFeePaid` info in member's `semesterSheet` (latest registration sheet of the member).
- * 
- * If member's semester code is removed from `MASTER`, it will update `isFeePaid` in `semesterSheet`.
- * 
- * @param {string} payHistory  Payment history of member's fee. Stored as 3-char code(s), separated by newline.
- * @param {number} memberRow  The row index of the member in `semesterSheet` (1-indexed).
- * @param {number} isFeePaidCol  The column index of `isFeePaid` in `semesterSheet` (1-indexed).
- * @param {SpreadsheetApp.Sheet} semesterSheet  The member's latest registration sheet (e.g. "Fall 2024").
- * 
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
- * @date  Dec 17, 2024
- * @update  Dec 17, 2024
- * 
+ * Updates the `isFeePaid` status in the member's semester sheet.
+ *
+ * This function checks if the member's semester code is present in their payment history.
+ * If the code is found, it sets `isFeePaid` to `true`; otherwise, it sets it to `false`.
+ *
+ * @param {string} payHistory  The payment history of the member, stored as newline-separated semester codes.
+ * @param {number} memberRow  The 1-indexed row number of the member in the semester sheet.
+ * @param {number} isFeePaidCol  The 1-indexed column number of the `isFeePaid` field in the semester sheet.
+ * @param {SpreadsheetApp.Sheet} semesterSheet  The member's latest registration sheet (e.g., "Fall 2024").
+ *
+ * @see {@link getSemesterCode_} for how the semester code is determined.
+ *
+ * @author Andrey Gonzalez
+ * @date Dec 17, 2024
  */
 
 function updateIsFeePaid(payHistory, memberRow, isFeePaidCol, semesterSheet) {

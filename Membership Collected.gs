@@ -1,22 +1,32 @@
 /**
- * Run formatting functions after new member submits a registration form.
+ * Handles the submission of a new registration form.
  * 
- * Prevents sorting in main if concurrent runs.
+ * This function processes the latest submission in `MAIN_SHEET` by:
+ * - Trimming whitespace
+ * - Fixing letter case
+ * - Generating a unique member ID
+ * - Adding missing items (e.g., checkboxes)
+ * - Verifying payment information
+ * - Sending communications to the new member
  * 
- * https://developers.google.com/apps-script/samples/automations/event-session-signup
+ * It also ensures that the data is added to the `MASTER` sheet and sorted appropriately.
  * 
- * https://stackoverflow.com/questions/62246016/how-to-check-if-current-form-submission-is-editing-response
+ * @param {number} [newRow=getLastSubmissionInMain()] - The row number of the new submission.
+ *                                                      Defaults to the last row in `MAIN_SHEET`.
  *
+ * @see {@link getLastSubmissionInMain} for how the last row is determined.
+ * @see {@link addLastSubmissionToMaster} for how the data is added to the `MASTER` sheet.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Oct 18, 2023
  */
 
 function onFormSubmit(newRow = getLastSubmissionInMain()) {
   trimWhitespace_(newRow);
   fixLetterCaseInRow_(newRow);
-  encodeLastRow_(newRow);   // Create unique member ID
+  encodeLastRow_(newRow);
   addMissingItems_(newRow);
-
-  // Get payment information from Interac or Zeffy email
-  checkAndSetPaymentRef(newRow);   
+  checkAndSetPaymentRef(newRow);
 
   // Wrap around try-catch since GAS does not support async calls
   try {
@@ -37,6 +47,21 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
   }
 }
 
+
+/**
+ * Sends communications to a new member.
+ * 
+ * This function packages the member's information and transfers it to the
+ * `NewMemberComms` sheet for further processing.
+ * 
+ * @param {integer} row - The row number of the new member in `MAIN_SHEET`.
+ * 
+ * @see {@link packageMemberInfoInRow_} for how member information is packaged.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Oct 18, 2023
+ */
+
 function sendNewMemberCommunications(row) {
   const memberInfo = packageMemberInfoInRow_(row);
   console.log(`Member info to export to 'NewMemberComms'\n`, memberInfo);
@@ -52,7 +77,7 @@ function sendNewMemberCommunications(row) {
  * @return {integer}  Returns 1-index of last row in GSheet.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
- * @date  Sept 1, 2024
+ * @date  Sep 1, 2024
  * @update  Dec 18, 2024
  */
 

@@ -387,11 +387,36 @@ function packageMemberInfoInRow_(row) {
 }
 
 
+/** 
+ * Copies a member's registration from the `MASTER` sheet to the `MAIN_SHEET`.
+ *
+ * This function is a placeholder for copying a member's registration from the `MASTER`
+ * sheet to the `MAIN_SHEET`. It is currently not implemented.
+ * 
+ * @example
+ * // Copy a member's registration to the main sheet
+ * copyToMainFromMaster(5);
+ *
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date
+ */
 function copyToMainFromMaster(row) {
-  //@todo: complete function!!!
+  throw new Error('Function not implemented.');
 }
 
+/**
+ * Sends a notification for a new app submission.
+ *
+ * This function is a placeholder for sending a notification when a new app submission
+ * is added. It is currently not implemented.
+ *
+ * @example
+ * // Notify about a new app submission
+ * notifyNewAppSubmission(5);
+ *
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date 
+ */
 function notifyNewAppSubmission(row) {
-  //@todo: complete function!!!
-  //STEP 1: Notify member to complete reg
+  throw new Error('Function not implemented.');
 }

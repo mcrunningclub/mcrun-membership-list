@@ -60,7 +60,7 @@ function changeSheetView_(sheetName) {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 21, 2024
- * @update  March 1, 2025
+ * @update  Mar 1, 2025
  */
 
 function onOpen() {
@@ -135,7 +135,7 @@ function helpUI_() {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 21, 2024
- * @update  March 1, 2025
+ * @update  Mar 1, 2025
  */
 
 function confirmAndRunUserChoice_(functionName, sheetName, additionalMsg = "", funcArg = "") {
@@ -189,7 +189,7 @@ function confirmAndRunUserChoice_(functionName, sheetName, additionalMsg = "", f
  *
  * Helper function for UI functions for McRUN menu.
  *
- * @param {number}  The row number in `sheet` 1-indexed.
+ * @param {integer}  The row number in `sheet` 1-indexed.
  * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.
  * 
  * @return {boolean}  The input is a number.
@@ -341,7 +341,15 @@ function sortMasterByEmailUI_() {
   confirmAndRunUserChoice_(functionName, sheetName);
 }
 
+/**
+ * Adds a new member from a specific sheet submission to the `MASTER` sheet.
+ *
+ * This function is a placeholder for adding a member from a specific sheet submission.
+ *
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date
+ */
 function addMemberFromSheetInRowUI_() {
-  const functionName = addMemberFromSheetInRow.name;
+  throw new Error('Function not implemented.');
 }
 
