@@ -325,4 +325,3 @@ function getExpirationDate(semCode) {
     default: return null;
   };
 }
-

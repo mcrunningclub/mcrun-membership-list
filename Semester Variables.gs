@@ -170,4 +170,3 @@ function getCurrentUserEmail_() {
 function parseBool(val) {
   return val === true || val === "true";
 }
-

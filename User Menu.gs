@@ -349,7 +349,6 @@ function sortMasterByEmailUI_() {
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date
  */
-function addMemberFromSheetInRowUI_() {
+function addMemberFromSheetInRowUI_() { 
   throw new Error('Function not implemented.');
 }
-

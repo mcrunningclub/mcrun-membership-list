@@ -16,7 +16,7 @@ limitations under the License.
 
 const TRIGGER_FUNC = runFeeChecker.name;
 const TRIGGER_BASE_ID = 'feeCheckTrigger';
-const FEE_MAX_CHECKS = 2;
+const FEE_MAX_CHECKS = 3;
 const TRIGGER_FREQUENCY = 5;  // Minutes
 
 
@@ -62,7 +62,7 @@ function createNewFeeTrigger_(row, feeDetails) {
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  May 20, 2025
- * @update  May 20, 2025
+ * @update  May 26, 2025
  */
 
 function runFeeChecker() {
@@ -75,15 +75,16 @@ function runFeeChecker() {
     const triggerData = JSON.parse(allProps[key]);
     let { tries, triggerId, feeDetails, memberRow } = triggerData;
 
-    // First check memberRow and update if needed
+    // First check memberRow and update 'triggerData' if needed
     memberRow = checkMemberRow(feeDetails.email, memberRow);
+    triggerData.memberRow = memberRow;
     
     if (isPaymentFound(memberRow)) {
       // If found, clean up trigger and data in script properties
       cleanUpTrigger(key, triggerId);
       Logger.log(`✅ Payment found for member '${feeDetails.memberName}' after ${tries} tries`);
     }
-    else if (tries <= FEE_MAX_CHECKS) {
+    else if (tries < FEE_MAX_CHECKS) {
       // Limit not reach, check again and increment 'tries'
       incrementTries(key, triggerData);
       const isPaid = checkThisPayment(memberRow, feeDetails);
@@ -111,7 +112,7 @@ function runFeeChecker() {
 
     // If emails don't match, find updated memberRow
     if (currentEmail !== memberEmail) {
-      memberRow = findMemberByBinarySearch(memberEmail, sheet);
+      memberRow = findMemberByEmail(memberEmail, sheet);
     }
     return memberRow;
   }
@@ -151,4 +152,3 @@ function runFeeChecker() {
     throw new Error(`⚠️ Trigger with id ${triggerId} not found`);
   }
 }
-
