@@ -368,7 +368,8 @@ function packageMemberInfoInRow_(row) {
   const extractValues = (index) => memberData[index - 1].toString().trim();
 
   // Stringify fee status
-  const memberFeeStatus = parseBool(extractValues(IS_FEE_PAID_COL)) ? 'Paid' : 'Unpaid';
+  //const memberFeeStatus = parseBool(extractValues(IS_FEE_PAID_COL)) ? 'Paid' : 'Unpaid';
+  const memberFeeStatus = 'Paid';   // Set as paid since updating pass not implemented yet
 
   // Get membership expiration date via sheet name
   const semesterCode = getSemesterCode_(semesterName);  // Get the semester code based on the sheet name

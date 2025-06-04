@@ -37,7 +37,6 @@ function getPaymentItem_(colIndex) {
  * @return {GmailApp.GmailLabel} The Gmail label object corresponding to the provided name.
  *
  */
-
 function getGmailLabel_(labelName) {
   return GmailApp.getUserLabelByName(labelName);
 }
@@ -54,7 +53,6 @@ function getGmailLabel_(labelName) {
  * @date  Mar 16, 2025
  * @update  May 20, 2025
  */
-
 function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
   console.log('Entering `checkAndSetPaymentRef()` now...');
@@ -119,7 +117,6 @@ function checkThisPayment(row, feeDetails) {
  * @date  Oct 1, 2023
  * @update  Mar 16, 2025
  */
-
 function setFeeDetails_(row, listItem) {
   const sheet = MAIN_SHEET;
   const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
@@ -143,7 +140,6 @@ function setFeeDetails_(row, listItem) {
  * @date  Mar 16, 2025
  * @update  Mar 17, 2025
  */
-
 function getMatchingPayments_(sender, maxMatches, subject='') {
   // Ensure that correct mailbox is used
   if (getCurrentUserEmail_() !== MCRUN_EMAIL) {

@@ -20,7 +20,6 @@
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
  */
-
 function onFormSubmit(newRow = getLastSubmissionInMain()) {
   trimWhitespace_(newRow);
   fixLetterCaseInRow_(newRow);

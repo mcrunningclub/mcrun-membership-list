@@ -26,7 +26,7 @@ const PROCESSED_ARR = {
  * Creates the master sheet by consolidating member data from selected semester sheets.
  * Calls `consolidateMemberData` to fetch, process, and output data to the `MASTER` sheet.
  *
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @author [Andrey Gonzalez](andrey.gonzalez@mail.mcgill.ca)
  * @date  Oct 23, 2024
  *
  */

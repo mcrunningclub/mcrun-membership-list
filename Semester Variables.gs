@@ -1,5 +1,18 @@
 // SHEET CONSTANTS
-const SHEET_NAME = 'Winter 2025';       // MUST UPDATE EVERY SEMESTER!
+/**
+ * Sheet name corresponding to current semester
+ * 
+ * MUST UPDATE EVERY SEMESTER!
+ * 
+ * @constant {string}
+ */
+const SHEET_NAME = 'Winter 2025';
+
+/**
+ * Sheet object corresponding to current semester
+ * 
+ * @constant {SpreadsheetApp.Sheet}
+ */
 const MAIN_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
 
 // IMPORT SHEET FOR FILLOUT REGISTRATIONS
@@ -11,7 +24,11 @@ const TIMEZONE = getUserTimeZone_();
 const MCRUN_EMAIL = 'mcrunningclub@ssmu.ca';
 const MEMBERSHIP_DURATION = 1;    // 1 year
 
-// DRIVE URL CONTAINING WAIVERS; NOT CONFIDENTIAL
+/**
+ * DRIVE URL CONTAINING WAIVERS; NOT CONFIDENTIAL
+ * 
+ * @constant {string}
+ */
 const WAIVER_DRIVE_ID = '1lNAvGMsm-ixa7rAQHqTdd_gV-W4WNwpOdx4Zx7S_AZ8_6EQ8ammSEwy3A3xzbPsPp7eUnvnf';
 
 // LIST OF COLUMNS IN SHEET_NAME
