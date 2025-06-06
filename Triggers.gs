@@ -87,7 +87,7 @@ function runFeeChecker() {
     else if (tries < FEE_MAX_CHECKS) {
       // Limit not reach, check again and increment 'tries'
       incrementTries(key, triggerData);
-      const isPaid = checkThisPayment(memberRow, feeDetails);
+      const isPaid = checkThisPayment_(memberRow, feeDetails);
       Logger.log(`Payment verification for member '${feeDetails.memberName}' returned: ${isPaid}`);
     }
     else {

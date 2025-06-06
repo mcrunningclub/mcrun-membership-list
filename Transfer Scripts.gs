@@ -302,7 +302,6 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
  * @update  May 17, 2025
- * 
  */
 
 function copyFilloutRegToMain_(registration, row = getLastSubmissionInMain()) {
@@ -331,8 +330,8 @@ function copyFilloutRegToMain_(registration, row = getLastSubmissionInMain()) {
 
   // Add additional information for payments occuring in other forms
   if (registrationObj['paymentAmount'] == 0) {
-    const event = (registrationObj['referral'])['sources'] ?? "";
-    const method = registrationObj['paymentMethod'];
+    const event = (registrationObj['referral'])['sources'] || "";
+    const method = registrationObj['paymentMethod'] || 'Fee Waived';
 
     // Set new value
     registrationObj['paymentMethod'] = `${[event, method].join(': ')}`;

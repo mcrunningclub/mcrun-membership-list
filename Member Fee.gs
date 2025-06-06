@@ -10,6 +10,7 @@ const INTERAC_LABEL = 'Fee Payments/Interac Emails';
 // Found in `Internal Fee Collection` sheet
 const INTERAC_ITEM_COL = 'A3';
 const ONLINE_PAYMENT_ITEM_COL = 'A4';
+const FEE_WAIVED_ITEM_COL = 'A5';
 
 /**
  * Retrieves the payment item from the "Internal Fee Collection" sheet.
@@ -51,7 +52,7 @@ function getGmailLabel_(labelName) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 16, 2025
- * @update  May 20, 2025
+ * @update  Jun 6, 2025
  */
 function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
   const sheet = MAIN_SHEET;
@@ -61,9 +62,9 @@ function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
   const values = sheet.getSheetValues(row, 1, 1, sheet.getLastColumn())[0];
   const feeDetails = packFeeDetails(values);
 
-  // Has the payment been found in inbox? 
-  if (checkThisPayment(row, feeDetails)) {
-    console.log(`Successfully found transaction email for '${feeDetails.memberName}'!`);  // Log success message
+  // Has the payment been found in inbox or fee waived?
+  if (checkThisPayment_(row, feeDetails)) {
+    console.log(`Successfully found transaction email for '${feeDetails.memberName}' (or fee waived)!`);  // Log success message
   }
   else {
     // 1) Create a scheduled trigger to recheck email inbox
@@ -92,16 +93,20 @@ function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
 }
 
 // Helper function for Stripe/Zeffy and Interac cases
-function checkThisPayment(row, feeDetails) {
+function checkThisPayment_(row, feeDetails) {
   const { firstName, lastName, email, paymentMethod, interacRef } = feeDetails;
 
   if (paymentMethod.includes('CC')) {
-    return checkAndSetOnlinePayment(row, 
-    { firstName: firstName, lastName: lastName, email: email });
+    return checkAndSetOnlinePayment_(row, 
+    { firstName, lastName, email});
   }
   else if (paymentMethod.includes('Interac')) {
-    return checkAndSetInteracRef(row, 
-    { firstName: firstName, lastName: lastName, interacRef: interacRef });
+    return checkAndSetInteracRef_(row, 
+    { firstName, lastName, interacRef });
+  }
+  else if (paymentMethod.includes('Waived')) {
+    setFeeWaived_(row);
+    return true;  // Always returns true
   }
   return false;
 }
@@ -220,7 +225,7 @@ function matchMemberInPaymentEmail_(searchTerms, emailBody) {
  * @update Mar 21, 2025
  */
 
-function createSearchTerms(member) {
+function createSearchTerms_(member) {
   const lastNameHyphenated = (member.lastName).replace(/[-\s]/, '[-\\s]?'); // handle hyphenated last names
   const fullName = `${member.firstName}\\s+${lastNameHyphenated}`;
 
@@ -232,6 +237,23 @@ function createSearchTerms(member) {
   ].filter(Boolean); // Removes undefined, null, or empty strings
 
   return searchTerms;
+}
+
+
+///  👉 FUNCTIONS FOR FEE WAIVED 👈  \\\
+
+/**
+ * Sets fee status as waived in member registration.
+ * 
+ * @param {integer} row  The index to enter information.
+ *  
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Jun 6, 2025
+ * @update  Jun 6, 2025
+ */
+function setFeeWaived_(row) {
+  const feeWaivedItem = getPaymentItem_(FEE_WAIVED_ITEM_COL);
+  setFeeDetails_(row, feeWaivedItem);
 }
 
 
@@ -260,12 +282,12 @@ function setOnlinePaid_(row) {
  * @update  May 17, 2025
  */
 
-function checkAndSetOnlinePayment(row, member) {
+function checkAndSetOnlinePayment_(row, member) {
   const sender = `${ZEFFY_EMAIL} OR ${STRIPE_EMAIL}`;
   const maxMatches = 5;
   const threads = getMatchingPayments_(sender, maxMatches, 'payment');
 
-  const searchTerms = createSearchTerms(member);
+  const searchTerms = createSearchTerms_(member);
   console.log('Search terms for email body', searchTerms);
 
   let isFound = threads.some(thread => processOnlineThread_(thread, searchTerms));
@@ -329,7 +351,7 @@ function setInteractPaid_(row) {
  * @update  Apr 29, 2025
  */
 
-function checkAndSetInteracRef(row, member) {
+function checkAndSetInteracRef_(row, member) {
   const sender = INTERAC_EMAIL;
   const maxMatches = 10;
   const threads = getMatchingPayments_(sender, maxMatches);
@@ -339,7 +361,7 @@ function checkAndSetInteracRef(row, member) {
   const thisUnidentified = [];
 
   // Construct search terms once
-  const searchTerms = createSearchTerms(member);
+  const searchTerms = createSearchTerms_(member);
   console.log('Search terms for email body', searchTerms);
 
   // Most Interac email threads only have 1 message, so O(n) instead of O(n**2). Coded as safeguard.
