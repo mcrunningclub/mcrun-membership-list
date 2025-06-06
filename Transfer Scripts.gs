@@ -189,17 +189,17 @@ function verifyLegalEditInRange_(e, sheet) {
   Logger.log(`verifyLegalEditInRange 1 -> sheetName: ${sheetName}`);
 
   // Function to get column mappings
-  const feeStatus = GET_COL_MAP_(sheetName).feeStatus;
-  const isInternalCollected = GET_COL_MAP_(sheetName).isInternalCollected;
-
-  Logger.log(`verifyLegalEditInRange 2 -> feeStatusCol: ${feeStatus}, isInternalCollected: ${isInternalCollected}`);
+  const colMap = GET_COL_MAP_(sheetName);
+  const getLeftRange = () => (sheetName === MASTER_NAME) ? colMap.collector : colMap.feeStatus;
 
   const feeEditRange = {
     top: 2,    // Skip header row
     bottom: sheet.getLastRow(),
-    leftmost: feeStatus,
-    rightmost: isInternalCollected,
+    rightmost: colMap.isInternalCollected,   // For both sheet, this is rightmost col
+    leftmost : getLeftRange()   // Get leftmost according to sheet
   }
+
+  Logger.log(`verifyLegalEditInRange 2 -> feeEditRange: ${JSON.stringify(feeEditRange)}`);
 
   // Exit if we're out of range
   if (thisRow < feeEditRange.top || thisRow > feeEditRange.bottom) {
@@ -211,7 +211,8 @@ function verifyLegalEditInRange_(e, sheet) {
     return false;
   }
 
-  return true;    // edit e is within legal edit range
+  Logger.log("Edit is within legal edit range");
+  return true;
 }
 
 

@@ -91,7 +91,7 @@ const SHEET_COL_MAP = {
   },
 };
 
-// Function to get column mappings
+
 /**
  * Retrieves the column mapping for a given sheet.
  *
