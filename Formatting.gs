@@ -42,7 +42,7 @@ function trimWhitespace_(lastRow = MAIN_SHEET.getLastRow()) {
  * @update  Mar 15, 2025
  */
 
-function removeDiacritics(str) {
+function removeDiacritics_(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 

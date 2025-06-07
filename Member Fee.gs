@@ -19,7 +19,7 @@ const FEE_WAIVED_ITEM_COL = 'A5';
  * @return {string}  The payment item value from the specified cell.
  *
  * @author Andrey Gonzalez
- * @date May 24, 2025
+ * @date  May 24, 2025
  */
 function getPaymentItem_(colIndex) {
   return SpreadsheetApp
@@ -166,7 +166,9 @@ function getMatchingPayments_(sender, maxMatches, subject='') {
 }
 
 
-// Get threads from search (from:sender, starting:yesterday, in:inbox, [subject:partial-email-match])
+/**
+ * Get threads from search (from:sender, starting:yesterday, in:inbox, [subject:partial-email-match])
+ */ 
 function getGmailSearchString_(sender, subject = '') {
   const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
   const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd');
@@ -177,7 +179,6 @@ function getGmailSearchString_(sender, subject = '') {
 /**
  * Marks a fully processed thread as read, archives it, and moves it to the `label` folder.
  */
-
 function cleanUpMatchedThread_(thread, label) {
   thread.markRead();
   thread.moveToArchive();
@@ -191,50 +192,60 @@ function cleanUpMatchedThread_(thread, label) {
  * 
  * @param {string[]} searchTerms  Search terms for match regex.
  * @param {string} emailBody  The body of the payment.
+ * @returns {boolean}  True if a match is found, false otherwise.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 15, 2025
- * @update Mar 21, 2025
- * 
+ * @update  Jun 7, 2025
  */
-
 function matchMemberInPaymentEmail_(searchTerms, emailBody) {
-  const formatedBody = emailBody.replace(/\*/g, '');    // Remove astericks around terms
+  const formatedBody = emailBody.replace(/\*/g, '');   // Remove asterisks around terms
   console.log(formatedBody);
 
-  if (searchTerms.length === 0) return false; // Prevent empty regex errors
-
-  const searchPattern = new RegExp(`\\b(${searchTerms.join('\\b|\\b')})\\b`, 'i');
+  if (!searchTerms.length) return false;  // Prevent empty regex errors
+  const searchPattern = new RegExp(`${searchTerms.join('|')}`, 'i');
   return searchPattern.test(formatedBody);
 }
 
 
 /**
- * Creates search terms for regex using member information.
+ * Creates search terms for regex matching using a member's information.
  * 
- * Matches lastName whether hyphenated or not.
+ * Handles optional hyphens/spaces in last names, and removes diacritics for better matching.
+ * Improves matching accuracy in `matchMemberInPaymentEmail`.
  * 
  * @param {Object}  Member information.
  * @param {string} member.firstName  Member's first name.
  * @param {string} member.lastName  Member's last name.
  * @param {string} [member.email]  Member's email address (if applicable).
  * @param {string} [member.interacRef]  Reference number of Interac e-Transfer (if applicable).
+ * @returns {string[]}  An array of search terms for regex matching.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 21, 2025
- * @update Mar 21, 2025
+ * @update  Jun 7, 2025
  */
-
 function createSearchTerms_(member) {
-  const lastNameHyphenated = (member.lastName).replace(/[-\s]/, '[-\\s]?'); // handle hyphenated last names
-  const fullName = `${member.firstName}\\s+${lastNameHyphenated}`;
+  const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const nameParts = [
+    member.firstName,
+    member.lastName.replace(/[-\s]/g, '[-\\s]?'),  // Allow optional hyphen/space
+  ].filter(Boolean);
+
+  // Construct regex for ordered matching: \bWord\b.*?\bWord\b...
+  const orderedNamePattern = nameParts
+    .map(part => `\\b${escapeRegex(part)}\\b`)
+    .join('.*?');
+
+  const diacriticPattern = removeDiacritics_(orderedNamePattern);
 
   const searchTerms = [
-    fullName,
-    removeDiacritics(fullName),
+    orderedNamePattern,
+    diacriticPattern,
     member.email,
     member.interacRef
-  ].filter(Boolean); // Removes undefined, null, or empty strings
+  ].filter(Boolean);   // Removes undefined, null, or empty strings
 
   return searchTerms;
 }
@@ -281,7 +292,6 @@ function setOnlinePaid_(row) {
  * @date  Mar 15, 2025
  * @update  May 17, 2025
  */
-
 function checkAndSetOnlinePayment_(row, member) {
   const sender = `${ZEFFY_EMAIL} OR ${STRIPE_EMAIL}`;
   const maxMatches = 5;
@@ -302,7 +312,6 @@ function checkAndSetOnlinePayment_(row, member) {
 /**
  * Process a single Gmail thread to find a matching member's payment.
  */
-
 function processOnlineThread_(thread, searchTerms) {
   const messages = thread.getMessages();
   let starredCount = 0;
@@ -350,7 +359,6 @@ function setInteractPaid_(row) {
  * @date  Oct 1, 2023
  * @update  Apr 29, 2025
  */
-
 function checkAndSetInteracRef_(row, member) {
   const sender = INTERAC_EMAIL;
   const maxMatches = 10;
@@ -423,7 +431,6 @@ function processInteracThreads_(thread, searchTerms) {
  * @date  Nov 13, 2024
  * @update  Mar 16, 2025
  */
-
 function extractInteracRef_(emailBody) {
   const searchPattern = /(Reference Number|Numero de reference)\s*:\s*(\w+)/;
   const match = emailBody.match(searchPattern);
@@ -461,7 +468,7 @@ function notifyUnidentifiedInteracRef_(references) {
 function notifyUnidentifiedPayment_(name) {
   const emailBody =
   `
-  Cannot find the payment confirmation email for member: ${name}
+  Cannot find the payment confirmation email for member: '${name}'
       
   Please manually check the inbox and update membership registry if required.
 
