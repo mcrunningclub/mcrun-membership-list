@@ -55,6 +55,35 @@ const ATTENDANCE_STATUS_COL = 19;       // Column 'S'
 const MEMBER_ID_COL = 20;               // Column 'T'
 
 
+/** LATEST COLUMN MAPPING FOR SEMESTER SHEET (S25) */
+const SEMESTER_COLS = {
+  registration: 1,
+  email: 2,
+  firstName: 3,
+  lastName: 4,
+  preferredName: 5,
+  year: 6,
+  program: 7,
+  memberDescription: 8,
+  isNewsletterOpt: 9,
+  isAutomatedOpt: 10,
+  referral: 11,
+  waiverUrl: 12,
+  paymentMethod: 13,
+  promo: 14,
+  emptyCol: 15,
+  feeAmount: 16,
+  isFeePaid: 17,
+  collectionDate: 18,
+  collectedBy: 19,
+  isInternalCollected: 20,
+  comments: 21,
+  totalRuns: 22,
+  totalPoints: 23,
+  memberId: 24
+}
+
+
 // MASTER SHEET CONSTANTS
 const MASTER_NAME = 'MASTER';
 const MASTER_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MASTER_NAME);
