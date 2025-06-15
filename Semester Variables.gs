@@ -84,6 +84,33 @@ const SEMESTER_COLS = {
 }
 
 
+/** LATEST COLUMN MAPPING FOR MASTER SHEET (2025-06-10) */            
+const MASTER_COLS = {            
+  email: 1,            
+  firstName: 2,            
+  lastName: 3,            
+  preferredName: 4,            
+  year: 5,            
+  program: 6,            
+  waiverUrl: 7,            
+  memberDescription: 8,            
+  referral: 9,            
+  latestRegistration: 10,            
+  latestSemester: 11,            
+  regHistory: 12,            
+  emptyCol: 13,            
+  isFeePaid: 14,            
+  feeExpiration: 15,            
+  collectedBy: 16,            
+  collectionDate: 17,            
+  isInternalCollected: 18,            
+  paymentHistory: 19,            
+  comments: 20,            
+  attendanceStatus: 21,            
+  memberId: 22            
+}
+
+
 // MASTER SHEET CONSTANTS
 const MASTER_NAME = 'MASTER';
 const MASTER_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MASTER_NAME);
