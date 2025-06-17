@@ -1,4 +1,3 @@
-// SHEET CONSTANTS
 /**
  * Sheet name corresponding to current semester
  * 
