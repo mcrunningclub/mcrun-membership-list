@@ -223,7 +223,7 @@ function matchMemberInPaymentEmail_(searchTerms, emailBody) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 21, 2025
- * @update  Jun 7, 2025
+ * @update  Sep 20, 2025
  */
 function createSearchTerms_(member) {
   const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -244,7 +244,7 @@ function createSearchTerms_(member) {
     orderedNamePattern,
     diacriticPattern,
     member.email,
-    member.interacRef
+    escapeRegex(member.interacRef)
   ].filter(Boolean);   // Removes undefined, null, or empty strings
 
   return searchTerms;
@@ -386,9 +386,9 @@ function checkAndSetInteracRef_(row, member) {
     setInteractPaid_(row);
   }
   // Notify McRUN about references not identified
-  else if (thisUnidentified.length > 0) {
-    notifyUnidentifiedInteracRef_(thisUnidentified);
-  }
+  // else if (thisUnidentified.length > 0) {
+  //   notifyUnidentifiedInteracRef_(thisUnidentified);
+  // }
 
   return thisIsFound;
 }
