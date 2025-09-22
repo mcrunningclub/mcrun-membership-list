@@ -43,6 +43,7 @@ function getGmailLabel_(labelName) {
 }
 
 
+
 /**
  * Verify if member has paid fee using notification email sent by Interac, Stripe or Zeffy
  * 
@@ -223,10 +224,10 @@ function matchMemberInPaymentEmail_(searchTerms, emailBody) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 21, 2025
- * @update  Sep 20, 2025
+ * @update  Sep 22, 2025
  */
 function createSearchTerms_(member) {
-  const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapeRegex = str => str ? str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
 
   const nameParts = [
     member.firstName,

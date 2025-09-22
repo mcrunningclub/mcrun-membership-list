@@ -140,7 +140,7 @@ function processLastSubmission(lastRow = getLastSubmissionInMain()) {
 
   const indicesToProcess = [PROCESSED_ARR.MEMBER_DESCR, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
 
-  // Loop over the relevant indices and append semester code to non-empty fields
+  // Loop over the relevant indices and prepend semester code to non-empty fields
   indicesToProcess.forEach(index => {
     if (lastSubmission[index]) {
       lastSubmission[index] = `(${semesterCode}) ${lastSubmission[index]}`;
@@ -171,7 +171,7 @@ function processLastSubmission(lastRow = getLastSubmissionInMain()) {
  * @date  Oct 21, 2024
  * @update Mar 15, 2025
  */
-
+// IMPROVE RUNTIME!
 function consolidateLastSubmission(lastRow = getLastSubmissionInMain()) {
   var sheet = MASTER_SHEET;
   var processedLastSubmission = processLastSubmission(lastRow);

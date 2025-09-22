@@ -25,14 +25,14 @@ function onFormSubmit(newRow = getLastSubmissionInMain()) {
   fixLetterCaseInRow_(newRow);
   encodeLastRow_(newRow);
   addMissingItems_(newRow);
-  checkAndSetPaymentRef(newRow);
-
+  
   // Wrap around try-catch since GAS does not support async calls
   try {
+    checkAndSetPaymentRef(newRow);
     sendNewMemberCommunications(newRow);
   }
   catch (e) {
-    console.log(`Could not transfer new registration to 'New Member Comms'`);
+    console.log(`Could not find payment OR transfer new registration to 'New Member Comms'`);
     throw Error(e);
   }
   finally {
@@ -89,127 +89,6 @@ function getLastSubmissionInMain() {
   }
 
   return lastRow;
-}
-
-
-/**
- * Searches for member entry by email in `sheet` by binary search.
- * If unsuccessful, searches again via top-to-bottom iteration.
- * 
- * Returns row index of `email` in GSheet (1-indexed), or null if not found.
- * 
- * @param {string} emailToFind  The email address to search for in `sheet`.
- * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.
- * 
- * @return {number|null}  Returns the 1-indexed row number where the email is found, 
- *                        or `null` if the email is not found.
- * 
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
- * @date  Dec 16, 2024
- * @update  Dec 18, 2024
- * 
- * @example `const submissionRowNumber = findMemberByEmail('example@mail.com', MAIN_SHEET);`
- */
-
-function findMemberByEmail(emailToFind, sheet) {
-  // First try with binary search (faster)
-  const resultBinarySearch = findMemberByBinarySearch(emailToFind, sheet);
-
-  if (resultBinarySearch != null) return resultBinarySearch;   // success!
-
-  // If binary search unsuccessful, try with iteration (2x slower)
-  return findMemberByIteration(emailToFind, sheet);
-}
-
-
-/**
- * Searches for member entry by email in `sheet` using iteration.
- * Returns row index of `email` in GSheet (1-indexed), or null if not found.
- * 
- * See faster binary search function `findMemberByBinarySearch()`.
- * 
- * @param {string} emailToFind  The email address to search for in `sheet`.
- * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.
- * @param {number} [start=2]  The starting row index for the search (1-indexed).
- *                            Defaults to 2 (the second row) to avoid the header row.
- * @param {number} [end=MASTER_SHEET.getLastRow()]  The ending row index for the search.
- *                                                  Defaults to the last row in the sheet.
- * 
- * @return {number|null}  Returns the 1-indexed row number where the email is found, 
- *                        or `null` if the email is not found.
- * 
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
- * @date  Dec 16, 2024
- * @update  Dec 18, 2024
- * 
- * @example `const submissionRowNumber = findMemberByIteration('example@mail.com', MAIN_SHEET);`
- */
-
-function findMemberByIteration(emailToFind, sheet, start = 2, end = sheet.getLastRow()) {
-  const sheetName = sheet.getSheetName();
-  const thisEmailCol = GET_COL_MAP_(sheetName).emailCol;    // Get email col index of `sheet`
-
-  for (var row = start; row <= end; row++) {
-    let email = sheet.getRange(row, thisEmailCol).getValue();
-    if (email === emailToFind) return row;    // Exit loop and return value;
-  }
-
-  return null;
-}
-
-
-/**
- * Recursive function to search for entry by email in `sheet` using binary search.
- * Returns row index of `email` in GSheet (1-indexed), or null if not found.
- * 
- * Previously `findSubmissionFromEmail` in `Master Scripts.gs`.
- * 
- * @param {string} emailToFind  The email address to search for in `sheet`.
- * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.
- * @param {number} [start=2]  The starting row index for the search (1-indexed). 
- *                            Defaults to 2 (the second row) to avoid the header row.
- * @param {number} [end=MASTER_SHEET.getLastRow()]  The ending row index for the search. 
- *                                                  Defaults to the last row in the sheet.
- * 
- * @return {number|null}  Returns the 1-indexed row number where the email is found, 
- *                        or `null` if the email is not found.
- * 
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
- * @date  Oct 21, 2024
- * @update  Dec 17, 2024
- * 
- * @example `const submissionRowNumber = findMemberByBinarySearch('example@mail.com', MASTER_SHEET);`
- */
-
-function findMemberByBinarySearch(emailToFind, sheet, start = 2, end = sheet.getLastRow()) {
-  const sheetName = sheet.getSheetName();
-  const emailCol = GET_COL_MAP_(sheetName).emailCol;  // Get email col from `sheet`
-
-  // Base case: If start index exceeds the end index, the email is not found
-  if (start > end) {
-    return null;
-  }
-
-  // Find the middle point between the start and end indexes
-  const mid = Math.floor((start + end) / 2);
-
-  // Get the email value at the middle row
-  const emailAtMid = sheet.getRange(mid, emailCol).getValue();
-
-  // Compare the target email with the middle email
-  if (emailAtMid === emailToFind) {
-    return mid;  // If the email matches, return the row index (1-indexed)
-
-    // If the email at the middle row is alphabetically smaller, search the right half.
-    // Note: use localeString() to ensure string comparison matches GSheet.
-  } else if (emailAtMid.localeCompare(emailToFind) === -1) {
-    return findMemberByBinarySearch(emailToFind, sheet, mid + 1, end);
-
-    // If the email at the middle row is alphabetically larger, search the left half.
-  } else {
-    return findMemberByBinarySearch(emailToFind, sheet, start, mid - 1);
-  }
-
 }
 
 
@@ -278,7 +157,7 @@ function setWaiverUrl(row = getLastSubmissionInMain()) {
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 1, 2025
- * @update  Mar 15, 2025
+ * @update  Sep 22, 2025
  */
 
 function findWaiverLink_(name) {
@@ -309,7 +188,6 @@ function findWaiverLink_(name) {
  * @date  Feb 28, 2025
  * @update  Feb 28, 2025
  */
-
 
 function getExpirationDate(semCode) {
   const validDuration = MEMBERSHIP_DURATION;
