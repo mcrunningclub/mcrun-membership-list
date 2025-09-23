@@ -57,10 +57,10 @@ function onChange(e) {
     console.log('Whoops! Error raised in onChange(e)');
     Logger.log(error);
 
-    // Only alert if message is not "Please select an active sheet first"
-    if (! /"active"/i.test(error)) {
+    /* // Only alert if message is not "Please select an active sheet first"
+    if (! /"active"/i.test(error.message)) {
       throw Error(error.message);
-    }
+    } */
   }
 }
 

@@ -74,6 +74,7 @@ function runFeeChecker() {
 
     const triggerData = JSON.parse(allProps[key]);
     let { tries, triggerId, feeDetails, memberRow } = triggerData;
+    console.log(`Trigger Data: ${triggerData}`);
 
     // First check memberRow and update 'triggerData' if needed
     memberRow = checkMemberRow(feeDetails.email, memberRow);
@@ -152,3 +153,4 @@ function runFeeChecker() {
     throw new Error(`⚠️ Trigger with id ${triggerId} not found`);
   }
 }
+

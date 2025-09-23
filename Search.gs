@@ -47,7 +47,7 @@ function buildLetterIndexStore_() {
 
 
 function testRuntime() {
-  const email = 'harry.tatam@mail.mcgill.ca';
+  const email = 'example@mail.com';
   const startTime = new Date().getTime();
 
   /**
@@ -95,7 +95,7 @@ function findMemberByEmail(emailToFind, sheet) {
   let result = null;
 
   // First try with letter index store and binary search (fastest)
-  if (sheet = MASTER_SHEET) result = findMemberWithStore_(emailToFind);
+  if (sheet === MASTER_SHEET) result = findMemberWithStore_(emailToFind);
 
   // Try with binary search with whole sheet if unsuccessful or sheet !== MASTER_SHEET
   result = result ?? findMemberByBinarySearch(emailToFind, sheet);
