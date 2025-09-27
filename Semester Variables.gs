@@ -12,7 +12,7 @@ const SHEET_NAME = 'Winter 2025';
  * 
  * @constant {SpreadsheetApp.Sheet}
  */
-const MAIN_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+const SEMESTER_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
 
 // IMPORT SHEET FOR FILLOUT REGISTRATIONS
 const IMPORT_NAME = 'Import';
@@ -57,6 +57,7 @@ const MEMBER_ID_COL = 20;               // Column 'T'
 /** LATEST COLUMN MAPPING FOR SEMESTER SHEET (S25) */
 const SEMESTER_COLS = {
   registration: 1,
+  //rowInMaster : 1,
   email: 2,
   firstName: 3,
   lastName: 4,
@@ -84,7 +85,8 @@ const SEMESTER_COLS = {
 
 
 /** LATEST COLUMN MAPPING FOR MASTER SHEET (2025-06-10) */            
-const MASTER_COLS = {            
+const MASTER_COLS = {
+  //rowInSemester : 1,
   email: 1,            
   firstName: 2,            
   lastName: 3,            
@@ -105,7 +107,7 @@ const MASTER_COLS = {
   isInternalCollected: 18,            
   paymentHistory: 19,            
   comments: 20,            
-  attendanceStatus: 21,            
+  attendanceStatus: 21,
   memberId: 22            
 }
 
@@ -126,27 +128,6 @@ const MASTER_PAYMENT_HIST = 19;
 const MASTER_MEMBER_ID_COL = 22;
 
 
-// MAPPING USED TO GET COL INDEX ACROSS SHEETS
-const SHEET_COL_MAP = {
-  [SHEET_NAME]: {
-    emailCol: EMAIL_COL,
-    memberIdCol: MEMBER_ID_COL,
-    feeStatus: IS_FEE_PAID_COL,   // Boolean value
-    collectionDate: COLLECTION_DATE_COL,
-    collector: COLLECTION_PERSON_COL,
-    isInternalCollected: IS_INTERNAL_COLLECTED_COL,
-  },
-  [MASTER_NAME]: {
-    emailCol: MASTER_EMAIL_COL,
-    memberIdCol: MASTER_MEMBER_ID_COL,
-    feeStatus: MASTER_PAYMENT_HIST,   // String with semester code(s)
-    collectionDate: MASTER_COLLECTION_DATE,
-    collector: MASTER_FEE_COLLECTOR,
-    isInternalCollected: MASTER_IS_INTERNAL_COLLECTED,
-  },
-};
-
-
 /**
  * Retrieves the column mapping for a given sheet.
  *
@@ -156,10 +137,36 @@ const SHEET_COL_MAP = {
  * @param {string} sheet - The name of the sheet to retrieve the column mapping for.
  * @return {Object|null} The column mapping object for the sheet, or `null` if not found
  * 
- * @author Andrey Gonzalez
- * @date May 24, 2025
+ * @author  Andrey Gonzalez
+ * @date  May 24, 2025
+ * @update  Sep 26, 2025
  */
+
+let SHEET_COL_MAP = null;
+
 function GET_COL_MAP_(sheet) {
+  /** If SHEET_COL_MAP not defined yet */
+  if (!SHEET_COL_MAP) {
+    SHEET_COL_MAP = {
+      [SHEET_NAME]: {
+        emailCol: EMAIL_COL,
+        memberIdCol: MEMBER_ID_COL,
+        feeStatus: IS_FEE_PAID_COL,   // Boolean value
+        collectionDate: COLLECTION_DATE_COL,
+        collector: COLLECTION_PERSON_COL,
+        isInternalCollected: IS_INTERNAL_COLLECTED_COL,
+      },
+      [MASTER_NAME]: {
+        emailCol: MASTER_EMAIL_COL,
+        memberIdCol: MASTER_MEMBER_ID_COL,
+        feeStatus: MASTER_PAYMENT_HIST,   // String with semester code(s)
+        collectionDate: MASTER_COLLECTION_DATE,
+        collector: MASTER_FEE_COLLECTOR,
+        isInternalCollected: MASTER_IS_INTERNAL_COLLECTED,
+      },
+    };
+  }
+
   return SHEET_COL_MAP[sheet] || null;
 }
 

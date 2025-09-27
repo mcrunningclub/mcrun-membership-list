@@ -199,7 +199,7 @@ function confirmAndRunUserChoice_(functionName, sheetName, additionalMsg = "", f
  * @update  March 1, 2025
  */
 
-function isValidRow_(row, sheet = MAIN_SHEET) {
+function isValidRow_(row, sheet = SEMESTER_SHEET) {
   const lastRow = sheet.getLastRow();
   const rowInt = parseInt(row);
 
@@ -214,7 +214,7 @@ function isValidRow_(row, sheet = MAIN_SHEET) {
  */
 
 function sortByNameUI_() {
-  const functionName = sortMainByName.name;
+  const functionName = sortSemesterByName.name;
   const sheetName = SHEET_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }

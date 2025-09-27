@@ -55,8 +55,8 @@ function getGmailLabel_(labelName) {
  * @date  Mar 16, 2025
  * @update  Jun 6, 2025
  */
-function checkAndSetPaymentRef(row = getLastSubmissionInMain()) {
-  const sheet = MAIN_SHEET;
+function checkAndSetPaymentRef(row = getLastSubmissionInSemester()) {
+  const sheet = SEMESTER_SHEET;
   console.log('Entering `checkAndSetPaymentRef()` now...');
 
   // Get values of member's registration, and pack fee details for payment verifications
@@ -123,14 +123,115 @@ function checkThisPayment_(row, feeDetails) {
  * @date  Oct 1, 2023
  * @update  Mar 16, 2025
  */
-function setFeeDetails_(row, listItem) {
-  const sheet = MAIN_SHEET;
+function setFeeDetailsInSemester_(row, listItem) {
+  const sheet = SEMESTER_SHEET;
   const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
 
   sheet.getRange(row, IS_FEE_PAID_COL).check();
   sheet.getRange(row, COLLECTION_DATE_COL).setValue(currentDate);
   sheet.getRange(row, COLLECTION_PERSON_COL).setValue(listItem);
   sheet.getRange(row, IS_INTERNAL_COLLECTED_COL).check();
+}
+
+
+function setFeeDetailsInMaster_(row, paymentMethod, collectedBy, thisDate = null) {
+  const sheet = MASTER_SHEET;
+  const collectionDate = thisDate ?? Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
+  sheet.getRange(row, MASTER_COLS.collectionDate).setValue(collectionDate);
+
+  //sheet.getRange(row, MASTER_COLS.paymentHistory).setValue(...);
+
+  // Get cleaner string of payment method using list item
+  const collector = collectedBy ?? paymentMethodToItem(paymentMethod).toString();
+  sheet.getRange(row, MASTER_COLS.collectedBy).setValue(collector);
+  sheet.getRange(row, MASTER_COLS.isInternalCollected).check();
+}
+
+function updateMasterPayment_(email, paymentMethod, aRow = null) {
+  // Find member row in MASTER_SHEET
+  const rowInMaster = aRow ?? findMemberByEmail(email, MASTER_SHEET);
+  
+  // Set fee details in MASTER_SHEET
+  setFeeDetailsInMaster_(rowInMaster, paymentMethod);
+  addPaidSemesterToHistory(rowInMaster, SHEET_NAME);
+}
+
+
+function checkExistingPaymentInSemester() {
+  const masterSheet = MASTER_SHEET;
+  const startRow = 1;
+  const numRows = masterSheet.getLastRow();
+
+  // Get all emails and isPaid values in both MASTER and SEMESTER sheets
+  const getThisCol = (col) => masterSheet.getSheetValues(startRow, col, numRows, 1);
+  const masterEmails = getThisCol(MASTER_COLS.email);
+  const masterLatestReg =  getThisCol(MASTER_COLS.latestRegistration);
+  const masterIsPaid = getThisCol(MASTER_COLS.isFeePaid);
+
+  // Now in SEMESTER SHEET
+  const semesterSheet = SEMESTER_SHEET;
+  const sSheetName = semesterSheet.getSheetName();
+  const sNumRows = semesterSheet.getLastRow();
+
+  const SEMESTER_MAP = GET_COL_MAP_(sSheetName);
+  const semesterIsPaid = semesterSheet.getSheetValues(1, SEMESTER_MAP.feeStatus, sNumRows, 1);
+
+  // 'Collected by' columns in both sheets to use for defining range
+  const sCollectedByCol = SEMESTER_MAP.collector;
+  const sCollectionDateCol = SEMESTER_MAP.collectionDate;
+
+  const emailsNotFound = [];
+  const today = new Date();
+
+  // Iterate through rows and verify payment in SEMESTER_SHEET iff isPaid false
+  for (let isPaid, lastReg, mRow = startRow; mRow <= numRows - 1; mRow++) {
+    isPaid = masterIsPaid[mRow][0];
+    lastReg = new Date(masterLatestReg[mRow][0]);
+
+    const days = getNumberOfDays(lastReg, today);
+
+    if (isPaid !== 'Paid' && days > 60 && days < 150) {
+      let email = masterEmails[mRow][0];
+      const sRow = findMemberByEmail(email, semesterSheet);
+      console.info(`Checking fee for '${email}' in semester sheet row #${sRow}`);
+
+      if (!sRow) {
+        emailsNotFound.push(email);   // Not found in 'SEMESTER'
+      }
+      else if (semesterIsPaid[sRow - 1][0]) {
+        // Transfer from SEMESTER TO MASTER and add semester code
+        const sCollectedBy = semesterSheet.getRange(sRow, sCollectedByCol).getValue();
+        const sCollectionDate = semesterSheet.getRange(sRow, sCollectionDateCol).getValue();
+
+        setFeeDetailsInMaster_(mRow + 1, null, sCollectedBy, sCollectionDate)
+        addPaidSemesterToHistory(mRow + 1, sSheetName);
+        logSuccessfulTransfer(sRow, mRow + 1);
+      }
+    }
+  }
+
+  // Finally log all emails that could not be found in semester sheet
+  if(emailsNotFound.length > 0) {
+    console.error(`Unable to find in 'SEMESTER'...\n${emailsNotFound.join('\n')}`);
+  }
+
+
+
+  /** Helper function to calculate number of days */ 
+  function getNumberOfDays(startDate, endDate) {
+    const startTime = startDate.getTime();
+    const endTime = endDate.getTime();
+
+    const differenceInMilliseconds = endTime - startTime;
+    const millisecondsPerDay = 1000 * 60 * 60 * 24;
+
+    return Math.round(differenceInMilliseconds / millisecondsPerDay);
+  }
+
+  /** Helper function to add log messages for debugging */
+  function logSuccessfulTransfer(sRow, mRow) {
+    console.log(`Successfully transferred fee details from 'SEMESTER' row #${sRow} to 'MASTER' row #${mRow}`);
+  }
 }
 
 
@@ -254,6 +355,23 @@ function createSearchTerms_(member) {
 
 ///  👉 FUNCTIONS FOR FEE WAIVED 👈  \\\
 
+
+function paymentMethodToItem(paymentMethod) {
+  const itemCol = (() => {
+    if (paymentMethod.includes('CC')) {
+      return ONLINE_PAYMENT_ITEM_COL;
+    }
+    else if (paymentMethod.includes('Interac')) {
+      return INTERAC_ITEM_COL;
+    }
+    else if (paymentMethod.includes('Waived')) {
+      return FEE_WAIVED_ITEM_COL;
+    }
+  })();
+
+  return getPaymentItem_(itemCol);
+}
+
 /**
  * Sets fee status as waived in member registration.
  * 
@@ -265,7 +383,7 @@ function createSearchTerms_(member) {
  */
 function setFeeWaived_(row) {
   const feeWaivedItem = getPaymentItem_(FEE_WAIVED_ITEM_COL);
-  setFeeDetails_(row, feeWaivedItem);
+  setFeeDetailsInSemester_(row, feeWaivedItem);
 }
 
 
@@ -273,7 +391,7 @@ function setFeeWaived_(row) {
 
 function setOnlinePaid_(row) {
   const onlinePaymentItem = getPaymentItem_(ONLINE_PAYMENT_ITEM_COL);
-  setFeeDetails_(row, onlinePaymentItem);
+  setFeeDetailsInSemester_(row, onlinePaymentItem);
 }
 
 
@@ -347,7 +465,7 @@ function processOnlineThread_(thread, searchTerms) {
 
 function setInteractPaid_(row) {
   const interacItem = getPaymentItem_(INTERAC_ITEM_COL);
-  setFeeDetails_(row, interacItem);
+  setFeeDetailsInSemester_(row, interacItem);
 }
 
 /**

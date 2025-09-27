@@ -50,7 +50,7 @@ function createMaster() {
  * @author Andrey Gonzalez
  * @date Oct 23, 2024
  */
-function addLastSubmissionToMaster(lastRow = getLastSubmissionInMain()) {
+function addLastSubmissionToMaster(lastRow = getLastSubmissionInSemester()) {
   consolidateLastSubmission(lastRow);
   sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
 }
@@ -105,7 +105,7 @@ function addPaidSemesterToHistory(memberRow, semesterSheetName) {
  * @date Dec 17, 2024
  */
 
-function updateIsFeePaid(payHistory, memberRow, isFeePaidCol, semesterSheet) {
+function updateIsFeePaidInSemesterSheet(payHistory, memberRow, isFeePaidCol, semesterSheet) {
   const paymentHistoryArray = payHistory.split('\n');
   const semesterCode = getSemesterCode_(semesterSheet.getSheetName()); // Get the semester code based on the sheet name
 
@@ -134,9 +134,9 @@ function updateIsFeePaid(payHistory, memberRow, isFeePaidCol, semesterSheet) {
  * ```
  */
 
-function processLastSubmission(lastRow = getLastSubmissionInMain()) {
+function processLastSubmission(lastRow = getLastSubmissionInSemester()) {
   const semesterCode = getSemesterCode_(SHEET_NAME); // Get the semester code based on the sheet name
-  var lastSubmission = MAIN_SHEET.getSheetValues(lastRow, 1, 1, MASTER_COL_SIZE)[0];
+  var lastSubmission = SEMESTER_SHEET.getSheetValues(lastRow, 1, 1, MASTER_COL_SIZE)[0];
 
   const indicesToProcess = [PROCESSED_ARR.MEMBER_DESCR, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
 
@@ -172,7 +172,7 @@ function processLastSubmission(lastRow = getLastSubmissionInMain()) {
  * @update Mar 15, 2025
  */
 // IMPROVE RUNTIME!
-function consolidateLastSubmission(lastRow = getLastSubmissionInMain()) {
+function consolidateLastSubmission(lastRow = getLastSubmissionInSemester()) {
   var sheet = MASTER_SHEET;
   var processedLastSubmission = processLastSubmission(lastRow);
 

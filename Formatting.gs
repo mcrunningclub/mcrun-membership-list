@@ -17,8 +17,8 @@
  * @update  Feb 5, 2025
  */
 
-function trimWhitespace_(lastRow = MAIN_SHEET.getLastRow()) {
-  const sheet = MAIN_SHEET;
+function trimWhitespace_(lastRow = SEMESTER_SHEET.getLastRow()) {
+  const sheet = SEMESTER_SHEET;
   const rangeToFormat = sheet.getRange(lastRow, FIRST_NAME_COL, 1, 7);
   rangeToFormat.trimWhitespace();
 }
@@ -64,8 +64,8 @@ function removeDiacritics_(str) {
  * @update  Jan 11, 2025
  */
 
-function sortMainByName() {
-  const sheet = MAIN_SHEET;
+function sortSemesterByName() {
+  const sheet = SEMESTER_SHEET;
 
   const numRows = sheet.getLastRow() - 1;   // Remove header row from count
   const numCols = sheet.getLastColumn();
@@ -85,7 +85,7 @@ function sortMainByName() {
  * by acquiring a script lock before proceeding. If the lock is unavailable,
  * it logs a message and exits gracefully.
  *  
- * @see {@link sortMainByName} for the actual sorting logic.
+ * @see {@link sortSemesterByName} for the actual sorting logic.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
  * @date  Mar 15, 2025
@@ -98,7 +98,7 @@ function tryAndSortMain() {
   // Try getting lock for up to 10 seconds
   if (lock.tryLock(10000)) {
     try {
-      sortMainByName();
+      sortSemesterByName();
       formatMainView();
     } finally {
       lock.releaseLock();
@@ -122,7 +122,7 @@ function tryAndSortMain() {
  * - Adding hyperlinks to waivers
  * - Formatting collection dates
  * 
- * @see {@link sortMainByName} for sorting logic applied to the same sheet.
+ * @see {@link sortSemesterByName} for sorting logic applied to the same sheet.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
@@ -130,7 +130,7 @@ function tryAndSortMain() {
  */
 
 function formatMainView() {
-  const sheet = MAIN_SHEET;
+  const sheet = SEMESTER_SHEET;
 
   // Helper function to improve readability
   const getThisRange = (ranges) =>
@@ -227,7 +227,7 @@ function formatMainView() {
  * @update  Feb 5, 2025
  */
 function addMissingItems_(row) {
-  const sheet = MAIN_SHEET;
+  const sheet = SEMESTER_SHEET;
 
   // Add checkboxes to target columns
   [IS_FEE_PAID_COL,
@@ -257,8 +257,8 @@ function addMissingItems_(row) {
  * @update  Mar 15, 2025
  */
 
-function fixLetterCaseInRow_(row = getLastSubmissionInMain()) {
-  const sheet = MAIN_SHEET;
+function fixLetterCaseInRow_(row = getLastSubmissionInSemester()) {
+  const sheet = SEMESTER_SHEET;
 
   // Set to lower case
   const rangeToLowerCase = sheet.getRange(row, EMAIL_COL);
@@ -542,8 +542,8 @@ function encodeFromInput(input) {
  * @update Feb 5, 2025
  */
 
-function encodeLastRow_(newSubmissionRow = getLastSubmissionInMain()) {
-  const sheet = MAIN_SHEET;
+function encodeLastRow_(newSubmissionRow = getLastSubmissionInSemester()) {
+  const sheet = SEMESTER_SHEET;
 
   const email = sheet.getRange(newSubmissionRow, EMAIL_COL).getValue();
   const memberID = MD5(email);

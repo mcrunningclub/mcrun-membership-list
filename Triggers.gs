@@ -90,6 +90,12 @@ function runFeeChecker() {
       incrementTries(key, triggerData);
       const isPaid = checkThisPayment_(memberRow, feeDetails);
       Logger.log(`Payment verification for member '${feeDetails.memberName}' returned: ${isPaid}`);
+      
+      // Only update if member fee has been paid
+      if (isPaid) {
+        updateMasterPayment_(feeDetails.email, feeDetails.paymentMethod);
+        Logger.log(`Completed '${updateMasterPayment_.name}' in 'MASTER_SHEET'`);
+      }
     }
     else {
       // Send email notification if limit is reached
@@ -101,14 +107,14 @@ function runFeeChecker() {
 
   /** Helper: check if payment already found */
   function isPaymentFound(memberRow) {
-    const sheet = MAIN_SHEET;
+    const sheet = SEMESTER_SHEET;
     const currentFeeValue = sheet.getRange(memberRow, IS_FEE_PAID_COL).getValue().toString();
     return parseBool(currentFeeValue.trim());
   }
 
   /** Helper: validate memberRow, else return updated row */
   function checkMemberRow(memberEmail, memberRow) {
-    const sheet = MAIN_SHEET;
+    const sheet = SEMESTER_SHEET;
     const currentEmail = sheet.getRange(memberRow, EMAIL_COL).getValue();
 
     // If emails don't match, find updated memberRow

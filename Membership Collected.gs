@@ -14,13 +14,13 @@
  * @param {number} [newRow=getLastSubmissionInMain()] - The row number of the new submission.
  *                                                      Defaults to the last row in `MAIN_SHEET`.
  *
- * @see {@link getLastSubmissionInMain} for how the last row is determined.
+ * @see {@link getLastSubmissionInSemester} for how the last row is determined.
  * @see {@link addLastSubmissionToMaster} for how the data is added to the `MASTER` sheet.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
  */
-function onFormSubmit(newRow = getLastSubmissionInMain()) {
+function onFormSubmit(newRow = getLastSubmissionInSemester()) {
   trimWhitespace_(newRow);
   fixLetterCaseInRow_(newRow);
   encodeLastRow_(newRow);
@@ -80,8 +80,8 @@ function sendNewMemberCommunications(row) {
  * @update  Dec 18, 2024
  */
 
-function getLastSubmissionInMain() {
-  const sheet = MAIN_SHEET;
+function getLastSubmissionInSemester() {
+  const sheet = SEMESTER_SHEET;
   let lastRow = sheet.getLastRow();
 
   while (sheet.getRange(lastRow, REGISTRATION_DATE_COL).getValue() == "") {
@@ -136,8 +136,8 @@ function MD5(input) {
  * @update  Mar 15, 2025
  */
 
-function setWaiverUrl(row = getLastSubmissionInMain()) {
-  const sheet = MAIN_SHEET;
+function setWaiverUrl(row = getLastSubmissionInSemester()) {
+  const sheet = SEMESTER_SHEET;
 
   // Search for waiver link using member name
   const memberName = sheet.getSheetValues(row, FIRST_NAME_COL, 1, 2)[0].join(' ');

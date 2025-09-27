@@ -133,14 +133,13 @@ function onEdit(e) {
 
   console.log(`onEdit 1 -> thisSheetName: ${thisSheetName}`);
 
-  // Check if legal sheet
-  if (thisSheetName != SHEET_NAME && thisSheetName != MASTER_NAME) return;
+  // Check if legal sheet (neither SHEET_NAME OR MASTER_NAME)
+  if (!(thisSheetName == SHEET_NAME || thisSheetName == MASTER_NAME)) return;
 
   console.log("onEdit 1a -> Passed first check");
 
   //if(e.value == e.oldValue) return;   // Values have not changed. Edit was on sheet formatting.
-
-  console.log("onEdit 1b -> Passed second check");
+  //console.log("onEdit 1b -> Passed second check");
 
   // Check if legal edit
   if (!verifyLegalEditInRange_(e, thisSheet)) return;
@@ -156,11 +155,11 @@ function onEdit(e) {
   // Get email from `thisRow` and `thisEmailCol`
   const email = thisSheet.getRange(thisRow, thisEmailCol).getValue();
 
-  const isMainSheet = (thisSheetName === SHEET_NAME);
-  console.log(`onEdit 4 -> email: ${email} isMainSheet: ${isMainSheet}`);
+  const isSemesterSheet = (thisSheetName === SHEET_NAME);
+  console.log(`onEdit 4 -> email: ${email}  |  isMainSheet: ${isSemesterSheet}`);
 
-  const sourceSheet = isMainSheet ? MAIN_SHEET : MASTER_SHEET;
-  const targetSheet = isMainSheet ? MASTER_SHEET : MAIN_SHEET;
+  const sourceSheet = isSemesterSheet ? SEMESTER_SHEET : MASTER_SHEET;
+  const targetSheet = isSemesterSheet ? MASTER_SHEET : SEMESTER_SHEET;
   const targetRow = findMemberByEmail(email, targetSheet);  // Find row of member in `targetSheet` using their email
 
   // Throw error message if member not in `targetSheet`
@@ -189,8 +188,8 @@ function onEdit(e) {
 function verifyLegalEditInRange_(e, sheet) {
   Logger.log("NOW ENTERING verifyLegalEditInRange()...");
   const sheetName = sheet.getName();
-  var thisRow = e.range.getRow();
-  var thisCol = e.range.getColumn();
+  const thisRow = e.range.getRow();
+  const thisCol = e.range.getColumn();
   Logger.log(`verifyLegalEditInRange 1 -> sheetName: ${sheetName}`);
 
   // Function to get column mappings
@@ -240,29 +239,15 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
   const thisCol = thisRange.getColumn();
   const targetSheetName = targetSheet.getSheetName();
 
-  console.log(`NOW ENTERING updateFeeInfo()`);
+  console.log(`NOW ENTERING ${updateFeeInfo_.name}`);
   console.log(`Source: ${sourceSheetName}, thisCol: ${thisCol} && Target: ${targetSheetName}, targetRow: ${targetRow}`);
 
-  const sourceCols = GET_COL_MAP_(sourceSheetName);   // Map of type of member data to its column index
-  const targetCols = GET_COL_MAP_(targetSheetName);   // Get map of member data with respective column indices
-
-  Logger.log("updateFeeInfo 1 -> Successfully got sourceCols and targetCols");
-
-  // Find respective column where `targetCol` contains same data as `sourceCol`.
-  const getTargetCol = (source) => {
-    switch (source) {
-      case (sourceCols.feeStatus): return targetCols.feeStatus;
-      case (sourceCols.collectionDate): return targetCols.collectionDate;
-      case (sourceCols.collector): return targetCols.collector;
-      case (sourceCols.isInternalCollected): return targetCols.isInternalCollected;
-    }
-  };
-
   // Find which column was edited in `sourceSheet` and find respective col in `targetSheet`
-  const targetCol = getTargetCol(thisCol);
-  Logger.log(`updateFeeInfo 2 -> targetRow: ${targetRow} targetCol: ${targetCol}`);
+  const targetCol = getRespectiveCol(thisCol, sourceSheetName, targetSheetName);
+  console.log(`updateFeeInfo 1 -> Successfully got respective range (row=${targetRow},col=${targetCol})!`);
 
   const targetRange = targetSheet.getRange(targetRow, targetCol);
+  console.log(`updateFeeInfo 2 -> Successfully got targetRange for ${targetSheetName}`);
 
   // Special case: MASTER stores payment history as semesterCode(s).
   // If isPaid, then add semesterCode to payment history, i.e. bool -> str
@@ -273,7 +258,7 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
     const isPaid = parseBool(value);    // convert to bool
     console.log(`updateFeeInfo 3b -> Value: ${value} isPaid: ${isPaid}`);
 
-    // Only modify payment history if isPaid=true.
+    // Only modify payment history if isPaid
     if (isPaid) {
       console.log("updateFeeInfo 3c -> entering isPaid");
       addPaidSemesterToHistory(targetRow, sourceSheetName);
@@ -284,17 +269,38 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
 
   }
   else if (sourceSheetName == MASTER_NAME && thisCol == MASTER_PAYMENT_HIST) {
-    // CASE 2: Add history payment to sheet
-    console.log("updateFeeInfo 3 ->  entering else if statement");
+    // CASE 2: Add payment history from MASTER to SEMESTER_SHEET
+    console.log("updateFeeInfo 3a ->  MASTER to SEMESTER_SHEET");
     const paymentHistory = thisRange.getValue() || "";
-    updateIsFeePaid(paymentHistory, targetRow, targetCol, targetSheet);
+    updateIsFeePaidInSemesterSheet(paymentHistory, targetRow, targetCol, targetSheet);
   }
   else {
-    console.log("updateFeeInfo 3 ->  entering else statement");
-    thisRange.copyTo(targetRange, { contentsOnly: true });
+    // CASE 3: Copy fee details from SEMESTER_SHEET to MASTER
+    console.log("updateFeeInfo 3b ->  SEMESTER_SHEET to MASTER");
+    transferRangeToMaster(thisRange, targetRange);
   }
 
-  console.log("updateFeeInfo 4 ->  finished updating payment history");
+  console.log(`Completed update succesfully\nNOW EXITING ${updateFeeInfo_.name}`);
+
+
+  /** HELPERS */
+  function getRespectiveCol(sourceCol, sourceSheetName, targetSheetName) {
+    const sourceCols = GET_COL_MAP_(sourceSheetName);   // Map of type of member data to its column index
+    const targetCols = GET_COL_MAP_(targetSheetName);   // Get map of member data with respective column indices
+
+    // Find respective column where `targetCol` contains same data as `sourceCol`.
+    switch (sourceCol) {
+      case (sourceCols.feeStatus): return targetCols.feeStatus;
+      case (sourceCols.collectionDate): return targetCols.collectionDate;
+      case (sourceCols.collector): return targetCols.collector;
+      case (sourceCols.isInternalCollected): return targetCols.isInternalCollected;
+    }
+  }
+}
+
+
+function transferRangeToMaster(rangeInSemester, rangeInMaster) {
+  rangeInSemester.copyTo(rangeInMaster, { contentsOnly: true });
 }
 
 
@@ -310,15 +316,15 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
  * @update  May 17, 2025
  */
 
-function copyFilloutRegToMain_(registration, row = getLastSubmissionInMain()) {
-  const mainSheet = MAIN_SHEET;
+function copyFilloutRegToMain_(registration, row = getLastSubmissionInSemester()) {
+  const semesterSheet = SEMESTER_SHEET;
   const importMap = IMPORT_MAP;
 
   const registrationObj = JSON.parse(registration.replace(/[\n\r\t]/g, ' '));
   console.log(registrationObj);
 
   const startRow = row + 1;
-  const colSize = mainSheet.getLastColumn();
+  const colSize = semesterSheet.getLastColumn();
 
   const valuesByIndex = Array(colSize);
 
@@ -354,7 +360,7 @@ function copyFilloutRegToMain_(registration, row = getLastSubmissionInMain()) {
   }
 
   // Set values of registration
-  const rangeToImport = mainSheet.getRange(startRow, 1, 1, colSize);
+  const rangeToImport = semesterSheet.getRange(startRow, 1, 1, colSize);
   rangeToImport.setValues([valuesByIndex]);
 
   return startRow;
@@ -362,7 +368,7 @@ function copyFilloutRegToMain_(registration, row = getLastSubmissionInMain()) {
 
 
 function packageMemberInfoInRow_(row) {
-  const sheet = MAIN_SHEET;
+  const sheet = SEMESTER_SHEET;
   const semesterName = SHEET_NAME;
 
   // Get member data to populate pass template
