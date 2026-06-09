@@ -197,7 +197,6 @@ function formatMainView() {
     [WAIVER_COL]: 185,
     [PAYMENT_METHOD_COL]: 155,
     [INTERAC_REF_COL]: 155,
-    [EMPTY_COL]: 40,
     [IS_FEE_PAID_COL]: 75,
     [COLLECTION_DATE_COL]: 150,
     [COLLECTION_PERSON_COL]: 160,

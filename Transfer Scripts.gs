@@ -255,7 +255,7 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
   if (targetSheetName == MASTER_NAME && targetCol == MASTER_PAYMENT_HIST) {
     console.log("updateFeeInfo 3 -> entering if statement");
     const value = thisRange.getValue() || "";
-    const isPaid = parseBool(value);    // convert to bool
+    const isPaid = parseBool_(value);    // convert to bool
     console.log(`updateFeeInfo 3b -> Value: ${value} isPaid: ${isPaid}`);
 
     // Only modify payment history if isPaid
@@ -415,6 +415,7 @@ function packageMemberInfoInRow_(row) {
 function copyToMainFromMaster(row) {
   throw new Error('Function not implemented.');
 }
+
 
 /**
  * Sends a notification for a new app submission.

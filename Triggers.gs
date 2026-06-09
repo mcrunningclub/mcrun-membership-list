@@ -74,7 +74,7 @@ function runFeeChecker() {
 
     const triggerData = JSON.parse(allProps[key]);
     let { tries, triggerId, feeDetails, memberRow } = triggerData;
-    console.log(`Trigger Data: ${triggerData}`);
+    console.log(`Trigger Data: ${allProps[key]}`);
 
     // First check memberRow and update 'triggerData' if needed
     memberRow = checkMemberRow(feeDetails.email, memberRow);
@@ -109,7 +109,7 @@ function runFeeChecker() {
   function isPaymentFound(memberRow) {
     const sheet = SEMESTER_SHEET;
     const currentFeeValue = sheet.getRange(memberRow, IS_FEE_PAID_COL).getValue().toString();
-    return parseBool(currentFeeValue.trim());
+    return parseBool_(currentFeeValue.trim());
   }
 
   /** Helper: validate memberRow, else return updated row */
