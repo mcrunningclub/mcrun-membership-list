@@ -140,7 +140,9 @@ const MASTER_COLS = {
   memberId: 22            
 }
 
-// MAPPING FROM FILLOUT REGISTRATION OBJ TO MAIN
+/**
+ * MAPPING FROM FILLOUT REGISTRATION OBJ TO MAIN
+ */ 
 const IMPORT_MAP = {
   'timestamp': REGISTRATION_DATE_COL,
   'email': EMAIL_COL,

@@ -21,10 +21,10 @@
  * @date  Oct 18, 2023
  */
 function onFormSubmit(newRow = getLastSubmissionInSemester()) {
-  trimWhitespace_(newRow);
-  fixLetterCaseInRow_(newRow);
-  encodeLastRow_(newRow);
-  addMissingItems_(newRow);
+  trimWhitespaceSemester_(newRow);
+  fixRowCaseSemester_(newRow);
+  encodeRowSemester_(newRow);
+  addCheckboxSemester_(newRow);
   
   // Wrap around try-catch since GAS does not support async calls
   try {
@@ -42,7 +42,7 @@ function onFormSubmit(newRow = getLastSubmissionInSemester()) {
 
     // Applies all pending changes before sorting
     SpreadsheetApp.flush();
-    tryAndSortMain();   // Can only sort and format view if lock not acquired (to prevent concurrent runs)
+    tryAndSortSemester();   // Can only sort and format view if lock not acquired (to prevent concurrent runs)
   }
 }
 

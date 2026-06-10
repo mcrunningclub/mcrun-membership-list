@@ -39,7 +39,7 @@ function onChange(e) {
       if(!isNewMemberViaApp_(thisLastRow)) {
         console.log('Exiting because member *not* added by app');
       }
-      formatFeeCollection(thisLastRow);
+      formatFeeCollectionMaster_(thisLastRow);
       setMemberIdInRow_(MASTER_SHEET, thisLastRow);
       copyToMainFromMaster(thisLastRow);
       console.log('Added registration to main sheet from master!');
@@ -101,7 +101,7 @@ function setMemberIdInRow_(sheet, row) {
 
   // STEP 2: Encode email using `encodeFromInput`
   const email = sheet.getRange(row, thisEmailCol).getValue();
-  const memberId = encodeFromInput(email);
+  const memberId = encodeFromInput_(email);
 
   // STEP 3: Set member id in target row
   const thisIdCol = colMap.memberIdCol;

@@ -226,13 +226,13 @@ function onFormSubmitUI_() {
 }
 
 function prettifyMainUI_() {
-  const functionName = formatMainView.name;
+  const functionName = formatSemester_.name;
   const sheetName = SHEET_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }
 
 function encodeLastRowUI_() {
-  const functionName = encodeLastRow_.name;
+  const functionName = encodeRowSemester_.name;
   const sheetName = SHEET_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }
@@ -284,7 +284,7 @@ function createMemberIDFromInputUI_() {
   }
   else if (responseButton == ui.Button.OK) {
     // User clicked "OK" and response non-empty.
-    const encoded = encodeFromInput(responseText);
+    const encoded = encodeFromInput_(responseText);
     ui.alert("Here is the encoded text:", encoded, ui.ButtonSet.OK);
   }
   else {
@@ -324,7 +324,7 @@ function createMasterUI_() {
 }
 
 function prettifyMasterUI_() {
-  const functionName = formatMasterView.name;
+  const functionName = formatMaster_.name;
   const sheetName = MASTER_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }

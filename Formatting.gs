@@ -1,28 +1,27 @@
 /**
- * Trims whitespace from specific columns in the last row of `MAIN_SHEET`.
+ * Trims whitespace from specific columns in the last row of the semester sheet.
  * 
  * This function targets the range from `FIRST_NAME_COL` to `REFERRAL_COL` (7 columns).
  * It ensures that unnecessary whitespace is removed from the latest member entry.
  * 
  * @trigger New form submission
  * 
- * @param {number} [lastRow=MAIN_SHEET.getLastRow()] - The row number to target for trimming.
- *                                                     Defaults to the last row in `MAIN_SHEET`.
+ * @param {number} [row=SEMESTER_SHEET.getLastRow()] - The row number to target for trimming.
+ *                                                     Defaults to the last row in semester sheet.
  * 
   * 
- * @see {@link fixLetterCaseInRow_} for additional formatting applied to the same row.
+ * @see {@link fixRowCaseSemester_} for additional formatting applied to the same row.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 17, 2023
  * @update  Feb 5, 2025
  */
 
-function trimWhitespace_(lastRow = SEMESTER_SHEET.getLastRow()) {
+function trimWhitespaceSemester_(row = getLastSubmissionInSemester()) {
   const sheet = SEMESTER_SHEET;
-  const rangeToFormat = sheet.getRange(lastRow, FIRST_NAME_COL, 1, 7);
+  const rangeToFormat = sheet.getRange(row, FIRST_NAME_COL, 1, 7);
   rangeToFormat.trimWhitespace();
 }
-
 
 /**
  * Removes diacritics (accents) from a string.
@@ -47,24 +46,24 @@ function removeDiacritics_(str) {
 }
 
 
-///  👉 FUNCTIONS APPLIED TO MAIN_SHEET 👈  \\\
+///  👉 FUNCTIONS APPLIED TO SEMESTER_SHEET 👈  \\\
 
 /**
- * Sorts `MAIN_SHEET` by first name, then last name.
+ * Sorts semester sheet by first name, then last name.
  * 
- * This function organizes the data in `MAIN_SHEET` by sorting rows alphabetically
- * based on the `First Name` column (column 3) and then the `Last Name` column (column 4).
+ * This function organizes the data in the semester sheet by sorting rows alphabetically
+ * based on the `First Name` column and then the `Last Name` column.
  * 
  * @trigger New form submission or McRUN menu.
  * 
- * @see {@link tryAndSortMain} for a safe way to sort with locking.
+ * @see {@link tryAndSortSemester} for a safe way to sort with locking.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
  * @update  Jan 11, 2025
  */
 
-function sortSemesterByName() {
+function sortSemesterByName_() {
   const sheet = SEMESTER_SHEET;
 
   const numRows = sheet.getLastRow() - 1;   // Remove header row from count
@@ -79,27 +78,27 @@ function sortSemesterByName() {
 
 
 /**
- * Sorts `MAIN_SHEET` only if the lock is free.
+ * Sorts semester sheet only if the lock is free.
  * 
  * This function prevents concurrent processes from interfering with sorting
  * by acquiring a script lock before proceeding. If the lock is unavailable,
  * it logs a message and exits gracefully.
  *  
- * @see {@link sortSemesterByName} for the actual sorting logic.
+ * @see {@link sortSemesterByName_} for the actual sorting logic.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
  * @date  Mar 15, 2025
  * @update  Mar 15, 2025
  */
 
-function tryAndSortMain() {
+function tryAndSortSemester() {
   const lock = LockService.getScriptLock();
 
   // Try getting lock for up to 10 seconds
   if (lock.tryLock(10000)) {
     try {
-      sortSemesterByName();
-      formatMainView();
+      sortSemesterByName_();
+      formatSemester_();
     } finally {
       lock.releaseLock();
     }
@@ -110,7 +109,7 @@ function tryAndSortMain() {
 
 
 /**
- * Formats `MAIN_SHEET` for a simple and uniform user experience.
+ * Formats semester sheet for a simple and uniform user experience.
  * 
  * - Freezing panes
  * - Adjusting font styles, sizes, and weights
@@ -122,14 +121,14 @@ function tryAndSortMain() {
  * - Adding hyperlinks to waivers
  * - Formatting collection dates
  * 
- * @see {@link sortSemesterByName} for sorting logic applied to the same sheet.
+ * @see {@link sortSemesterByName_} for sorting logic applied to the same sheet.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
  * @update  Feb 5, 2025
  */
 
-function formatMainView() {
+function formatSemester() {
   const sheet = SEMESTER_SHEET;
 
   // Helper function to improve readability
@@ -214,9 +213,9 @@ function formatMainView() {
 
 
 /**
- * Adds checkboxes to specific columns in the last row of `MAIN_SHEET`.
+ * Adds checkboxes to specific columns in the last row of semester sheet.
  * 
- * This function is used to ensure that the last row of `MAIN_SHEET` has checkboxes
+ * This function is used to ensure that the last row of semester sheet has checkboxes
  * in the `Fee Paid`, `Given to Internal`, and `Attendance Status` columns.
  * 
  * @param {number} row  Row number to target for formatting.
@@ -225,7 +224,7 @@ function formatMainView() {
  * @date  Oct 1, 2023
  * @update  Feb 5, 2025
  */
-function addMissingItems_(row) {
+function addCheckboxSemester_(row) {
   const sheet = SEMESTER_SHEET;
 
   // Add checkboxes to target columns
@@ -256,7 +255,7 @@ function addMissingItems_(row) {
  * @update  Mar 15, 2025
  */
 
-function fixLetterCaseInRow_(row = getLastSubmissionInSemester()) {
+function fixRowCaseSemester_(row = getLastSubmissionInSemester()) {
   const sheet = SEMESTER_SHEET;
 
   // Set to lower case
@@ -302,7 +301,7 @@ function fixLetterCaseInRow_(row = getLastSubmissionInSemester()) {
 ///  👉 FUNCTIONS APPLIED TO MASTER_SHEET 👈  \\\
 
 /**
- * Sorts `MASTER` by email instead of first name.
+ * Sorts master sheet by email instead of first name.
  * Required to ensure `findSubmissionByEmail` works properly.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
@@ -324,16 +323,16 @@ function sortMasterByEmail() {
 
 
 /**
- * Formats `MASTER_SHEET` for simple and uniform UX.
+ * Formats master sheet for simple and uniform UX.
  * 
- * Remove whitespace from `McGill Email Address` to  `Referral`
+ * Remove whitespace from `McGill Email Address` to `Referral`
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Nov 22, 2024
  * @update  Dec 15, 2024
  */
 
-function formatMasterView() {
+function formatMaster() {
   var sheet = MASTER_SHEET;
 
   // Set Text to Bold
@@ -414,7 +413,7 @@ function formatMasterView() {
 
 
 /**
- * Clean latest member registration in `MASTER_SHEET`.
+ * Clean latest member registration in master sheet.
  * 
  * Data normalization includes:
  * 
@@ -428,7 +427,7 @@ function formatMasterView() {
  * @update  Nov 22, 2024
  */
 
-function cleanMasterRegistration() {
+function cleanLastRowMaster() {
   var sheet = MASTER_SHEET;
   const lastRow = sheet.getLastRow();
 
@@ -454,19 +453,18 @@ function cleanMasterRegistration() {
 
 
 /**
- * Recursive function to search for entry by email in `MASTER` sheet using binary search.
+ * Formats fee collection date and semester for the specified row of the master sheet.
  * 
- * Returns email's row index in GSheet (1-indexed), or null if not found.
- * 
+ * Changes date to 'yyyy-MM-dd'. No formatting is done if fee is not paid.
  * 
  * @param {number} [row=MASTER_SHEET.getLastRow()]  The starting row index for the search (1-indexed). 
- *                                                  Defaults to 1 (the first row).
+ *                                                  Defaults to last row.
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
  * @date  Nov 22, 2024
  * @update  Dec 11, 2024
  */
 
-function formatFeeCollection(row = MASTER_SHEET.getLastRow()) {
+function formatFeeCollection_(row = MASTER_SHEET.getLastRow()) {
   const sheet = MASTER_SHEET;
 
   // STEP 1: Check for current fee status to flag for later
@@ -493,16 +491,16 @@ function formatFeeCollection(row = MASTER_SHEET.getLastRow()) {
   if (!collectionDate) return;
 
   const rangePaymentHistory = sheet.getRange(row, MASTER_PAYMENT_HIST);
-  const semCode = getSemesterCode_(SHEET_NAME);   // Get semCode from `MAIN_SHEET`
+  const semCode = getSemesterCode_(SHEET_NAME);   // Get semCode from semester sheet
   rangePaymentHistory.setValue(semCode);
 }
 
 /**
- * Inserts the 3-char semester code for the registration.
+ * Inserts the 3-char semester code for the registration in the specified row of the master sheet.
  * 
  * @param {number} [row=MASTER_SHEET.getLastRow()] 
  *                    The row number to target for inserting the semester code.
- *                    Defaults to the last row in `MASTER_SHEET`.
+ *                    Defaults to the last row.
  * 
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
@@ -510,7 +508,7 @@ function formatFeeCollection(row = MASTER_SHEET.getLastRow()) {
  * @update  Dec 15, 2024
  */
 
-function insertRegistrationSem(row = MASTER_SHEET.getLastRow()) {
+function insertRegistrationSem_(row = MASTER_SHEET.getLastRow()) {
   var sheet = MASTER_SHEET;
   const rangeLatestRegSem = sheet.getRange(row, MASTER_LAST_REG_SEM);
 
@@ -523,35 +521,41 @@ function insertRegistrationSem(row = MASTER_SHEET.getLastRow()) {
 
 /**
  * Create Member ID from input.
+ * 
+ * @param {string} input Usually email
+ * 
+ * @return {string} Hash of input
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Dec 15, 2024
  * @update  Dec 15, 2024
  */
 
-function encodeFromInput(input) {
+function encodeFromInput_(input) {
   return MD5(input);
 }
 
 /**
- * Create Member ID in last row of `MAIN_SHEET`.
+ * Create Member ID in specified row of semester sheet.
+ * 
+ * @param {number} row  Row to encode. Defaults to last row.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 9, 2023
  * @update Feb 5, 2025
  */
 
-function encodeLastRow_(newSubmissionRow = getLastSubmissionInSemester()) {
+function encodeRowSemester_(row = getLastSubmissionInSemester()) {
   const sheet = SEMESTER_SHEET;
 
-  const email = sheet.getRange(newSubmissionRow, EMAIL_COL).getValue();
+  const email = sheet.getRange(row, EMAIL_COL).getValue();
   const memberID = MD5(email);
-  sheet.getRange(newSubmissionRow, MEMBER_ID_COL).setValue(memberID);
+  sheet.getRange(row, MEMBER_ID_COL).setValue(memberID);
 }
 
 
 /**
- * Create Member ID for every member in `sheet`.
+ * Create Member ID for every member in given sheet.
  * 
  * @param {SpreadsheetApp.Sheet} sheet  Sheet reference to encode
  *  
@@ -560,7 +564,7 @@ function encodeLastRow_(newSubmissionRow = getLastSubmissionInSemester()) {
  * @update  Dec 18, 2024
  */
 
-function encodeList(sheet) {
+function encodeList_(sheet) {
   const sheetName = sheet.getSheetName();
   let sheetCols = GET_COL_MAP_(sheetName);
 
@@ -576,7 +580,7 @@ function encodeList(sheet) {
 
 
 /**
- * Create single Member ID using row number from `sheet`.
+ * Create single Member ID using specified row number and sheet.
  * 
  * @param {SpreadsheetApp.Sheet} sheet  Sheet reference to target
  * @param {integer} [row=sheet.getLastRow()]    The 1-indexed row in input `sheet`. 
@@ -587,7 +591,7 @@ function encodeList(sheet) {
  * @update  Dec 18, 2024
  */
 
-function encodeByRow(sheet, row = sheet.getLastRow()) {
+function encodeByRow_(sheet, row = sheet.getLastRow()) {
   const sheetName = sheet.getSheetName();
   let sheetCols = GET_COL_MAP_(sheetName);
 
