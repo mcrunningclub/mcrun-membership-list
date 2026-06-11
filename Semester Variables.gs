@@ -223,11 +223,24 @@ const PROCESSED_ARR = {
   REGISTRATION_HIST: 21
 };
 
+/**
+ * Mapping from semesters names to semester codes e.g. Winter 2025 -> W25
+ */
 const SEMESTER_CODE_MAP = new Map();
-const ALL_SEMESTERS = ['Winter 2025', 'Fall 2024', 'Summer 2024', 'Winter 2024'];
+
+/**
+ * List of all semesters (names) which have sheets
+ * 
+ * @const {string[]}
+ */
+const ALL_SEMESTERS = ['Summer 2026', 'Winter 2025', 'Fall 2024', 'Summer 2024', 'Winter 2024'];
 
 
-// GSheet formula for IS_FEE_PAID_COL in master sheet
+/**
+ * GSheet formula for IS_FEE_PAID_COL in master sheet
+ * 
+ * @const {string}
+ */
 const isFeePaidFormula = `
   LET(row, ROW(),
       last_payment_sem, GET_FEE_EXPIRATION_DATE(INDIRECT("S" & row)), 
