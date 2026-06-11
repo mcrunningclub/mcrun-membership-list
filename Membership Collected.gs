@@ -15,7 +15,7 @@
  *                                                      Defaults to the last row in `MAIN_SHEET`.
  *
  * @see {@link getLastSubmissionInSemester} for how the last row is determined.
- * @see {@link addLastSubmissionToMaster} for how the data is added to the `MASTER` sheet.
+ * @see {@link addLastSubmissionToMaster_} for how the data is added to the `MASTER` sheet.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
@@ -38,7 +38,7 @@ function onFormSubmit(newRow = getLastSubmissionInSemester()) {
   finally {
     // Must add and sort AFTER extracting payment info from email
     setWaiverUrl(newRow);
-    addLastSubmissionToMaster(newRow);
+    addLastSubmissionToMaster_(newRow);
 
     // Applies all pending changes before sorting
     SpreadsheetApp.flush();

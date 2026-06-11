@@ -261,7 +261,7 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
     // Only modify payment history if isPaid
     if (isPaid) {
       console.log("updateFeeInfo 3c -> entering isPaid");
-      addPaidSemesterToHistory(targetRow, sourceSheetName);
+      addPaidSemesterToMaster_(targetRow, sourceSheetName);
     }
     else {
       console.log("updateFeeInfo 3c -> entering NOT(isPaid)");
@@ -272,7 +272,7 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
     // CASE 2: Add payment history from MASTER to SEMESTER_SHEET
     console.log("updateFeeInfo 3a ->  MASTER to SEMESTER_SHEET");
     const paymentHistory = thisRange.getValue() || "";
-    updateIsFeePaidInSemesterSheet(paymentHistory, targetRow, targetCol, targetSheet);
+    updateFeeStatusSemester_(paymentHistory, targetRow, targetCol, targetSheet);
   }
   else {
     // CASE 3: Copy fee details from SEMESTER_SHEET to MASTER

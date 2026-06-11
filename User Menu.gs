@@ -330,7 +330,7 @@ function prettifyMasterUI_() {
 }
 
 function addLastSubmissionToMasterUI_() {
-  const functionName = addLastSubmissionToMaster.name;
+  const functionName = addLastSubmissionToMaster_.name;
   const sheetName = MASTER_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }

@@ -140,25 +140,6 @@ const MASTER_COLS = {
   memberId: 22            
 }
 
-/**
- * MAPPING FROM FILLOUT REGISTRATION OBJ TO MAIN
- */ 
-const IMPORT_MAP = {
-  'timestamp': REGISTRATION_DATE_COL,
-  'email': EMAIL_COL,
-  'firstName': FIRST_NAME_COL,
-  'lastName': LAST_NAME_COL,
-  'preferredName': PREFERRED_NAME_COL,
-  'year': YEAR_COL,
-  'program': PROGRAM_COL,
-  'memberDescription': DESCRIPTION_COL,
-  'referral': REFERRAL_COL,
-  'waiver': WAIVER_COL,
-  'paymentMethod': PAYMENT_METHOD_COL,
-  'interacRef': INTERAC_REF_COL,
-  'comments': COMMENTS_COL,
-}
-
 // Semester sheet constants
 // Please update any changes made in active sheet
 const REGISTRATION_DATE_COL = 1;      // Column 'A'
@@ -195,6 +176,52 @@ const MASTER_IS_INTERNAL_COLLECTED = 18;
 const MASTER_PAYMENT_HIST = 19;
 const MASTER_MEMBER_ID_COL = 22;
 
+
+/**
+ * MAPPING FROM FILLOUT REGISTRATION OBJ TO SEMESTER SHEET
+ */ 
+const IMPORT_MAP = {
+  'timestamp': REGISTRATION_DATE_COL,
+  'email': EMAIL_COL,
+  'firstName': FIRST_NAME_COL,
+  'lastName': LAST_NAME_COL,
+  'preferredName': PREFERRED_NAME_COL,
+  'year': YEAR_COL,
+  'program': PROGRAM_COL,
+  'memberDescription': DESCRIPTION_COL,
+  'referral': REFERRAL_COL,
+  'waiver': WAIVER_COL,
+  'paymentMethod': PAYMENT_METHOD_COL,
+  'interacRef': INTERAC_REF_COL,
+  'comments': COMMENTS_COL,
+}
+
+
+/**
+ *  Fields in array from processing last row in semester sheet (0-indexed)
+ */
+const PROCESSED_ARR = {
+  LAST_REGISTRATION: 0,
+  EMAIL: 1,
+  FIRST_NAME: 2,
+  LAST_NAME: 3,
+  PREFERRED_NAME: 4,
+  YEAR: 5,
+  PROGRAM: 6,
+  MEMBER_DESCR: 7,
+  REFERRAL: 8,
+  WAIVER: 9,
+  EMPTY: 12,
+  FEE_PAID_HIST: 13,
+  COLLECTION_DATE: 14,
+  COLLECTED_BY: 15,
+  GIVEN_TO_INTERNAL: 16,
+  COMMENTS: 17,
+  ATTENDANCE_STATUS: 18,
+  MEMBER_ID: 19,
+  LAST_REG_CODE: 20,
+  REGISTRATION_HIST: 21
+};
 
 const SEMESTER_CODE_MAP = new Map();
 const ALL_SEMESTERS = ['Winter 2025', 'Fall 2024', 'Summer 2024', 'Winter 2024'];

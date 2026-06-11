@@ -1,30 +1,7 @@
-// Index of processed semester data arrays (0-indexed)
-const PROCESSED_ARR = {
-  LAST_REGISTRATION: 0,
-  EMAIL: 1,
-  FIRST_NAME: 2,
-  LAST_NAME: 3,
-  PREFERRED_NAME: 4,
-  YEAR: 5,
-  PROGRAM: 6,
-  MEMBER_DESCR: 7,
-  REFERRAL: 8,
-  WAIVER: 9,
-  EMPTY: 12,
-  FEE_PAID_HIST: 13,
-  COLLECTION_DATE: 14,
-  COLLECTED_BY: 15,
-  GIVEN_TO_INTERNAL: 16,
-  COMMENTS: 17,
-  ATTENDANCE_STATUS: 18,
-  MEMBER_ID: 19,
-  LAST_REG_CODE: 20,
-  REGISTRATION_HIST: 21
-};
-
 /**
  * Creates the master sheet by consolidating member data from selected semester sheets.
- * Calls `consolidateMemberData` to fetch, process, and output data to the `MASTER` sheet.
+ * 
+ * Calls `consolidateMemberData` to fetch, process, and output data to the master sheet.
  *
  * @author [Andrey Gonzalez](andrey.gonzalez@mail.mcgill.ca)
  * @date  Oct 23, 2024
@@ -32,36 +9,37 @@ const PROCESSED_ARR = {
  */
 
 function createMaster() {
-  consolidateMemberData();
+  consolidateMemberData_();
 }
 
 /**
- * Adds the last submission from `MAIN_SHEET` to the `MASTER` sheet.
+ * Adds the last submission from semester sheet to the master sheet.
  *
- * This function processes the last row of the `MAIN_SHEET`, consolidates the data,
- * and ensures the `MASTER` sheet is sorted by email after the new entry is added.
+ * This function processes the last row of the semester sheet, consolidates the data,
+ * and ensures the master sheet is sorted by email after the new entry is added.
  *
- * @param {number} [lastRow=getLastSubmissionInMain()] - The row number of the last submission in `MAIN_SHEET`.
+ * @param {number} [lastRow=getLastSubmissionInSemester()] - The row number of the last submission in the semester.
+ *                                                        Defaults to the last row.
  *
  *
- * @see {@link consolidateLastSubmission} for the logic of consolidating the last submission.
+ * @see {@link consolidateLastSubmission_} for the logic of consolidating the last submission.
  * @see {@link sortMasterByEmail} for sorting the `MASTER` sheet by email.
  *
  * @author Andrey Gonzalez
  * @date Oct 23, 2024
  */
-function addLastSubmissionToMaster(lastRow = getLastSubmissionInSemester()) {
-  consolidateLastSubmission(lastRow);
+function addLastSubmissionToMaster_(lastRow = getLastSubmissionInSemester()) {
+  consolidateLastSubmission_(lastRow);
   sortMasterByEmail(); // Sort 'MASTER' by email once member entry added
 }
 
 
 /**
- * Updates Payment History in `MASTER` from the member's semester sheet where they registered.
+ * Updates Payment History in master sheet from the member's semester sheet where they registered.
  *
  * Appends the semester code to the payment history column if it is not already present.
  *
- * @param {number} memberRow  The 1-indexed row number of the member in `MASTER`.
+ * @param {number} memberRow  The 1-indexed row number of the member in master sheet.
  * @param {string} semesterSheetName  The name of the member's latest registration semester sheet.
  * 
  * @see {@link getSemesterCode_} for how the semester code is determined.
@@ -71,7 +49,7 @@ function addLastSubmissionToMaster(lastRow = getLastSubmissionInSemester()) {
  * @update  Dec 17, 2024
  */
 
-function addPaidSemesterToHistory(memberRow, semesterSheetName) {
+function addPaidSemesterToMaster_(memberRow, semesterSheetName) {
   const sheet = MASTER_SHEET;
   const paymentHistoryCol = MASTER_PAYMENT_HIST;
   const semesterCode = getSemesterCode_(semesterSheetName); // Get the semester code based on the sheet name
@@ -105,7 +83,7 @@ function addPaidSemesterToHistory(memberRow, semesterSheetName) {
  * @date Dec 17, 2024
  */
 
-function updateIsFeePaidInSemesterSheet(payHistory, memberRow, isFeePaidCol, semesterSheet) {
+function updateFeeStatusSemester_(payHistory, memberRow, isFeePaidCol, semesterSheet) {
   const paymentHistoryArray = payHistory.split('\n');
   const semesterCode = getSemesterCode_(semesterSheet.getSheetName()); // Get the semester code based on the sheet name
 
@@ -119,22 +97,20 @@ function updateIsFeePaidInSemesterSheet(payHistory, memberRow, isFeePaidCol, sem
 
 
 /**
- * Processes the last submitted row from the `MAIN_SHEET`, adding semester codes
+ * Processes the last submitted row from the semester, adding semester codes
  * to relevant fields like `MEMBER_DESCR`, `REFERRAL`, `COMMENTS`, and payment history.
+ * 
+ * @param {number} [lastRow=getLastSubmissionInSemester()] - The row number of the last submission in the semester.
+ *                                                        Defaults to the last row.
  *
  * @return {string[]} Array of processed values for the last submission.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 21, 2024
  * @update Mar 15, 2025
- * 
- * ```javascript
- * // Sample Script ➜ Storing processed submission.
- * const processedData = processLastSubmission(21);
- * ```
  */
 
-function processLastSubmission(lastRow = getLastSubmissionInSemester()) {
+function processLastSubmission_(lastRow = getLastSubmissionInSemester()) {
   const semesterCode = getSemesterCode_(SHEET_NAME); // Get the semester code based on the sheet name
   var lastSubmission = SEMESTER_SHEET.getSheetValues(lastRow, 1, 1, MASTER_COL_SIZE)[0];
 
@@ -161,20 +137,23 @@ function processLastSubmission(lastRow = getLastSubmissionInSemester()) {
 
 
 /**
- * Consolidates the last submitted row from `MAIN` into `MASTER`.
+ * Consolidates the last submitted row from semester into master sheet.
  * 
  * Checks if an existing entry with the same email exists in the MASTER sheet:
  *   - If found, updates specific fields with concatenated data from both entries.
  *   - If not found, appends the new data as a fresh row.
- *
+ * 
+ * @param {number} [lastRow=getLastSubmissionInSemester()] - The row number of the last submission in the semester.
+ *                                                        Defaults to the last row.
+ * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 21, 2024
  * @update Mar 15, 2025
  */
 // IMPROVE RUNTIME!
-function consolidateLastSubmission(lastRow = getLastSubmissionInSemester()) {
+function consolidateLastSubmission_(lastRow = getLastSubmissionInSemester()) {
   var sheet = MASTER_SHEET;
-  var processedLastSubmission = processLastSubmission(lastRow);
+  var processedLastSubmission = processLastSubmission_(lastRow);
 
   // Search for user in 'MASTER'
   const lastEmail = processedLastSubmission[PROCESSED_ARR.EMAIL];
@@ -282,12 +261,12 @@ function consolidateLastSubmission(lastRow = getLastSubmissionInSemester()) {
  * Helper function for `consolidateMemberData()`.
  *
  * @param {string} sheetName  The name of the semester sheet to process (e.g., 'Fall 2024').
- * @return {Array<Array>}  Returns an array of processed row data for the given semester.
+ * @return {string[][]}  Returns an array of processed row data for the given semester.
  *
  * @example `const processedData = processSemesterData('Fall 2024');`
  */
 
-function processSemesterData(sheetName) {
+function processSemesterData_(sheetName) {
   const SPREADSHEET = SpreadsheetApp.getActiveSpreadsheet();
   const semesterSheetRange = 'A2:T';
 
@@ -320,8 +299,13 @@ function processSemesterData(sheetName) {
   return processedData;
 }
 
-
-function consolidateMemberData() {
+/**
+ * Combines data from 2024 semesters into new master sheet (overwrites existing)
+ * 
+ * Get and process semester data and concatenate, then create a map indexed by emails
+ * to make sure entries are unique/combine entries with the same email. Sorts output by first name.
+ */
+function consolidateMemberData_() {
   // Verify if data overwrite wanted
   createMasterUI_();
 
@@ -330,9 +314,9 @@ function consolidateMemberData() {
   return;
 
   // Get processed semester data
-  var fall2024 = processSemesterData('Fall 2024');
-  var summer2024 = processSemesterData('Summer 2024');
-  var winter2024 = processSemesterData('Winter 2024');
+  var fall2024 = processSemesterData_('Fall 2024');
+  var summer2024 = processSemesterData_('Summer 2024');
+  var winter2024 = processSemesterData_('Winter 2024');
 
   // Combine all semester data
   var allMemberData = fall2024.concat(summer2024, winter2024);
@@ -420,45 +404,12 @@ function consolidateMemberData() {
   MASTER_SHEET.getRange(2, 1, selectedData.length, selectedData[0].length).setValues(selectedData);
 }
 
-
-
-
-// Helper Function
-function getSemesterCode_(semester) {
-  // Return semester code if already in map
-  if (semester in SEMESTER_CODE_MAP) {
-    return SEMESTER_CODE_MAP.get(semester)
-  }
-
-  // Extract the first letter of the string and last two char representing the year
-  const semesterType = semester.charAt(0);
-  const semesterYear = semester.slice(-2);
-  const code = semesterType + semesterYear;
-
-  // Same key-value in map
-  SEMESTER_CODE_MAP.set(semester, code);
-
-  return code;
-}
-
-function getSemesterCodeFromDate_(date) {
-  // Return semester code if already in map
-  if (semester in SEMESTER_CODE_MAP) {
-    return SEMESTER_CODE_MAP.get(semester)
-  }
-
-  // Extract the first letter of the string and last two char representing the year
-  const semesterType = semester.charAt(0);
-  const semesterYear = semester.slice(-2);
-  const code = semesterType + semesterYear;
-
-  // Same key-value in map
-  SEMESTER_CODE_MAP.set(semester, code);
-
-  return code;
-}
-
-
+/**
+ * Combine data from 2024 and sort it into a new master sheet (overwrites existing)
+ * 
+ * Combines sheet values with their sheet name, then removes duplicates and sorts by
+ * first name.
+ */
 function sortUniqueData() {
   // Get the active sheet and data from each range
   var sheet = SpreadsheetApp.getActiveSpreadsheet();

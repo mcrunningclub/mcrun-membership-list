@@ -153,7 +153,7 @@ function updateMasterPayment_(email, paymentMethod, aRow = null) {
   
   // Set fee details in MASTER_SHEET
   setFeeDetailsInMaster_(rowInMaster, paymentMethod);
-  addPaidSemesterToHistory(rowInMaster, SHEET_NAME);
+  addPaidSemesterToMaster_(rowInMaster, SHEET_NAME);
 }
 
 
@@ -204,7 +204,7 @@ function checkExistingPaymentInSemester() {
         const sCollectionDate = semesterSheet.getRange(sRow, sCollectionDateCol).getValue();
 
         setFeeDetailsInMaster_(mRow + 1, null, sCollectedBy, sCollectionDate)
-        addPaidSemesterToHistory(mRow + 1, sSheetName);
+        addPaidSemesterToMaster_(mRow + 1, sSheetName);
         logSuccessfulTransfer(sRow, mRow + 1);
       }
     }

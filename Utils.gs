@@ -1,4 +1,30 @@
 /**
+ * Get semester code from semester sheet name in map, or creates if not found.
+ * 
+ * First letter of code is W/F/S corresponding to first letter of semester
+ * and next two are digits YY corresponding to the year.
+ * 
+ * @param {string} semester  Semester name e.g. Fall 2024
+ * @return {string}  Semester code e.g. F24
+ */
+function getSemesterCode_(semester) {
+  // Return semester code if already in map
+  if (semester in SEMESTER_CODE_MAP) {
+    return SEMESTER_CODE_MAP.get(semester)
+  }
+
+  // Extract the first letter of the string and last two char representing the year
+  const semesterType = semester.charAt(0);
+  const semesterYear = semester.slice(-2);
+  const code = semesterType + semesterYear;
+
+  // Same key-value in map
+  SEMESTER_CODE_MAP.set(semester, code);
+
+  return code;
+}
+
+/**
  * Retrieves the column mapping for a given sheet.
  *
  * This function returns the column mapping object for the specified sheet name.
