@@ -226,7 +226,7 @@ function onFormSubmitUI_() {
 }
 
 function prettifyMainUI_() {
-  const functionName = formatSemester_.name;
+  const functionName = formatSemester.name;
   const sheetName = SHEET_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }

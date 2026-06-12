@@ -28,7 +28,7 @@ function onFormSubmit(newRow = getLastSubmissionInSemester()) {
   
   // Wrap around try-catch since GAS does not support async calls
   try {
-    checkAndSetPaymentRef(newRow);
+    checkPaymentForSemester(newRow);
     sendNewMemberCommunications(newRow);
   }
   catch (e) {

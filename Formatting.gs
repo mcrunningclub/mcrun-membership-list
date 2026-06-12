@@ -98,7 +98,7 @@ function tryAndSortSemester() {
   if (lock.tryLock(10000)) {
     try {
       sortSemesterByName_();
-      formatSemester_();
+      formatSemester();
     } finally {
       lock.releaseLock();
     }

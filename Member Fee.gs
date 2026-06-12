@@ -1,31 +1,17 @@
-// LAST UPDATED: MAY 15, 2025
-// PLEASE UPDATE WHEN NEEDED
-const ZEFFY_EMAIL = 'contact@zeffy.com';
-const INTERAC_EMAIL = 'interac.ca';    // Interac email addresses end in "interac.ca"
-const STRIPE_EMAIL = 'stripe.com';
-
-const ONLINE_LABEL = 'Fee Payments/Online Emails';
-const INTERAC_LABEL = 'Fee Payments/Interac Emails';
-
-// Found in `Internal Fee Collection` sheet
-const INTERAC_ITEM_COL = 'A3';
-const ONLINE_PAYMENT_ITEM_COL = 'A4';
-const FEE_WAIVED_ITEM_COL = 'A5';
-
 /**
  * Retrieves the payment item from the "Internal Fee Collection" sheet.
  *
- * @param {string} colIndex  The cell reference (e.g., 'A3') to retrieve the payment item from.
- * @return {string}  The payment item value from the specified cell.
+ * @param {string} cell  The cell reference (e.g., 'A3') to retrieve the payment item from.
+ * @return {string}  The payment item value (e.g. "(Online Payment)") from the specified cell.
  *
  * @author Andrey Gonzalez
  * @date  May 24, 2025
  */
-function getPaymentItem_(colIndex) {
+function getPaymentItem_(cell) {
   return SpreadsheetApp
     .getActiveSpreadsheet()
     .getSheetByName("Internal Fee Collection")
-    .getRange(colIndex)
+    .getRange(cell)
     .getValue();
 }
 
@@ -47,7 +33,7 @@ function getGmailLabel_(labelName) {
 /**
  * Verify if member has paid fee using notification email sent by Interac, Stripe or Zeffy
  * 
- * Update member's information in MAIN_SHEET as required.
+ * Update member's information in the semester sheet as required.
  * 
  * @param {integer} [row=getLastSubmissionInMain()] index of member.
  *  
@@ -55,7 +41,7 @@ function getGmailLabel_(labelName) {
  * @date  Mar 16, 2025
  * @update  Jun 6, 2025
  */
-function checkAndSetPaymentRef(row = getLastSubmissionInSemester()) {
+function checkPaymentForSemester(row = getLastSubmissionInSemester()) {
   const sheet = SEMESTER_SHEET;
   console.log('Entering `checkAndSetPaymentRef()` now...');
 
@@ -64,7 +50,7 @@ function checkAndSetPaymentRef(row = getLastSubmissionInSemester()) {
   const feeDetails = packFeeDetails(values);
 
   // Has the payment been found in inbox or fee waived?
-  if (checkThisPayment_(row, feeDetails)) {
+  if (isPaid_(row, feeDetails)) {
     console.log(`Successfully found transaction email for '${feeDetails.memberName}' (or fee waived)!`);  // Log success message
   }
   else {
@@ -93,8 +79,18 @@ function checkAndSetPaymentRef(row = getLastSubmissionInSemester()) {
   }
 }
 
-// Helper function for Stripe/Zeffy and Interac cases
-function checkThisPayment_(row, feeDetails) {
+/**
+ * Helper function for Stripe/Zeffy and Interac cases
+ * 
+ * Calls necessary function to check whether payment has been
+ * made depending on type of payment
+ * 
+ * @param {number} row  Row of the member to check payment for
+ * @param {struct} feeDetails  struct of fee information from sheet??
+ * 
+ * @return {bool}  Whether member's fee has been paid or not
+ */
+function isPaid_(row, feeDetails) {
   const { firstName, lastName, email, paymentMethod, interacRef } = feeDetails;
 
   if (paymentMethod.includes('CC')) {
@@ -117,39 +113,54 @@ function checkThisPayment_(row, feeDetails) {
  * Updates member's fee information.
  * 
  * @param {integer} row  The index to enter information.
- * @param {string} listItem  The list item in `Internal Fee Collection` to set in 'Collection Person' col.
+ * @param {string} collectedBy  The list item from `Internal Fee Collection` to put in 'Collection Person' col.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 1, 2023
  * @update  Mar 16, 2025
  */
-function setFeeDetailsInSemester_(row, listItem) {
+function setFeeDetailsInSemester_(row, collectedBy) {
   const sheet = SEMESTER_SHEET;
   const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
 
   sheet.getRange(row, IS_FEE_PAID_COL).check();
   sheet.getRange(row, COLLECTION_DATE_COL).setValue(currentDate);
-  sheet.getRange(row, COLLECTION_PERSON_COL).setValue(listItem);
+  sheet.getRange(row, COLLECTION_PERSON_COL).setValue(collectedBy);
   sheet.getRange(row, IS_INTERNAL_COLLECTED_COL).check();
 }
 
 
-function setFeeDetailsInMaster_(row, paymentMethod, collectedBy, thisDate = null) {
+/**
+ * Updates member's fee information in the master sheet.
+ * 
+ * @param {integer} row  The index of the row with member's information.
+ * @param {string} paymentMethod  How the fee was paid
+ * @param {string} collectedBy  How the fee was collected
+ * @param {string} date  Date of collection. Defaults to null (will be set to current date)
+ */
+function setFeeDetailsInMaster_(row, paymentMethod, collectedBy, date = null) {
   const sheet = MASTER_SHEET;
-  const collectionDate = thisDate ?? Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
+  const collectionDate = date ?? Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
   sheet.getRange(row, MASTER_COLS.collectionDate).setValue(collectionDate);
 
   //sheet.getRange(row, MASTER_COLS.paymentHistory).setValue(...);
 
   // Get cleaner string of payment method using list item
-  const collector = collectedBy ?? paymentMethodToItem(paymentMethod).toString();
+  const collector = collectedBy ?? paymentMethodToItem_(paymentMethod).toString();
   sheet.getRange(row, MASTER_COLS.collectedBy).setValue(collector);
   sheet.getRange(row, MASTER_COLS.isInternalCollected).check();
 }
 
-function updateMasterPayment_(email, paymentMethod, aRow = null) {
+/**
+ * Updates fee payment information in master sheet given member's email.
+ * 
+ * @param {string} email  Email address of member to update info for.
+ * @param {string} paymentMethod  How fee was paid
+ * @param {number} row  Row of member (if known). Defaults to null.
+ */
+function updateMasterPayment_(email, paymentMethod, row = null) {
   // Find member row in MASTER_SHEET
-  const rowInMaster = aRow ?? findMemberByEmail(email, MASTER_SHEET);
+  const rowInMaster = row ?? findMemberByEmail(email, MASTER_SHEET);
   
   // Set fee details in MASTER_SHEET
   setFeeDetailsInMaster_(rowInMaster, paymentMethod);
@@ -157,55 +168,60 @@ function updateMasterPayment_(email, paymentMethod, aRow = null) {
 }
 
 
+/**
+ * For members whose fee is not paid in the master sheet, check whether
+ * they have paid the fee in the semester sheet. Update master sheet if necessary.
+ * 
+ * Loop through every member in the master sheet. If their fee status is not paid,
+ * check whether registration date is within the last semester and whether the semester
+ * sheet contains their payment. If found, add to master sheet. If not found, add to
+ * list of "unpaid" emails that is logged in console.
+ */
 function checkExistingPaymentInSemester() {
   const masterSheet = MASTER_SHEET;
   const startRow = 1;
-  const numRows = masterSheet.getLastRow();
+  const numRowsMaster = masterSheet.getLastRow();
 
   // Get all emails and isPaid values in both MASTER and SEMESTER sheets
-  const getThisCol = (col) => masterSheet.getSheetValues(startRow, col, numRows, 1);
-  const masterEmails = getThisCol(MASTER_COLS.email);
-  const masterLatestReg =  getThisCol(MASTER_COLS.latestRegistration);
-  const masterIsPaid = getThisCol(MASTER_COLS.isFeePaid);
+  const getColumnVals = (col) => masterSheet.getSheetValues(startRow, col, numRowsMaster, 1);
+  const masterEmails = getColumnVals(MASTER_COLS.email);
+  const masterRegDates =  getColumnVals(MASTER_COLS.latestRegistration);
+  const masterFeeStatuses = getColumnVals(MASTER_COLS.isFeePaid);
 
   // Now in SEMESTER SHEET
   const semesterSheet = SEMESTER_SHEET;
-  const sSheetName = semesterSheet.getSheetName();
-  const sNumRows = semesterSheet.getLastRow();
+  const semesterName = semesterSheet.getSheetName();
+  const numRowsSemester = semesterSheet.getLastRow();
 
-  const SEMESTER_MAP = GET_COL_MAP_(sSheetName);
-  const semesterIsPaid = semesterSheet.getSheetValues(1, SEMESTER_MAP.feeStatus, sNumRows, 1);
-
-  // 'Collected by' columns in both sheets to use for defining range
-  const sCollectedByCol = SEMESTER_MAP.collector;
-  const sCollectionDateCol = SEMESTER_MAP.collectionDate;
+  const SEMESTER_MAP = GET_COL_MAP_(semesterName);
+  const semesterFeeStatuses = semesterSheet.getSheetValues(1, SEMESTER_MAP.feeStatus, numRowsSemester, 1);
 
   const emailsNotFound = [];
   const today = new Date();
 
   // Iterate through rows and verify payment in SEMESTER_SHEET iff isPaid false
-  for (let isPaid, lastReg, mRow = startRow; mRow <= numRows - 1; mRow++) {
-    isPaid = masterIsPaid[mRow][0];
-    lastReg = new Date(masterLatestReg[mRow][0]);
+  for (let isPaid, lastReg, masterRow = startRow; masterRow <= numRowsMaster - 1; masterRow++) {
+    isPaid = masterFeeStatuses[masterRow][0];
+    lastReg = new Date(masterRegDates[masterRow][0]);
 
-    const days = getNumberOfDays(lastReg, today);
+    const daysSinceReg = getNumberOfDays(lastReg, today);
 
-    if (isPaid !== 'Paid' && days > 60 && days < 150) {
-      let email = masterEmails[mRow][0];
-      const sRow = findMemberByEmail(email, semesterSheet);
-      console.info(`Checking fee for '${email}' in semester sheet row #${sRow}`);
+    if (isPaid !== 'Paid' && daysSinceReg > 60 && daysSinceReg < 150) {
+      let email = masterEmails[masterRow][0];
+      const semesterRow = findMemberByEmail(email, semesterSheet);
+      console.info(`Checking fee for '${email}' in semester sheet row #${semesterRow}`);
 
-      if (!sRow) {
+      if (!semesterRow) {
         emailsNotFound.push(email);   // Not found in 'SEMESTER'
       }
-      else if (semesterIsPaid[sRow - 1][0]) {
+      else if (semesterFeeStatuses[semesterRow - 1][0]) {
         // Transfer from SEMESTER TO MASTER and add semester code
-        const sCollectedBy = semesterSheet.getRange(sRow, sCollectedByCol).getValue();
-        const sCollectionDate = semesterSheet.getRange(sRow, sCollectionDateCol).getValue();
+        const collectedBy = semesterSheet.getRange(semesterRow, SEMESTER_MAP.collector).getValue();
+        const collectionDate = semesterSheet.getRange(semesterRow, SEMESTER_MAP.collectionDate).getValue();
 
-        setFeeDetailsInMaster_(mRow + 1, null, sCollectedBy, sCollectionDate)
-        addPaidSemesterToMaster_(mRow + 1, sSheetName);
-        logSuccessfulTransfer(sRow, mRow + 1);
+        setFeeDetailsInMaster_(masterRow + 1, null, collectedBy, collectionDate)
+        addPaidSemesterToMaster_(masterRow + 1, semesterName);
+        logSuccessfulTransfer(semesterRow, masterRow + 1);
       }
     }
   }
@@ -214,8 +230,6 @@ function checkExistingPaymentInSemester() {
   if(emailsNotFound.length > 0) {
     console.error(`Unable to find in 'SEMESTER'...\n${emailsNotFound.join('\n')}`);
   }
-
-
 
   /** Helper function to calculate number of days */ 
   function getNumberOfDays(startDate, endDate) {
@@ -239,21 +253,24 @@ function checkExistingPaymentInSemester() {
  * Return latest emails of payment notification.
  * 
  * If not found, wait multiple times for email to arrive in McRUN inbox.
+ * Must use club email.
  * 
  * @param {string} sender  Email of sender (Interac, Stripe or Zeffy).
  * @param {integer} maxMatches  Number of max tries.
+ * @param {string} subject  Email subject to filter by. Defaults to empty string
+ * @return {GmailThread[]}  Gmail threads matching the search
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 16, 2025
  * @update  Mar 17, 2025
  */
-function getMatchingPayments_(sender, maxMatches, subject='') {
+function getMatchingEmails_(sender, maxMatches, subject='') {
   // Ensure that correct mailbox is used
   if (getCurrentUserEmail_() !== MCRUN_EMAIL) {
     throw new Error('Wrong account! Please switch to McRUN\'s Gmail account');
   }
 
-  const searchStr = getGmailSearchString_(sender, subject);
+  const searchStr = createGmailSearchString_(sender, subject);
   let threads = [];
   let delay = 5 * 1000; // Start with 10 seconds
 
@@ -269,9 +286,11 @@ function getMatchingPayments_(sender, maxMatches, subject='') {
 
 
 /**
- * Get threads from search (from:sender, starting:yesterday, in:inbox, [subject:partial-email-match])
+ * Create search string given sender and optional subject
+ * 
+ * In the form (from:sender, starting:yesterday, in:inbox, [subject:partial-email-match])
  */ 
-function getGmailSearchString_(sender, subject = '') {
+function createGmailSearchString_(sender, subject = '') {
   const yesterday = new Date(Date.now() - 86400000); // Subtract 1 day in milliseconds
   const formattedYesterday = Utilities.formatDate(yesterday, TIMEZONE, 'yyyy/MM/dd');
   return `from:(${sender}) in:inbox after:${formattedYesterday} subject:"${subject}"`;
@@ -300,7 +319,7 @@ function cleanUpMatchedThread_(thread, label) {
  * @date  Mar 15, 2025
  * @update  Jun 7, 2025
  */
-function matchMemberInPaymentEmail_(searchTerms, emailBody) {
+function searchInEmail_(searchTerms, emailBody) {
   const formatedBody = emailBody.replace(/\*/g, '');   // Remove asterisks around terms
   console.log(formatedBody);
 
@@ -314,13 +333,10 @@ function matchMemberInPaymentEmail_(searchTerms, emailBody) {
  * Creates search terms for regex matching using a member's information.
  * 
  * Handles optional hyphens/spaces in last names, and removes diacritics for better matching.
- * Improves matching accuracy in `matchMemberInPaymentEmail`.
+ * Improves matching accuracy in `searchInEmail_`.
  * 
- * @param {Object}  Member information.
- * @param {string} member.firstName  Member's first name.
- * @param {string} member.lastName  Member's last name.
- * @param {string} [member.email]  Member's email address (if applicable).
- * @param {string} [member.interacRef]  Reference number of Interac e-Transfer (if applicable).
+ * @param {Object}  Member information. Contains attributes member.firstname, member.lastname,
+ *                    member.email (if applicable), member.interacRef (if applicable).
  * @returns {string[]}  An array of search terms for regex matching.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
@@ -355,8 +371,13 @@ function createSearchTerms_(member) {
 
 ///  👉 FUNCTIONS FOR FEE WAIVED 👈  \\\
 
-
-function paymentMethodToItem(paymentMethod) {
+/**
+ * Get payment item eg. "(Online Payment)" from payment method string
+ * 
+ * Gets standardized item from list in Internal Memberships Collected spreadsheet 
+ * based on keywords in payment method. 
+ */
+function paymentMethodToItem_(paymentMethod) {
   const itemCol = (() => {
     if (paymentMethod.includes('CC')) {
       return ONLINE_PAYMENT_ITEM_COL;
@@ -389,6 +410,11 @@ function setFeeWaived_(row) {
 
 ///  👉 FUNCTIONS HANDLING STRIPE/ZEFFY TRANSACTIONS 👈  \\\
 
+/**
+ * Sets fee status as paid online in member registration.
+ * 
+ * @param {integer} row  The index to enter information.
+ */
 function setOnlinePaid_(row) {
   const onlinePaymentItem = getPaymentItem_(ONLINE_PAYMENT_ITEM_COL);
   setFeeDetailsInSemester_(row, onlinePaymentItem);
@@ -406,6 +432,8 @@ function setOnlinePaid_(row) {
  * @param {string} member.firstName  First name of member.
  * @param {string} member.lastName  Last name of member.
  * @param {string} member.email  Email of member.
+ * 
+ * @return {boolean}  True if payment was found in emails.
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Mar 15, 2025
@@ -414,7 +442,7 @@ function setOnlinePaid_(row) {
 function checkAndSetOnlinePayment_(row, member) {
   const sender = `${ZEFFY_EMAIL} OR ${STRIPE_EMAIL}`;
   const maxMatches = 5;
-  const threads = getMatchingPayments_(sender, maxMatches, 'payment');
+  const threads = getMatchingEmails_(sender, maxMatches, 'payment');
 
   const searchTerms = createSearchTerms_(member);
   console.log('Search terms for email body', searchTerms);
@@ -443,7 +471,7 @@ function processOnlineThread_(thread, searchTerms) {
     }
 
     const emailBody = message.getPlainBody();
-    isFoundInMessage = matchMemberInPaymentEmail_(searchTerms, emailBody);
+    isFoundInMessage = searchInEmail_(searchTerms, emailBody);
 
     if (isFoundInMessage) {
       message.star();
@@ -463,7 +491,12 @@ function processOnlineThread_(thread, searchTerms) {
 
 ///  👉 FUNCTIONS HANDLING INTERAC TRANSACTIONS 👈  \\\
 
-function setInteractPaid_(row) {
+/**
+ * Sets fee status as paid through Interac in member registration.
+ * 
+ * @param {integer} row  The index to enter information.
+ */
+function setInteracPaid_(row) {
   const interacItem = getPaymentItem_(INTERAC_ITEM_COL);
   setFeeDetailsInSemester_(row, interacItem);
 }
@@ -481,7 +514,7 @@ function setInteractPaid_(row) {
 function checkAndSetInteracRef_(row, member) {
   const sender = INTERAC_EMAIL;
   const maxMatches = 10;
-  const threads = getMatchingPayments_(sender, maxMatches);
+  const threads = getMatchingEmails_(sender, maxMatches);
 
   // Save results of thread processing
   let thisIsFound = false;
@@ -502,7 +535,7 @@ function checkAndSetInteracRef_(row, member) {
 
   // Update member's payment information
   if (thisIsFound) {
-    setInteractPaid_(row);
+    setInteracPaid_(row);
   }
   // Notify McRUN about references not identified
   // else if (thisUnidentified.length > 0) {
@@ -521,7 +554,7 @@ function processInteracThreads_(thread, searchTerms) {
     const emailBody = message.getPlainBody();
 
     // Try matching Interac e-Transfer email with member's reference number or name
-    const isFoundInMessage = matchMemberInPaymentEmail_(searchTerms, emailBody);
+    const isFoundInMessage = searchInEmail_(searchTerms, emailBody);
 
     if (isFoundInMessage) {
       result.isFound = true;
@@ -540,8 +573,6 @@ function processInteracThreads_(thread, searchTerms) {
 
 /**
  * Extract Interac e-Transfer reference string.
- * 
- * Helper function for getReferenceNumberFromEmail_().
  * 
  * @param {string} emailBody  The body of the Interac e-Transfer email.
  * @return {string}  Returns extracted Interac Ref from `emailBody`, otherwise empty string.
@@ -563,7 +594,10 @@ function extractInteracRef_(emailBody) {
   return '';
 }
 
-
+/**
+ * Sends an email to the club with a list of Interac references that have not
+ * been matched to a member registration.
+ */
 function notifyUnidentifiedInteracRef_(references) {
   const emailBody =
   `
@@ -583,7 +617,9 @@ function notifyUnidentifiedInteracRef_(references) {
   GmailApp.sendEmail(errorEmail.to, errorEmail.subject, errorEmail.body);
 }
 
-
+/**
+ * Sends an email to the club with member whose payment emails has not been found.
+ */
 function notifyUnidentifiedPayment_(name) {
   const emailBody =
   `

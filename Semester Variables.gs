@@ -66,6 +66,41 @@ const TIMEZONE = getUserTimeZone_();
  */
 const MCRUN_EMAIL = 'mcrunningclub@ssmu.ca';
 
+// LAST UPDATED: MAY 15, 2025
+// PLEASE UPDATE WHEN NEEDED
+/**
+ * Email address of Zeffy emails
+ */
+const ZEFFY_EMAIL = 'contact@zeffy.com';
+
+/**
+ * Email address (ending) of Interac emails
+ */
+const INTERAC_EMAIL = 'interac.ca';    // Interac email addresses end in "interac.ca"
+
+/**
+ * Email address (ending) of Stripe emails
+ */
+const STRIPE_EMAIL = 'stripe.com';
+
+/**
+ * Gmail label for online payment emails
+ */
+const ONLINE_LABEL = 'Fee Payments/Online Emails';
+
+/**
+ * Gmail label for Interac payment emails
+ */
+const INTERAC_LABEL = 'Fee Payments/Interac Emails';
+
+/**
+ * Cells for each payment method. Found in `Internal Fee Collection` sheet.
+ */
+const INTERAC_ITEM_COL = 'A3';
+const ONLINE_PAYMENT_ITEM_COL = 'A4';
+const FEE_WAIVED_ITEM_COL = 'A5';
+
+
 /**
  * Length of membership in years
  * @const {number}
