@@ -1,7 +1,7 @@
 /**
  * Handles the submission of a new registration form.
  * 
- * This function processes the latest submission in `MAIN_SHEET` by:
+ * This function processes the latest submission in the semester sheet by:
  * - Trimming whitespace
  * - Fixing letter case
  * - Generating a unique member ID
@@ -9,13 +9,13 @@
  * - Verifying payment information
  * - Sending communications to the new member
  * 
- * It also ensures that the data is added to the `MASTER` sheet and sorted appropriately.
+ * It also ensures that the data is added to the master sheet and sorted appropriately.
  * 
  * @param {number} [newRow=getLastSubmissionInMain()] - The row number of the new submission.
- *                                                      Defaults to the last row in `MAIN_SHEET`.
+ *                                                      Defaults to the last row in the semester sheet.
  *
  * @see {@link getLastSubmissionInSemester} for how the last row is determined.
- * @see {@link addLastSubmissionToMaster_} for how the data is added to the `MASTER` sheet.
+ * @see {@link addLastSubmissionToMaster_} for how the data is added to the master sheet.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
@@ -37,7 +37,7 @@ function onFormSubmit(newRow = getLastSubmissionInSemester()) {
   }
   finally {
     // Must add and sort AFTER extracting payment info from email
-    setWaiverUrl(newRow);
+    setWaiverUrl_(newRow);
     addLastSubmissionToMaster_(newRow);
 
     // Applies all pending changes before sorting
@@ -51,9 +51,9 @@ function onFormSubmit(newRow = getLastSubmissionInSemester()) {
  * Sends communications to a new member.
  * 
  * This function packages the member's information and transfers it to the
- * `NewMemberComms` sheet for further processing.
+ * New Member Communications sheet for further processing.
  * 
- * @param {integer} row - The row number of the new member in `MAIN_SHEET`.
+ * @param {integer} row - The row number of the new member in the semester.
  * 
  * @see {@link packageMemberInfoInRow_} for how member information is packaged.
  * 
@@ -65,30 +65,6 @@ function sendNewMemberCommunications(row) {
   const memberInfo = packageMemberInfoInRow_(row);
   console.log(`Member info to export to 'NewMemberComms'\n`, memberInfo);
   NewMemberCommunications.createNewMemberCommunications(memberInfo);   // Transfer new member's value to external sheet
-}
-
-
-/**
- * Find row index of last submission, starting from bottom using while-loop.
- * 
- * Used to prevent native `sheet.getLastRow()` from returning empty row.
- * 
- * @return {integer}  Returns 1-index of last row in GSheet.
- *  
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
- * @date  Sep 1, 2024
- * @update  Dec 18, 2024
- */
-
-function getLastSubmissionInSemester() {
-  const sheet = SEMESTER_SHEET;
-  let lastRow = sheet.getLastRow();
-
-  while (sheet.getRange(lastRow, REGISTRATION_DATE_COL).getValue() == "") {
-    lastRow = lastRow - 1;
-  }
-
-  return lastRow;
 }
 
 
@@ -126,7 +102,7 @@ function MD5(input) {
 /**
  * Find and set waiver url to new member registration.
  * 
- * Waiver is automatically saved by Fillout to a specific folder.
+ * Waiver is automatically saved by Fillout to folder with id `WAIVER_DRIVE_ID`.
  * 
  * @param {number} [row=getLastSubmissionInMain()]  Row index to find and set url.
  *                                                  Defaults to the last row in main sheet.
@@ -136,7 +112,7 @@ function MD5(input) {
  * @update  Mar 15, 2025
  */
 
-function setWaiverUrl(row = getLastSubmissionInSemester()) {
+function setWaiverUrl_(row = getLastSubmissionInSemester()) {
   const sheet = SEMESTER_SHEET;
 
   // Search for waiver link using member name
@@ -149,7 +125,7 @@ function setWaiverUrl(row = getLastSubmissionInSemester()) {
 
 
 /**
- * Find waiver using member's name. Helper function for setWaiverUrl.
+ * Find waiver using member's name. Helper function for setWaiverUrl_.
  * 
  * Waiver is automatically saved by Fillout to folder with id `WAIVER_DRIVE_ID`.
  * 
@@ -180,20 +156,23 @@ function findWaiverLink_(name) {
 
 
 /**
- * Get expiration date of member fee using `semCode` and `MEMBERSHIP_DURATION`.
+ * Get expiration date of member fee from given semester code.
  * 
- * @param {string} semCode  The 3-char code representing the semester and year.
+ * Depends on `MEMBERSHIP_DURATION`.
+ * 
+ * @param {string} semesterCode  The 3-char code representing the semester and year.
+ * @return {string}  Month and year of expiration e.g. Sep 2025
  *  
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Feb 28, 2025
  * @update  Feb 28, 2025
  */
 
-function getExpirationDate(semCode) {
+function getExpirationDate_(semesterCode) {
   const validDuration = MEMBERSHIP_DURATION;
 
-  const semester = semCode.charAt(0);
-  const expirationYear = '20' + (parseInt(semCode.slice(-2)) + validDuration)
+  const semester = semesterCode.charAt(0);
+  const expirationYear = '20' + (parseInt(semesterCode.slice(-2)) + validDuration)
 
   switch (semester) {
     case ('F'): return `Sep ${expirationYear}`;

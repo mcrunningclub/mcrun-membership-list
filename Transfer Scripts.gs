@@ -384,7 +384,7 @@ function packageMemberInfoInRow_(row) {
 
   // Get membership expiration date via sheet name
   const semesterCode = getSemesterCode_(semesterName);  // Get the semester code based on the sheet name
-  const membershipExpiration = getExpirationDate(semesterCode);
+  const membershipExpiration = getExpirationDate_(semesterCode);
 
   // Map member info to pass info
   return {

@@ -1,15 +1,25 @@
-// NAME OF STORE WITH INDEX OF LETTER
-const INDEX_STORE_NAME = "letterIndexStore";
-
-// Setter and getter for index store
-function getIndexStore_() {
+/**
+ * Retrieves index store from script properties and parses it.
+ * 
+ * If store is not found, call function to create it.
+ * 
+ * @returns {Object}  Mapping letters to the row with the first occurence 
+ *                      of an email starting with that letter
+ */
+function getIndexStore() {
   const scriptProperties = PropertiesService.getScriptProperties();
   const store = scriptProperties.getProperty(INDEX_STORE_NAME);
   return JSON.parse(store) ?? setIndexStore();
 }
 
+/**
+ * Builds and sets index store as a script property.
+ * 
+ * @returns {Object}  Mapping letters to the row with the first occurence 
+ *                      of an email starting with that letter
+ */
 function setIndexStore() {
-  const store = buildLetterIndexStore_();
+  const store = buildIndexStore_();
   const scriptProperties = PropertiesService.getScriptProperties();
   scriptProperties.setProperty(INDEX_STORE_NAME, JSON.stringify(store));
   return store;
@@ -18,14 +28,14 @@ function setIndexStore() {
 
 /**
  * Builds an index store mapping the first letter of a key (i.e. email) to 
- * its first occurrence index in `MASTER_SHEET`. e.g { 'a': 2, 'b' : 21, ... }
+ * its first occurrence index in the master sheet. e.g { 'a': 2, 'b' : 21, ... }
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>) & ChatGPT
  * @date  Sep 22, 2025
  * @update  Sep 22, 2025
  */
 
-function buildLetterIndexStore_() {
+function buildIndexStore_() {
   // Get all emails from `MASTER` sheet
   const startRow = 2;
   const numRows = MASTER_SHEET.getLastRow() - 1;
@@ -46,39 +56,13 @@ function buildLetterIndexStore_() {
 }
 
 
-function testRuntime() {
-  const email = 'example@mail.com';
-  const startTime = new Date().getTime();
-
-  /**
-   * Runtime compared in ms: 
-   * - findMemberByIteration: 1133, 1749, 1185, 1191
-   * - findMemberByBinarySearch: 643, 1548, 926 
-   * - findMemberWithStore: 275, 239, 223, 235
-  */
-
-  //findMemberByIteration(email, MASTER_SHEET);
-  //findMemberByBinarySearch(email, MASTER_SHEET);
-  findMemberWithStore_(email);
-  
-  // Record the end time
-  const endTime = new Date().getTime();
-  
-  // Calculate the runtime in milliseconds
-  const runtime = endTime - startTime;
-  
-  // Log the runtime
-  Logger.log(`Function runtime: ${runtime} ms`);
-}
-
-
 /**
  * Searches for member entry by email in `sheet` by binary search.
  * If unsuccessful, searches again via top-to-bottom iteration.
  * 
  * Returns row index of `email` in GSheet (1-indexed), or null if not found.
  * 
- * @param {string} emailToFind  The email address to search for in `sheet`.
+ * @param {string} email  The email address to search for in `sheet`.
  * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.
  * 
  * @return {number|null}  Returns the 1-indexed row number where the email is found, 
@@ -91,28 +75,28 @@ function testRuntime() {
  * @example `const submissionRowNumber = findMemberByEmail('example@mail.com', MAIN_SHEET);`
  */
 
-function findMemberByEmail(emailToFind, sheet) {
+function findMemberByEmail(email, sheet) {
   let result = null;
 
   // First try with letter index store and binary search (fastest)
-  if (sheet === MASTER_SHEET) result = findMemberWithStore_(emailToFind);
+  if (sheet === MASTER_SHEET) result = findMemberWithStore(email);
 
   // Try with binary search with whole sheet if unsuccessful or sheet !== MASTER_SHEET
-  result = result ?? findMemberByBinarySearch(emailToFind, sheet);
+  result = result ?? findMemberByBinarySearch(email, sheet);
 
   // If binary search unsuccessful, try with iteration (slowest)
-  result = result ?? findMemberByIteration(emailToFind, sheet);
+  result = result ?? findMemberByIteration(email, sheet);
   return result;
 }
 
 
 /**
- * Finds a member by setting a stricter bound using an index store of each letter.
- * Then searches `MASTER_SHEET` using binary search.
+ * Finds a member in the master sheet by setting a stricter bound using an
+ * index store of each letter, searching with binary search.
  * 
  * Returns row index of `email` in GSheet (1-indexed), or null if not found.
  * 
- * @param {string} emailToFind  The email address to search for in `sheet`.
+ * @param {string} email  The email address to search for in `sheet`.
  * @param {Object} [store=getIndexStore()]  Object mapping first letter 
  *                                          to starting index, e.g. { 'a': 1, 'b': 21, ... }
  * 
@@ -125,8 +109,8 @@ function findMemberByEmail(emailToFind, sheet) {
  * 
  * @example `const submissionRowNumber = findMemberWithStore('example@mail.com');`
  */
-function findMemberWithStore_(emailToFind, store = getIndexStore_()) {
-  const letter = emailToFind[0].toLowerCase();
+function findMemberWithStore(email, store = getIndexStore()) {
+  const letter = email[0].toLowerCase();
   const BUFFER = 3;   // In case the store has not been updated
 
   // Set lower and upper bound for binary search
@@ -134,7 +118,7 @@ function findMemberWithStore_(emailToFind, store = getIndexStore_()) {
   const upperBound = getUpperBound(letter) + BUFFER;
 
   // Use binary search with a smaller search range
-  return findMemberByBinarySearch(emailToFind, MASTER_SHEET, lowerBound, upperBound);
+  return findMemberByBinarySearch(email, MASTER_SHEET, lowerBound, upperBound);
 
   // Get upper bound using next letter found in store
   function getUpperBound(char) {
@@ -151,11 +135,11 @@ function findMemberWithStore_(emailToFind, store = getIndexStore_()) {
  * 
  * See faster binary search function `findMemberByBinarySearch()`.
  * 
- * @param {string} emailToFind  The email address to search for in `sheet`.
+ * @param {string} email  The email address to search for in `sheet`.
  * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.
- * @param {number} [start=2]  The starting row index for the search (1-indexed).
+ * @param {number} [startRow=2]  The starting row index for the search (1-indexed).
  *                            Defaults to 2 (the second row) to avoid the header row.
- * @param {number} [end=MASTER_SHEET.getLastRow()]  The ending row index for the search.
+ * @param {number} [endRow=MASTER_SHEET.getLastRow()]  The ending row index for the search.
  *                                                  Defaults to the last row in the sheet.
  * 
  * @return {number|null}  Returns the 1-indexed row number where the email is found, 
@@ -168,13 +152,13 @@ function findMemberWithStore_(emailToFind, store = getIndexStore_()) {
  * @example `const submissionRowNumber = findMemberByIteration('example@mail.com', MAIN_SHEET);`
  */
 
-function findMemberByIteration(emailToFind, sheet, start = 2, end = sheet.getLastRow()) {
+function findMemberByIteration(email, sheet, startRow = 2, endRow = sheet.getLastRow()) {
   const sheetName = sheet.getSheetName();
   const thisEmailCol = GET_COL_MAP_(sheetName).emailCol;    // Get email col index of `sheet`
 
-  for (var row = start; row <= end; row++) {
+  for (var row = startRow; row <= endRow; row++) {
     let email = sheet.getRange(row, thisEmailCol).getValue();
-    if (email === emailToFind) return row;    // Exit loop and return value;
+    if (email === email) return row;    // Exit loop and return value;
   }
 
   return null;
@@ -187,11 +171,11 @@ function findMemberByIteration(emailToFind, sheet, start = 2, end = sheet.getLas
  * 
  * Previously `findSubmissionFromEmail` in `Master Scripts.gs`.
  * 
- * @param {string} emailToFind  The email address to search for in `sheet`.
+ * @param {string} email  The email address to search for in `sheet`.
  * @param {SpreadsheetApp.Sheet} sheet  The sheet to search in.
- * @param {number} [start=2]  The starting row index for the search (1-indexed). 
+ * @param {number} [startRow=2]  The starting row index for the search (1-indexed). 
  *                            Defaults to 2 (the second row) to avoid the header row.
- * @param {number} [end=MASTER_SHEET.getLastRow()]  The ending row index for the search. 
+ * @param {number} [endRow=MASTER_SHEET.getLastRow()]  The ending row index for the search. 
  *                                                  Defaults to the last row in the sheet.
  * 
  * @return {number|null}  Returns the 1-indexed row number where the email is found, 
@@ -204,33 +188,61 @@ function findMemberByIteration(emailToFind, sheet, start = 2, end = sheet.getLas
  * @example `const submissionRowNumber = findMemberByBinarySearch('example@mail.com', MASTER_SHEET);`
  */
 
-function findMemberByBinarySearch(emailToFind, sheet, start = 2, end = sheet.getLastRow()) {
+function findMemberByBinarySearch(email, sheet, startRow = 2, endRow = sheet.getLastRow()) {
   const sheetName = sheet.getSheetName();
   const emailCol = GET_COL_MAP_(sheetName).emailCol;  // Get email col from `sheet`
 
   // Base case: If start index exceeds the end index, the email is not found
-  if (start > end) {
+  if (startRow > endRow) {
     return null;
   }
 
   // Find the middle point between the start and end indexes
-  const mid = Math.floor((start + end) / 2);
+  const mid = Math.floor((startRow + endRow) / 2);
 
   // Get the email value at the middle row
   const emailAtMid = sheet.getRange(mid, emailCol).getValue();
 
   // Compare the target email with the middle email
-  if (emailAtMid === emailToFind) {
+  if (emailAtMid === email) {
     return mid;  // If the email matches, return the row index (1-indexed)
 
     // If the email at the middle row is alphabetically smaller, search the right half.
     // Note: use localeString() to ensure string comparison matches GSheet.
-  } else if (emailAtMid.localeCompare(emailToFind) === -1) {
-    return findMemberByBinarySearch(emailToFind, sheet, mid + 1, end);
+  } else if (emailAtMid.localeCompare(email) === -1) {
+    return findMemberByBinarySearch(email, sheet, mid + 1, endRow);
 
     // If the email at the middle row is alphabetically larger, search the left half.
   } else {
-    return findMemberByBinarySearch(emailToFind, sheet, start, mid - 1);
+    return findMemberByBinarySearch(email, sheet, startRow, mid - 1);
   }
 }
 
+
+/**
+ * Testing speed of different search functions.
+ */
+function testRuntime() {
+  const email = 'example@mail.com';
+  const startTime = new Date().getTime();
+
+  /**
+   * Runtime compared in ms: 
+   * - findMemberByIteration: 1133, 1749, 1185, 1191
+   * - findMemberByBinarySearch: 643, 1548, 926 
+   * - findMemberWithStore: 275, 239, 223, 235
+  */
+
+  //findMemberByIteration(email, MASTER_SHEET);
+  //findMemberByBinarySearch(email, MASTER_SHEET);
+  findMemberWithStore(email);
+  
+  // Record the end time
+  const endTime = new Date().getTime();
+  
+  // Calculate the runtime in milliseconds
+  const runtime = endTime - startTime;
+  
+  // Log the runtime
+  Logger.log(`Function runtime: ${runtime} ms`);
+}

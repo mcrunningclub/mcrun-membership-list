@@ -1,4 +1,26 @@
 /**
+ * Removes diacritics (accents) from a string.
+ * 
+ * This function normalizes the input string and removes any diacritical marks,
+ * ensuring a clean, ASCII-compatible output.
+ * 
+ * @param {string} str  The string to normalize and strip of diacritics.
+ * @return {string}  The normalized string without diacritics.
+ * 
+ * @example
+ * const result = removeDiacritics("José");
+ * console.log(result); // Outputs: "Jose"
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Mar 5, 2025
+ * @update  Mar 15, 2025
+ */
+
+function removeDiacritics_(str) {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+/**
  * Get semester code from semester sheet name in map, or creates if not found.
  * 
  * First letter of code is W/F/S corresponding to first letter of semester
@@ -25,45 +47,26 @@ function getSemesterCode_(semester) {
 }
 
 /**
- * Retrieves the column mapping for a given sheet.
- *
- * This function returns the column mapping object for the specified sheet name.
- * If the sheet name is not found in the mapping, it returns `null`.
- *
- * @param {string} sheet - The name of the sheet to retrieve the column mapping for.
- * @return {Object|null} The column mapping object for the sheet, or `null` if not found
+ * Find row index of last submission, starting from bottom using while-loop.
  * 
- * @author  Andrey Gonzalez
- * @date  May 24, 2025
- * @update  Sep 26, 2025
+ * Used to prevent native `sheet.getLastRow()` from returning empty row.
+ * 
+ * @return {integer}  Returns 1-index of last row in GSheet.
+ *  
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Sep 1, 2024
+ * @update  Dec 18, 2024
  */
 
-let SHEET_COL_MAP = null;
+function getLastSubmissionInSemester() {
+  const sheet = SEMESTER_SHEET;
+  let lastRow = sheet.getLastRow();
 
-function GET_COL_MAP_(sheet) {
-  /** If SHEET_COL_MAP not defined yet */
-  if (!SHEET_COL_MAP) {
-    SHEET_COL_MAP = {
-      [SHEET_NAME]: {
-        emailCol: EMAIL_COL,
-        memberIdCol: MEMBER_ID_COL,
-        feeStatus: IS_FEE_PAID_COL,   // Boolean value
-        collectionDate: COLLECTION_DATE_COL,
-        collector: COLLECTION_PERSON_COL,
-        isInternalCollected: IS_INTERNAL_COLLECTED_COL,
-      },
-      [MASTER_NAME]: {
-        emailCol: MASTER_EMAIL_COL,
-        memberIdCol: MASTER_MEMBER_ID_COL,
-        feeStatus: MASTER_PAYMENT_HIST,   // String with semester code(s)
-        collectionDate: MASTER_COLLECTION_DATE,
-        collector: MASTER_FEE_COLLECTOR,
-        isInternalCollected: MASTER_IS_INTERNAL_COLLECTED,
-      },
-    };
+  while (sheet.getRange(lastRow, REGISTRATION_DATE_COL).getValue() == "") {
+    lastRow = lastRow - 1;
   }
 
-  return SHEET_COL_MAP[sheet] || null;
+  return lastRow;
 }
 
 

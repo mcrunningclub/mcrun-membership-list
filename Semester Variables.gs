@@ -286,3 +286,53 @@ const isFeePaidFormula = `
           expiration_date >= TODAY(), "Paid", 
           expiration_date < TODAY(), "Expired" )
 )`;
+
+
+/**
+ * Name of property that index store is saved under
+ * @const {string}
+ */
+const INDEX_STORE_NAME = "letterIndexStore";
+
+
+/**
+ * Retrieves the column mapping for a given sheet.
+ *
+ * This function returns the column mapping object for the specified sheet name.
+ * If the sheet name is not found in the mapping, it returns `null`.
+ *
+ * @param {string} sheet - The name of the sheet to retrieve the column mapping for.
+ * @return {Object|null} The column mapping object for the sheet, or `null` if not found
+ * 
+ * @author  Andrey Gonzalez
+ * @date  May 24, 2025
+ * @update  Sep 26, 2025
+ */
+
+let SHEET_COL_MAP = null;
+
+function GET_COL_MAP_(sheet) {
+  /** If SHEET_COL_MAP not defined yet */
+  if (!SHEET_COL_MAP) {
+    SHEET_COL_MAP = {
+      [SHEET_NAME]: {
+        emailCol: EMAIL_COL,
+        memberIdCol: MEMBER_ID_COL,
+        feeStatus: IS_FEE_PAID_COL,   // Boolean value
+        collectionDate: COLLECTION_DATE_COL,
+        collector: COLLECTION_PERSON_COL,
+        isInternalCollected: IS_INTERNAL_COLLECTED_COL,
+      },
+      [MASTER_NAME]: {
+        emailCol: MASTER_EMAIL_COL,
+        memberIdCol: MASTER_MEMBER_ID_COL,
+        feeStatus: MASTER_PAYMENT_HIST,   // String with semester code(s)
+        collectionDate: MASTER_COLLECTION_DATE,
+        collector: MASTER_FEE_COLLECTOR,
+        isInternalCollected: MASTER_IS_INTERNAL_COLLECTED,
+      },
+    };
+  }
+
+  return SHEET_COL_MAP[sheet] || null;
+}

@@ -23,28 +23,6 @@ function trimWhitespaceSemester_(row = getLastSubmissionInSemester()) {
   rangeToFormat.trimWhitespace();
 }
 
-/**
- * Removes diacritics (accents) from a string.
- * 
- * This function normalizes the input string and removes any diacritical marks,
- * ensuring a clean, ASCII-compatible output.
- * 
- * @param {string} str  The string to normalize and strip of diacritics.
- * @return {string}  The normalized string without diacritics.
- * 
- * @example
- * const result = removeDiacritics("José");
- * console.log(result); // Outputs: "Jose"
- * 
- * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
- * @date  Mar 5, 2025
- * @update  Mar 15, 2025
- */
-
-function removeDiacritics_(str) {
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
 
 ///  👉 FUNCTIONS APPLIED TO SEMESTER_SHEET 👈  \\\
 

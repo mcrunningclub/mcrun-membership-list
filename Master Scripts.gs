@@ -446,8 +446,8 @@ function sortUniqueData() {
 
   // Sort by the second column (ignoring accents)
   uniqueData.sort(function (a, b) {
-    var nameA = a[1].normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents from nameA
-    var nameB = b[1].normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents from nameB
+    var nameA = removeDiacritics_(a[1]); // Remove accents from nameA
+    var nameB = removeDiacritics_(b[1]); // Remove accents from nameB
     return nameA.localeCompare(nameB);
   });
 
