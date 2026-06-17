@@ -186,7 +186,7 @@ function checkExistingPaymentInSemester() {
   const getColumnVals = (col) => masterSheet.getSheetValues(startRow, col, numRowsMaster, 1);
   const masterEmails = getColumnVals(MASTER_COLS.email);
   const masterRegDates =  getColumnVals(MASTER_COLS.latestRegistration);
-  const masterFeeStatuses = getColumnVals(MASTER_COLS.isFeePaid);
+  const masterFeeStatuses = getColumnVals(MASTER_COLS.feePaid);
 
   // Now in SEMESTER SHEET
   const semesterSheet = SEMESTER_SHEET;
