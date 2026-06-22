@@ -55,14 +55,14 @@ function onFormSubmit(newRow = getLastSubmissionInSemester()) {
  * 
  * @param {integer} row - The row number of the new member in the semester.
  * 
- * @see {@link packageMemberInfoInRow_} for how member information is packaged.
+ * @see {@link packageMemberInfo_} for how member information is packaged.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
  */
 
 function sendNewMemberCommunications(row) {
-  const memberInfo = packageMemberInfoInRow_(row);
+  const memberInfo = packageMemberInfo_(row);
   console.log(`Member info to export to 'NewMemberComms'\n`, memberInfo);
   NewMemberCommunications.createNewMemberCommunications(memberInfo);   // Transfer new member's value to external sheet
 }

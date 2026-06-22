@@ -1,6 +1,12 @@
-const CELL_EDIT_LIMIT = 4;   // set number of cells that can be edited at once
-
-// USED TO IMPORT NEW REGISTRATION FROM FILLOUT FORM
+/**
+ * When a sheet is changed, check if a row was added and process it accordingly.
+ * 
+ * If new row added to Import sheet, try to add the data to the semester sheet, format
+ * it, and add to master sheet. If new row added to master sheet by the app, try to format it and
+ * add the data to the semester sheet.
+ * 
+ * @param {Event} e  Edit event
+ */
 function onChange(e) {
   // Get details of edit event's sheet
   console.log({
@@ -9,42 +15,43 @@ function onChange(e) {
     user: e.user,
   });
 
-  const thisSource = e.source;
+  const source = e.source;
 
   // Try-catch to prevent errors when sheetId cannot be found
   try {
-    const thisSheetID = thisSource.getSheetId();
-    const thisLastRow = thisSource.getLastRow();
+    const sheetChanged = source.getSheetId();
 
-    const thisChange = e.changeType;
-    console.log(`Change Type: ${thisChange}`);
+    const changeType = e.changeType;
+    console.log(`Change Type: ${changeType}`);
 
-    if (thisSheetID === IMPORT_SHEET_ID && thisChange === 'INSERT_ROW') {
+    if (sheetChanged === IMPORT_SHEET_ID && changeType === 'INSERT_ROW') {
       console.log('Executing if block from onChange(e)...');
-      const importSheet = thisSource.getSheetById(thisSheetID);
-      const registrationObj = importSheet.getRange(thisLastRow, 1).getValue();
+      const importSheet = source.getSheetById(sheetChanged);
+      const newRow = source.getLastRow();
+      const newRegistration = importSheet.getRange(newRow, 1).getValue();
 
-      const lastRow = copyFilloutRegToMain_(registrationObj);
+      const lastRow = copyFilloutRegToSemester_(newRegistration);
       onFormSubmit(lastRow);
 
       // Successful execution...
       console.log('Exiting `onFormSubmit` from onChange(e) successfully!');
     }
 
-    else if (thisSheetID === MASTER_SHEET.getSheetId() && thisChange === 'INSERT_ROW') {
+    else if (sheetChanged === MASTER_SHEET.getSheetId() && changeType === 'INSERT_ROW') {
       console.log('Executing else-if block from onChange(e)...');
       console.log('New row added to Master sheet');
 
+      const newRow = source.getLastRow();
       // Add formula, then copy submission to main sheet
-      if(!isNewMemberViaApp_(thisLastRow)) {
+      if(!isNewMemberViaApp_(newRow)) {
         console.log('Exiting because member *not* added by app');
       }
-      formatFeeCollectionMaster_(thisLastRow);
-      setMemberIdInRow_(MASTER_SHEET, thisLastRow);
-      copyToMainFromMaster(thisLastRow);
+      formatFeeCollection_(newRow);
+      setMemberId_(MASTER_SHEET, newRow);
+      copyMasterRowToSemester(newRow);
       console.log('Added registration to main sheet from master!');
 
-      notifyNewAppSubmission(thisLastRow);
+      notifyNewAppSubmission(newRow);
       console.log('Sent an email notification!');
 
       sortMasterByEmail(); // Sort 'MASTER' by email once formatting completed
@@ -64,18 +71,15 @@ function onChange(e) {
   }
 }
 
-function transferLastImport() {
-  const thisLastRow = IMPORT_SHEET.getLastRow();
-  transferThisRow_(thisLastRow);
-}
-
-function transferThisRow_(row) {
-  const registrationObj = IMPORT_SHEET.getRange(row, 1).getValue();
-  const lastRow = copyFilloutRegToMain_(registrationObj);
-  onFormSubmit(lastRow);
-}
-
-
+/**
+ * Checks whether a row (in the master sheet) was added from the app or not.
+ * 
+ * Registrations added from the app do not have the registration semester, so
+ * it needs to be added.
+ * 
+ * @param {number} row  Row to check.
+ * @return {boolean}  True if row was added from app, false if not.
+ */
 function isNewMemberViaApp_(row) {
   const sheet = MASTER_SHEET;
 
@@ -84,7 +88,7 @@ function isNewMemberViaApp_(row) {
   const isBlank = rangeRegSem.trimWhitespace().isBlank();
   if (!isBlank) return false;   // Reg sem exists... not added via app
 
-  // STEP 2: Get regSem using `SHEET_NAME`, then add to target row
+  // STEP 2: Get regSem using semester sheet, then add to target row
   const regSem = getSemesterCode_(SHEET_NAME);   // Get semCode from `MAIN_SHEET`
   rangeRegSem.setValue(regSem);
   
@@ -92,8 +96,13 @@ function isNewMemberViaApp_(row) {
   return true;
 }
 
-
-function setMemberIdInRow_(sheet, row) {
+/**
+ * Encode member's email from given sheet and row, and sets it in the Member ID column.
+ * 
+ * @param {SpreadSheetApp.Sheet} sheet  Sheet object that row is from.
+ * @param {number} row  Row of member to make ID for.
+ */
+function setMemberId_(sheet, row) {
   // STEP 1: Get email col in target sheet
   const sheetName = sheet.getSheetName();
   const colMap = GET_COL_MAP_(sheetName);
@@ -108,12 +117,21 @@ function setMemberIdInRow_(sheet, row) {
   sheet.getRange(row, thisIdCol).setValue(memberId);
 }
 
-
+/**
+ * If master or semester sheet is edited, copies changes to the
+ * other sheet as well.
+ * 
+ * When a sheet is edited, check whether it was the master or semester sheet, 
+ * and if the edited range was within bounds of sheet contents. If so, get
+ * member row in source (edited) and target (other) sheet, and call updateFeeInfo
+ * 
+ * @param {Event} e  Edit event
+ */
 function onEdit(e) {
   // Get details of edit event's sheet
-  const thisRange = e.range;
-  const thisSheet = thisRange.getSheet();
-  const thisSheetName = thisSheet.getName();
+  const rangeEdited = e.range;
+  const sheetEdited = rangeEdited.getSheet();
+  const sheetEditedName = sheetEdited.getName();
 
   var debug_e = {
     //authMode:  e.authMode,
@@ -125,16 +143,16 @@ function onEdit(e) {
   }
   console.log(debug_e);
 
-  if (thisRange.getNumRows() > 2) return;  // prevent sheet-wide changes
-  else if (thisRange.getNumColumns() > CELL_EDIT_LIMIT) {
+  if (rangeEdited.getNumRows() > 2) return;  // prevent sheet-wide changes
+  else if (rangeEdited.getNumColumns() > CELL_EDIT_LIMIT) {
     // TODO: add function to individually process changes
     Logger.log(`More than ${CELL_EDIT_LIMIT} columns edited at once`);
   }
 
-  console.log(`onEdit 1 -> thisSheetName: ${thisSheetName}`);
+  console.log(`onEdit 1 -> thisSheetName: ${sheetEditedName}`);
 
   // Check if legal sheet (neither SHEET_NAME OR MASTER_NAME)
-  if (!(thisSheetName == SHEET_NAME || thisSheetName == MASTER_NAME)) return;
+  if (!(sheetEditedName == SHEET_NAME || sheetEditedName == MASTER_NAME)) return;
 
   console.log("onEdit 1a -> Passed first check");
 
@@ -142,20 +160,20 @@ function onEdit(e) {
   //console.log("onEdit 1b -> Passed second check");
 
   // Check if legal edit
-  if (!verifyLegalEditInRange_(e, thisSheet)) return;
+  if (!isLegalEdit_(rangeEdited, sheetEdited)) return;
 
-  console.log("onEdit 2 -> Passed \`verifyLegalEditInRange()\`");
+  console.log("onEdit 2 -> Passed \`isLegalEdit()\`");
 
   // Get the email column for the current sheet
-  const thisEmailCol = GET_COL_MAP_(thisSheetName).emailCol;
-  const thisRow = e.range.getRow();
+  const emailCol = GET_COL_MAP_(sheetEditedName).emailCol;
+  const row = rangeEdited.getRow();
 
-  console.log(`onEdit 3 -> thisEmailCol: ${thisEmailCol} thisRow: ${thisRow}`);
+  console.log(`onEdit 3 -> thisEmailCol: ${emailCol} thisRow: ${row}`);
 
-  // Get email from `thisRow` and `thisEmailCol`
-  const email = thisSheet.getRange(thisRow, thisEmailCol).getValue();
+  // Get email from row and column
+  const email = sheetEdited.getRange(row, emailCol).getValue();
 
-  const isSemesterSheet = (thisSheetName === SHEET_NAME);
+  const isSemesterSheet = (sheetEditedName === SHEET_NAME);
   console.log(`onEdit 4 -> email: ${email}  |  isMainSheet: ${isSemesterSheet}`);
 
   const sourceSheet = isSemesterSheet ? SEMESTER_SHEET : MASTER_SHEET;
@@ -167,7 +185,7 @@ function onEdit(e) {
     const errorMessage = `
       --- onEdit() ---
       targetRow not found in ${targetSheet}. 
-      Edit made in ${thisSheetName} at row ${thisRow}.
+      Edit made in ${sheetEditedName} at row ${row}.
       Email of edited member: ${email}. Please review this error.
     `
     throw Error(errorMessage);
@@ -175,22 +193,28 @@ function onEdit(e) {
 
   console.log(`onEdit 5 -> targetRow: ${targetRow} found by \`findMemberByEmail()\``);
 
-  updateFeeInfo_(e, thisSheetName, targetRow, targetSheet);
+  updateFeeInfo_(rangeEdited, sheetEditedName, targetRow, targetSheet);
   console.log(`onEdit 6 -> successfully completed trigger check`);
 }
 
 
 /**
- * @param {Event} e  Event Object from `onEdit`.
+ * Check whether the given range is within valid range of the given sheet.
+ * 
+ * Valid range includes all rows except header rows, and all columns from leftmost
+ * until the "Internal Collected" column
+ * 
+ * @param {Range} range  Range from Event Object from `onEdit`.
  * @param {SpreadsheetApp.Sheet} sheet  Sheet where edit occurred.
+ * @return {boolean}  True if range and sheet are valid, False otherwise
  */
 
-function verifyLegalEditInRange_(e, sheet) {
-  Logger.log("NOW ENTERING verifyLegalEditInRange()...");
+function isLegalEdit_(range, sheet) {
+  Logger.log("NOW ENTERING isLegalEdit()...");
   const sheetName = sheet.getName();
-  const thisRow = e.range.getRow();
-  const thisCol = e.range.getColumn();
-  Logger.log(`verifyLegalEditInRange 1 -> sheetName: ${sheetName}`);
+  const thisRow = range.getRow();
+  const thisCol = range.getColumn();
+  Logger.log(`isLegalEdit 1 -> sheetName: ${sheetName}`);
 
   // Function to get column mappings
   const colMap = GET_COL_MAP_(sheetName);
@@ -203,7 +227,7 @@ function verifyLegalEditInRange_(e, sheet) {
     leftmost : getLeftRange()   // Get leftmost according to sheet
   }
 
-  Logger.log(`verifyLegalEditInRange 2 -> feeEditRange: ${JSON.stringify(feeEditRange)}`);
+  Logger.log(`isLegalEdit 2 -> feeEditRange: ${JSON.stringify(feeEditRange)}`);
 
   // Exit if we're out of range
   if (thisRow < feeEditRange.top || thisRow > feeEditRange.bottom) {
@@ -223,7 +247,10 @@ function verifyLegalEditInRange_(e, sheet) {
 /** 
  * Update fee status from `sourceSheet` to `targetSheet`.
  * 
- * @param {Event} e  Event Object from `onEdit`.
+ * Includes handling the different ways of storing fee payment (boolean in semester sheet,
+ * list of semesters in master sheet)
+ * 
+ * @param {Range} range  Range from Event Object from `onEdit`.
  * @param {string} sourceSheetName  Name of source sheet to extract fee info.
  * @param {number} targetRow  Target row to update.
  * @param {SpreadsheetApp.Sheet} targetSheet  Target sheet to update fee info.
@@ -234,9 +261,8 @@ function verifyLegalEditInRange_(e, sheet) {
  * 
  */
 
-function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
-  const thisRange = e.range;
-  const thisCol = thisRange.getColumn();
+function supdateFeeInfo_(range, sourceSheetName, targetRow, targetSheet) {
+  const thisCol = range.getColumn();
   const targetSheetName = targetSheet.getSheetName();
 
   console.log(`NOW ENTERING ${updateFeeInfo_.name}`);
@@ -254,7 +280,7 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
   // Otherwise, nothing to modify in MASTER for member's payment history
   if (targetSheetName == MASTER_NAME && targetCol == MASTER_PAYMENT_HIST) {
     console.log("updateFeeInfo 3 -> entering if statement");
-    const value = thisRange.getValue() || "";
+    const value = range.getValue() || "";
     const isPaid = parseBool_(value);    // convert to bool
     console.log(`updateFeeInfo 3b -> Value: ${value} isPaid: ${isPaid}`);
 
@@ -271,13 +297,13 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
   else if (sourceSheetName == MASTER_NAME && thisCol == MASTER_PAYMENT_HIST) {
     // CASE 2: Add payment history from MASTER to SEMESTER_SHEET
     console.log("updateFeeInfo 3a ->  MASTER to SEMESTER_SHEET");
-    const paymentHistory = thisRange.getValue() || "";
+    const paymentHistory = range.getValue() || "";
     updateFeeStatusSemester_(paymentHistory, targetRow, targetCol, targetSheet);
   }
   else {
     // CASE 3: Copy fee details from SEMESTER_SHEET to MASTER
     console.log("updateFeeInfo 3b ->  SEMESTER_SHEET to MASTER");
-    transferRangeToMaster(thisRange, targetRange);
+    range.copyTo(targetRange, { contentsOnly: true });
   }
 
   console.log(`Completed update succesfully\nNOW EXITING ${updateFeeInfo_.name}`);
@@ -298,25 +324,19 @@ function updateFeeInfo_(e, sourceSheetName, targetRow, targetSheet) {
   }
 }
 
-
-function transferRangeToMaster(rangeInSemester, rangeInMaster) {
-  rangeInSemester.copyTo(rangeInMaster, { contentsOnly: true });
-}
-
-
 /** 
- * Transfer new member registration from `Import` to main sheet.
+ * Transfer new member registration from `Import` to semester sheet.
  * 
  * @trigger  New entry in `Import` sheet.
  * @param {Object} registration  Information on member registration.
- * @param {integer} [row = getLastSubmissionInMain()]  Gsheet row number to target,
+ * @param {integer} [row = getLastSubmissionInMain()]  Gsheet row number to target, defaults to last row
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  Oct 18, 2023
  * @update  May 17, 2025
  */
 
-function copyFilloutRegToMain_(registration, row = getLastSubmissionInSemester()) {
+function copyFilloutRegToSemester_(registration, row = getLastSubmissionInSemester()) {
   const semesterSheet = SEMESTER_SHEET;
   const importMap = IMPORT_MAP;
 
@@ -366,8 +386,16 @@ function copyFilloutRegToMain_(registration, row = getLastSubmissionInSemester()
   return startRow;
 }
 
-
-function packageMemberInfoInRow_(row) {
+/**
+ * Creates an object containing member information for creating membership pass
+ * 
+ * Gets member's email, first and last name, member ID, membership status, and
+ * membership expiration.
+ * 
+ * @param {number} row  Row of member to package information for
+ * @return {Object}  Member information
+ */
+function packageMemberInfo_(row) {
   const sheet = SEMESTER_SHEET;
   const semesterName = SHEET_NAME;
 
@@ -412,7 +440,7 @@ function packageMemberInfoInRow_(row) {
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date
  */
-function copyToMainFromMaster(row) {
+function copyMasterRowToSemester(row) {
   throw new Error('Function not implemented.');
 }
 

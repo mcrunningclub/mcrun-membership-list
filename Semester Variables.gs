@@ -62,7 +62,7 @@ const TIMEZONE = getUserTimeZone_();
 
 /**
  * Club email
- * @const {str}
+ * @const {string}
  */
 const MCRUN_EMAIL = 'mcrunningclub@ssmu.ca';
 
@@ -70,26 +70,31 @@ const MCRUN_EMAIL = 'mcrunningclub@ssmu.ca';
 // PLEASE UPDATE WHEN NEEDED
 /**
  * Email address of Zeffy emails
+ * @const {string}
  */
 const ZEFFY_EMAIL = 'contact@zeffy.com';
 
 /**
  * Email address (ending) of Interac emails
+ * @const {string}
  */
 const INTERAC_EMAIL = 'interac.ca';    // Interac email addresses end in "interac.ca"
 
 /**
  * Email address (ending) of Stripe emails
+ * @const {string}
  */
 const STRIPE_EMAIL = 'stripe.com';
 
 /**
  * Gmail label for online payment emails
+ * @const {string}
  */
 const ONLINE_LABEL = 'Fee Payments/Online Emails';
 
 /**
  * Gmail label for Interac payment emails
+ * @const {string}
  */
 const INTERAC_LABEL = 'Fee Payments/Interac Emails';
 
@@ -117,6 +122,7 @@ const WAIVER_DRIVE_ID = '1lNAvGMsm-ixa7rAQHqTdd_gV-W4WNwpOdx4Zx7S_AZ8_6EQ8ammSEw
 
 /** 
  * LATEST COLUMN MAPPING FOR SEMESTER SHEET (S26) 
+ * @const {Object}
  */
 const SEMESTER_COLS = {
   registrationDate: 1,
@@ -149,6 +155,7 @@ const SEMESTER_COLS = {
 
 /** 
  * LATEST COLUMN MAPPING FOR MASTER SHEET (S26) 
+ * @const {Object}
  */            
 const MASTER_COLS = {
   email: 1,            
@@ -214,6 +221,7 @@ const MASTER_MEMBER_ID_COL = 22;
 
 /**
  * MAPPING FROM FILLOUT REGISTRATION OBJ TO SEMESTER SHEET
+ * @const {Object}
  */ 
 const IMPORT_MAP = {
   'timestamp': REGISTRATION_DATE_COL,
@@ -233,7 +241,8 @@ const IMPORT_MAP = {
 
 
 /**
- *  Fields in array from processing last row in semester sheet (0-indexed)
+ * Fields in array from processing last row in semester sheet (0-indexed)
+ * @const {Object}
  */
 const PROCESSED_ARR = {
   LAST_REGISTRATION: 0,
@@ -259,7 +268,14 @@ const PROCESSED_ARR = {
 };
 
 /**
+ * Number of cells that can be edited at once (for onEdit function)
+ * @const {number}
+ */
+const CELL_EDIT_LIMIT = 4;
+
+/**
  * Mapping from semesters names to semester codes e.g. Winter 2025 -> W25
+ * @const {Map}
  */
 const SEMESTER_CODE_MAP = new Map();
 
