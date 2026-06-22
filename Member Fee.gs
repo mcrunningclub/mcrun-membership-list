@@ -66,11 +66,11 @@ function checkPaymentForSemester(row = getLastSubmissionInSemester()) {
     const getThis = (index) => values[index - 1];
     
     const obj = {
-      'firstName': getThis(FIRST_NAME_COL), 
-      'lastName': getThis(LAST_NAME_COL),
-      'email': getThis(EMAIL_COL),
-      'paymentMethod': getThis(PAYMENT_METHOD_COL),
-      'interacRef' : getThis(INTERAC_REF_COL),
+      'firstName': getThis(SEMESTER_COLS.FIRST_NAME), 
+      'lastName': getThis(SEMESTER_COLS.LAST_NAME),
+      'email': getThis(SEMESTER_COLS.EMAIL),
+      'paymentMethod': getThis(SEMESTER_COLS.PAYMENT_METHOD),
+      'interacRef' : getThis(SEMESTER_COLS.INTERAC_REF),
     };
     
     // Assemble full name for log and email
@@ -123,10 +123,10 @@ function setFeeDetailsInSemester_(row, collectedBy) {
   const sheet = SEMESTER_SHEET;
   const currentDate = Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
 
-  sheet.getRange(row, IS_FEE_PAID_COL).check();
-  sheet.getRange(row, COLLECTION_DATE_COL).setValue(currentDate);
-  sheet.getRange(row, COLLECTION_PERSON_COL).setValue(collectedBy);
-  sheet.getRange(row, IS_INTERNAL_COLLECTED_COL).check();
+  sheet.getRange(row, SEMESTER_COLS.FEE_PAID).check();
+  sheet.getRange(row, SEMESTER_COLS.COLLECTION_DATE).setValue(currentDate);
+  sheet.getRange(row, SEMESTER_COLS.COLLECTED_BY).setValue(collectedBy);
+  sheet.getRange(row, SEMESTER_COLS.IS_INTERNAL_COLLECTED).check();
 }
 
 
@@ -141,14 +141,14 @@ function setFeeDetailsInSemester_(row, collectedBy) {
 function setFeeDetailsInMaster_(row, paymentMethod, collectedBy, date = null) {
   const sheet = MASTER_SHEET;
   const collectionDate = date ?? Utilities.formatDate(new Date(), TIMEZONE, 'MMM d, yyyy');
-  sheet.getRange(row, MASTER_COLS.collectionDate).setValue(collectionDate);
+  sheet.getRange(row, MASTER_COLS.COLLECTION_DATE).setValue(collectionDate);
 
-  //sheet.getRange(row, MASTER_COLS.paymentHistory).setValue(...);
+  //sheet.getRange(row, MASTER_COLS.PAYMENT_HISTORY).setValue(...);
 
   // Get cleaner string of payment method using list item
   const collector = collectedBy ?? paymentMethodToItem_(paymentMethod).toString();
-  sheet.getRange(row, MASTER_COLS.collectedBy).setValue(collector);
-  sheet.getRange(row, MASTER_COLS.isInternalCollected).check();
+  sheet.getRange(row, MASTER_COLS.COLLECTED_BY).setValue(collector);
+  sheet.getRange(row, MASTER_COLS.IS_INTERNAL_COLLECTED).check();
 }
 
 /**
@@ -184,9 +184,9 @@ function checkExistingPaymentInSemester() {
 
   // Get all emails and isPaid values in both MASTER and SEMESTER sheets
   const getColumnVals = (col) => masterSheet.getSheetValues(startRow, col, numRowsMaster, 1);
-  const masterEmails = getColumnVals(MASTER_COLS.email);
-  const masterRegDates =  getColumnVals(MASTER_COLS.latestRegistration);
-  const masterFeeStatuses = getColumnVals(MASTER_COLS.feePaid);
+  const masterEmails = getColumnVals(MASTER_COLS.EMAIL);
+  const masterRegDates =  getColumnVals(MASTER_COLS.LATEST_REG_DATE);
+  const masterFeeStatuses = getColumnVals(MASTER_COLS.FEE_PAID);
 
   // Now in SEMESTER SHEET
   const semesterSheet = SEMESTER_SHEET;

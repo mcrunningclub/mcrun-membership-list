@@ -62,7 +62,7 @@ function getLastSubmissionInSemester() {
   const sheet = SEMESTER_SHEET;
   let lastRow = sheet.getLastRow();
 
-  while (sheet.getRange(lastRow, REGISTRATION_DATE_COL).getValue() == "") {
+  while (sheet.getRange(lastRow, SEMESTER_COLS.REGISTRATION_DATE).getValue() == "") {
     lastRow = lastRow - 1;
   }
 

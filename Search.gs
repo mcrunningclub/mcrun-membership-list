@@ -39,7 +39,7 @@ function buildIndexStore_() {
   // Get all emails from `MASTER` sheet
   const startRow = 2;
   const numRows = MASTER_SHEET.getLastRow() - 1;
-  const emails = MASTER_SHEET.getSheetValues(startRow, MASTER_COLS.email, numRows, 1);
+  const emails = MASTER_SHEET.getSheetValues(startRow, MASTER_COLS.EMAIL, numRows, 1);
 
   const store = {};
 

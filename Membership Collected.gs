@@ -116,11 +116,11 @@ function setWaiverUrl_(row = getLastSubmissionInSemester()) {
   const sheet = SEMESTER_SHEET;
 
   // Search for waiver link using member name
-  const memberName = sheet.getSheetValues(row, FIRST_NAME_COL, 1, 2)[0].join(' ');
+  const memberName = sheet.getSheetValues(row, SEMESTER_COLS.FIRST_NAME, 1, 2)[0].join(' ');
   const waiverUrl = findWaiverLink_(memberName);
 
   // Set value of waiver url
-  sheet.getRange(row, WAIVER_COL).setValue(waiverUrl);
+  sheet.getRange(row, SEMESTER_COLS.WAIVER).setValue(waiverUrl);
 }
 
 

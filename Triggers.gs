@@ -108,14 +108,14 @@ function runFeeChecker() {
   /** Helper: check if payment already found */
   function isPaymentFound(memberRow) {
     const sheet = SEMESTER_SHEET;
-    const currentFeeValue = sheet.getRange(memberRow, IS_FEE_PAID_COL).getValue().toString();
+    const currentFeeValue = sheet.getRange(memberRow, SEMESTER_COLS.FEE_PAID).getValue().toString();
     return parseBool_(currentFeeValue.trim());
   }
 
   /** Helper: validate memberRow, else return updated row */
   function checkMemberRow(memberEmail, memberRow) {
     const sheet = SEMESTER_SHEET;
-    const currentEmail = sheet.getRange(memberRow, EMAIL_COL).getValue();
+    const currentEmail = sheet.getRange(memberRow, SEMESTER_COLS.EMAIL).getValue();
 
     // If emails don't match, find updated memberRow
     if (currentEmail !== memberEmail) {

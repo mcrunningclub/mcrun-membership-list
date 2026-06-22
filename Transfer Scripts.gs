@@ -84,7 +84,7 @@ function isNewMemberViaApp_(row) {
   const sheet = MASTER_SHEET;
 
   // STEP 1: Check if 3-char code for registration semester exists
-  const rangeRegSem = sheet.getRange(row, MASTER_LAST_REG_SEM);
+  const rangeRegSem = sheet.getRange(row, MASTER_COLS.LATEST_REG_SEMESTER);
   const isBlank = rangeRegSem.trimWhitespace().isBlank();
   if (!isBlank) return false;   // Reg sem exists... not added via app
 
@@ -261,7 +261,7 @@ function isLegalEdit_(range, sheet) {
  * 
  */
 
-function supdateFeeInfo_(range, sourceSheetName, targetRow, targetSheet) {
+function updateFeeInfo_(range, sourceSheetName, targetRow, targetSheet) {
   const thisCol = range.getColumn();
   const targetSheetName = targetSheet.getSheetName();
 
@@ -278,7 +278,7 @@ function supdateFeeInfo_(range, sourceSheetName, targetRow, targetSheet) {
   // Special case: MASTER stores payment history as semesterCode(s).
   // If isPaid, then add semesterCode to payment history, i.e. bool -> str
   // Otherwise, nothing to modify in MASTER for member's payment history
-  if (targetSheetName == MASTER_NAME && targetCol == MASTER_PAYMENT_HIST) {
+  if (targetSheetName == MASTER_NAME && targetCol == MASTER_COLS.PAYMENT_HISTORY) {
     console.log("updateFeeInfo 3 -> entering if statement");
     const value = range.getValue() || "";
     const isPaid = parseBool_(value);    // convert to bool
@@ -294,7 +294,7 @@ function supdateFeeInfo_(range, sourceSheetName, targetRow, targetSheet) {
     }
 
   }
-  else if (sourceSheetName == MASTER_NAME && thisCol == MASTER_PAYMENT_HIST) {
+  else if (sourceSheetName == MASTER_NAME && thisCol == MASTER_COLS.PAYMENT_HISTORY) {
     // CASE 2: Add payment history from MASTER to SEMESTER_SHEET
     console.log("updateFeeInfo 3a ->  MASTER to SEMESTER_SHEET");
     const paymentHistory = range.getValue() || "";
@@ -400,14 +400,14 @@ function packageMemberInfo_(row) {
   const semesterName = SHEET_NAME;
 
   // Get member data to populate pass template
-  const endCol = MEMBER_ID_COL; // From first name to id col
+  const endCol = SEMESTER_COLS.MEMBER_ID; // From first name to id col
   const memberData = sheet.getSheetValues(row, 1, 1, endCol)[0];
 
   // Create function to access elements in arr as 0-index (GSheet is 1-indexed)
   const extractValues = (index) => memberData[index - 1].toString().trim();
 
   // Stringify fee status
-  //const memberFeeStatus = parseBool(extractValues(IS_FEE_PAID_COL)) ? 'Paid' : 'Unpaid';
+  //const memberFeeStatus = parseBool(extractValues(SEMESTER_COLS.FEE_PAID)) ? 'Paid' : 'Unpaid';
   const memberFeeStatus = 'Paid';   // Set as paid since updating pass not implemented yet
 
   // Get membership expiration date via sheet name
@@ -416,10 +416,10 @@ function packageMemberInfo_(row) {
 
   // Map member info to pass info
   return {
-    email: extractValues(EMAIL_COL),
-    firstName: extractValues(FIRST_NAME_COL),
-    lastName: extractValues(LAST_NAME_COL),
-    memberId: extractValues(MEMBER_ID_COL),
+    email: extractValues(SEMESTER_COLS.EMAIL),
+    firstName: extractValues(SEMESTER_COLS.FIRST_NAME),
+    lastName: extractValues(SEMESTER_COLS.LAST_NAME),
+    memberId: extractValues(SEMESTER_COLS.MEMBER_ID),
     memberStatus: 'Active',    // If email not found, then membership expired
     feeStatus: memberFeeStatus,
     expiry: membershipExpiration,
@@ -460,4 +460,13 @@ function copyMasterRowToSemester(row) {
  */
 function notifyNewAppSubmission(row) {
   throw new Error('Function not implemented.');
+}
+
+function test() {
+      const importSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetById(IMPORT_SHEET_ID);
+      const newRow = importSheet.getLastRow();
+      const newRegistration = importSheet.getRange(newRow, 1).getValue();
+
+      const lastRow = copyFilloutRegToSemester_(newRegistration);
+      onFormSubmit(lastRow);
 }

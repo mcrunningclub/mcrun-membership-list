@@ -112,9 +112,9 @@ function updateFeeStatusSemester_(payHistory, memberRow, isFeePaidCol, semesterS
 
 function processLastSubmission_(lastRow = getLastSubmissionInSemester()) {
   const semesterCode = getSemesterCode_(SHEET_NAME); // Get the semester code based on the sheet name
-  var lastSubmission = SEMESTER_SHEET.getSheetValues(lastRow, 1, 1, MASTER_COL_SIZE)[0];
+  var lastSubmission = SEMESTER_SHEET.getSheetValues(lastRow, 1, 1, Object.entries(SEMESTER_COLS).length)[0];
 
-  const indicesToProcess = [PROCESSED_ARR.MEMBER_DESCR, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
+  const indicesToProcess = [PROCESSED_ARR.DESCRIPTION, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
 
   // Loop over the relevant indices and prepend semester code to non-empty fields
   indicesToProcess.forEach(index => {
@@ -124,13 +124,13 @@ function processLastSubmission_(lastRow = getLastSubmissionInSemester()) {
   });
 
   // Append semester code to IS_FEE_PAID column in array
-  if (lastSubmission[PROCESSED_ARR.FEE_PAID_HIST]) {
-    lastSubmission[PROCESSED_ARR.FEE_PAID_HIST] = semesterCode;
+  if (lastSubmission[PROCESSED_ARR.FEE_PAID_SEM]) {
+    lastSubmission[PROCESSED_ARR.FEE_PAID_SEM] = semesterCode;
   }
 
-  // Add semester code for MASTER.LAST_REG_CODE and MASTER.REGISTRATION_HIST
-  lastSubmission.push(semesterCode);  // For MASTER.LAST_REG_CODE column
-  lastSubmission.push("");            // For MASTER.REGISTRATION_HIST column
+  // Add semester code for MASTER.LATEST_REG_SEMESTER and MASTER.REG_HISTORY
+  lastSubmission.push(semesterCode);  // For MASTER.LATEST_REG_SEMESTER column
+  lastSubmission.push("");            // For MASTER.REG_HISTORY column
 
   return lastSubmission;
 }
@@ -153,56 +153,61 @@ function processLastSubmission_(lastRow = getLastSubmissionInSemester()) {
 // IMPROVE RUNTIME!
 function consolidateLastSubmission_(lastRow = getLastSubmissionInSemester()) {
   var sheet = MASTER_SHEET;
-  var processedLastSubmission = processLastSubmission_(lastRow);
+  var lastSubmission = processLastSubmission_(lastRow);
 
   // Search for user in 'MASTER'
-  const lastEmail = processedLastSubmission[PROCESSED_ARR.EMAIL];
-  const memberIndex = findMemberByEmail(lastEmail, sheet);   // Returns null if not found
+  const lastEmail = lastSubmission[PROCESSED_ARR.EMAIL];
+  const memberRow = findMemberByEmail(lastEmail, sheet);   // Returns null if not found
 
   // Check if user already exists
-  if (memberIndex != null) {
-    var existingEntry = sheet.getSheetValues(memberIndex, 1, 1, MASTER_COL_SIZE)[0];
+  if (memberRow != null) {
+    var existingEntry = sheet.getSheetValues(memberRow, 1, 1, Object.entries(MASTER_COLS).length)[0];
 
     // Data to append in latest registration: 
-    const indicesToAppend = {
-      [PROCESSED_ARR.MEMBER_DESCR]: existingEntry[7],    // Describe Yourself 'H'
-      [PROCESSED_ARR.REFERRAL]: existingEntry[8],        // Referral 'I'
-      [PROCESSED_ARR.FEE_PAID_HIST]: existingEntry[18],  // Payment History 'S'
-      [PROCESSED_ARR.COMMENTS]: existingEntry[19]        // Comments 'T'
+    const columnsToMerge = {
+      [PROCESSED_ARR.DESCRIPTION]: MASTER_COLS.DESCRIPTION - 1,    // Describe Yourself 'H'
+      [PROCESSED_ARR.REFERRAL]: MASTER_COLS.REFERRAL - 1,        // Referral 'I'
+      [PROCESSED_ARR.FEE_PAID_SEM]: MASTER_COLS.PAYMENT_HISTORY - 1,  // Payment History 'S'
+      [PROCESSED_ARR.COMMENTS]: MASTER_COLS.COMMENTS - 1        // Comments 'T'
     };
 
     // Only append if existingEntry[i] non-empty
-    for (const index in indicesToAppend) {
-      var existingValue = indicesToAppend[index];
-      if (existingValue) {
-        var delimiter = processedLastSubmission[index] ? "\n" : "";
-        processedLastSubmission[index] += delimiter + existingValue;
+    for (const column in columnsToMerge) {
+      var existingValue = existingEntry[columnsToMerge[column]];
+      var newValue = lastSubmission[column];
+
+      if (existingValue && newValue) {
+        lastSubmission[column] += "\n" + existingValue;
       }
     }
 
     // Data to keep if latest registration empty:
-    const indicesToKeep = {
-      [PROCESSED_ARR.COLLECTED_BY]: existingEntry[16],     // Collected By 'P'
-      [PROCESSED_ARR.COLLECTION_DATE]: existingEntry[17],   // Collection Date 'Q'
-      [PROCESSED_ARR.GIVEN_TO_INTERNAL]: existingEntry[18],  // Given to Internal 'R'
+    const columnsToKeep = {
+      [PROCESSED_ARR.COLLECTED_BY]: MASTER_COLS.COLLECTED_BY - 1,     // Collected By 'P'
+      [PROCESSED_ARR.COLLECTION_DATE]: MASTER_COLS.COLLECTION_DATE - 1,   // Collection Date 'Q'
+      [PROCESSED_ARR.IS_INTERNAL_COLLECTED]: MASTER_COLS.IS_INTERNAL_COLLECTED - 1,  // Given to Internal 'R'
     };
 
-    for (const index in indicesToKeep) {
-      if (processedLastSubmission[index] == "") {
-        var existingValue = indicesToKeep[index];
-        processedLastSubmission[index] = existingValue;
+    for (const column in columnsToKeep) {
+      var newValue = lastSubmission[column];
+      if (newValue == "") {
+        var existingValue = existingEntry[columnsToKeep[column]];
+        lastSubmission[column] = existingValue;
       }
     }
 
-    // Case 1: no previous registration -> move old regCode to regHistory
+    // If no previous registration -> move existing registration semester to history
+    // If yes -> add existing code to existing history
     // And lastly add registration history
-    var existingHistory = existingEntry[11];
-    var existingRegCode = existingEntry[10];
-    var latestHistory = processedLastSubmission[PROCESSED_ARR.REGISTRATION_HIST];
-
-    // Registration History 'L'
-    var delimiter = latestHistory ? "\n" : "";
-    processedLastSubmission[PROCESSED_ARR.REGISTRATION_HIST] = existingRegCode + delimiter + existingHistory;
+    var existingHistory = existingEntry[MASTER_COLS.REG_HISTORY - 1];
+    var existingRegCode = existingEntry[MASTER_COLS.LATEST_REG_SEMESTER - 1];
+    if (existingHistory == "") {
+      lastSubmission[PROCESSED_ARR.REG_HISTORY] = existingRegCode;
+    }
+    else {
+      lastSubmission[PROCESSED_ARR.REG_HISTORY] = existingRegCode + "\n" + existingHistory;
+    }
+    
   }
 
   // Select specific columns
@@ -214,31 +219,31 @@ function consolidateLastSubmission_(lastRow = getLastSubmissionInSemester()) {
     PROCESSED_ARR.YEAR,
     PROCESSED_ARR.PROGRAM,
     PROCESSED_ARR.WAIVER,
-    PROCESSED_ARR.MEMBER_DESCR,
+    PROCESSED_ARR.DESCRIPTION,
     PROCESSED_ARR.REFERRAL,
-    PROCESSED_ARR.LAST_REGISTRATION,
-    PROCESSED_ARR.LAST_REG_CODE,
-    PROCESSED_ARR.REGISTRATION_HIST,
+    PROCESSED_ARR.LATEST_REG_DATE,
+    PROCESSED_ARR.LATEST_REG_SEM,
+    PROCESSED_ARR.REG_HISTORY,
     PROCESSED_ARR.EMPTY,
     PROCESSED_ARR.EMPTY,
     PROCESSED_ARR.EMPTY,
     PROCESSED_ARR.COLLECTED_BY,
     PROCESSED_ARR.COLLECTION_DATE,
-    PROCESSED_ARR.GIVEN_TO_INTERNAL,
-    PROCESSED_ARR.FEE_PAID_HIST,
+    PROCESSED_ARR.IS_INTERNAL_COLLECTED,
+    PROCESSED_ARR.FEE_PAID_SEM,
     PROCESSED_ARR.COMMENTS,
-    PROCESSED_ARR.EMPTY,
+    PROCESSED_ARR.ATTENDANCE_STATUS,
     PROCESSED_ARR.MEMBER_ID
   ];
 
   // Store selected data in new array
-  var selectedData = indicesToSelect.map(index => processedLastSubmission[index] || "");
+  var selectedData = indicesToSelect.map(index => lastSubmission[index] || "");
   var newEntryRow = sheet.getLastRow() + 1;
 
   // Output data to 'MASTER'
   // CASE 1 : User exists -> replace previous entry
-  if (memberIndex != null) {
-    sheet.getRange(memberIndex, 1, 1, selectedData.length).setValues([selectedData]);
+  if (memberRow != null) {
+    sheet.getRange(memberRow, 1, 1, selectedData.length).setValues([selectedData]);
   }
   // CASE 2: User does not exist in 'MASTER' -> add new entry to the bottom of sheet
   else {
@@ -246,10 +251,10 @@ function consolidateLastSubmission_(lastRow = getLastSubmissionInSemester()) {
   }
 
   // Get row of member if existing or non-existing
-  const targetRow = memberIndex ? memberIndex : newEntryRow;
+  const targetRow = memberRow ? memberRow : newEntryRow;
 
   // Add formula for `Fee Paid` col
-  const isFeePaidCell = sheet.getRange(targetRow, MASTER_FEE_STATUS);
+  const isFeePaidCell = sheet.getRange(targetRow, MASTER_COLS.FEE_PAID);
   isFeePaidCell.setFormula(isFeePaidFormula);
 }
 
@@ -275,7 +280,7 @@ function processSemesterData_(sheetName) {
 
   const processedData = sheetData.map(function (row) {
     // Append semester code if entries are non-empty by looping over selected indices
-    const indicesToProcess = [PROCESSED_ARR.MEMBER_DESCR, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
+    const indicesToProcess = [PROCESSED_ARR.DESCRIPTION, PROCESSED_ARR.REFERRAL, PROCESSED_ARR.COMMENTS];
 
     indicesToProcess.forEach(index => {
       if (lastSubmission[index]) {
@@ -284,13 +289,13 @@ function processSemesterData_(sheetName) {
     });
 
     // Append semester code to payment history
-    index = PROCESSED_ARR.FEE_PAID_HIST;
+    index = PROCESSED_ARR.FEE_PAID_SEM;
     row[index] = row[index] ? semesterCode : "";
 
-    // Append row with semester code for MASTER.LAST_REG_CODE
+    // Append row with semester code for MASTER.LATEST_REG_SEMESTER
     row.push(semesterCode);
 
-    // Append row with semester code for MASTER.REGISTRATION_HIST
+    // Append row with semester code for MASTER.REG_HISTORY
     row.push("");
 
     return row;
@@ -340,7 +345,7 @@ function consolidateMemberData_() {
       // Access memberMap is 0-indexed according to semester sheet
       var index, regHistory, semesterCode;
 
-      index = PROCESSED_ARR.MEMBER_DESCR;
+      index = PROCESSED_ARR.DESCRIPTION;
       if (row[index]) memberMap[email][index] += "\n" + row[index];
 
       index = PROCESSED_ARR.REFERRAL;
@@ -350,13 +355,13 @@ function consolidateMemberData_() {
       if (row[index]) memberMap[email][index] += "\n" + row[index];
 
       // Append registration history using semester code
-      index = PROCESSED_ARR.REGISTRATION_HIST;
-      semesterCode = row[PROCESSED_ARR.LAST_REG_CODE];
+      index = PROCESSED_ARR.REG_HISTORY;
+      semesterCode = row[PROCESSED_ARR.LATEST_REG_SEM];
       regHistory = memberMap[email][index] ? " " + semesterCode : semesterCode;
       memberMap[email][index] += regHistory;
 
       // Append payment history
-      index = PROCESSED_ARR.FEE_PAID_HIST;
+      index = PROCESSED_ARR.FEE_PAID_SEM;
       if (row[index]) memberMap[email][index] += " " + row[index];
     }
   });
@@ -382,18 +387,18 @@ function consolidateMemberData_() {
       row[PROCESSED_ARR.YEAR],
       row[PROCESSED_ARR.PROGRAM],
       row[PROCESSED_ARR.WAIVER],
-      row[PROCESSED_ARR.MEMBER_DESCR],
+      row[PROCESSED_ARR.DESCRIPTION],
       row[PROCESSED_ARR.REFERRAL],
-      row[PROCESSED_ARR.LAST_REGISTRATION],
-      row[PROCESSED_ARR.LAST_REG_CODE],
-      row[PROCESSED_ARR.REGISTRATION_HIST],
+      row[PROCESSED_ARR.LATEST_REG_DATE],
+      row[PROCESSED_ARR.LATEST_REG_SEM],
+      row[PROCESSED_ARR.REG_HISTORY],
       row[PROCESSED_ARR.EMPTY],
       row[PROCESSED_ARR.EMPTY],
       row[PROCESSED_ARR.EMPTY],
       row[PROCESSED_ARR.COLLECTED_BY],
       row[PROCESSED_ARR.COLLECTION_DATE],
-      row[PROCESSED_ARR.GIVEN_TO_INTERNAL],
-      row[PROCESSED_ARR.FEE_PAID_HIST],
+      row[PROCESSED_ARR.IS_INTERNAL_COLLECTED],
+      row[PROCESSED_ARR.FEE_PAID_SEM],
       row[PROCESSED_ARR.COMMENTS],
       row[PROCESSED_ARR.EMPTY],
       row[PROCESSED_ARR.MEMBER_ID]

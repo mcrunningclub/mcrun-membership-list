@@ -1,7 +1,7 @@
 /**
  * Trims whitespace from specific columns in the last row of the semester sheet.
  * 
- * This function targets the range from `FIRST_NAME_COL` to `REFERRAL_COL` (7 columns).
+ * This function targets the range from `SEMESTER_COLS.FIRST_NAME` to `REFERRAL_COL` (7 columns).
  * It ensures that unnecessary whitespace is removed from the latest member entry.
  * 
  * @trigger New form submission
@@ -19,7 +19,7 @@
 
 function trimWhitespaceSemester_(row = getLastSubmissionInSemester()) {
   const sheet = SEMESTER_SHEET;
-  const rangeToFormat = sheet.getRange(row, FIRST_NAME_COL, 1, 7);
+  const rangeToFormat = sheet.getRange(row, SEMESTER_COLS.FIRST_NAME, 1, 7);
   rangeToFormat.trimWhitespace();
 }
 
@@ -108,79 +108,112 @@ function tryAndSortSemester() {
 
 function formatSemester() {
   const sheet = SEMESTER_SHEET;
+  const allCols = Object.entries(SEMESTER_COLS).length;
+  const allRowsExceptHeader = sheet.getLastRow() - 1;
 
-  // Helper function to improve readability
-  const getThisRange = (ranges) =>
-    Array.isArray(ranges) ? sheet.getRangeList(ranges) : sheet.getRange(ranges);
+  //helper functions
+  function getHeaderCell(column) {
+    return sheet.getRange(1, column);
+  }
+
+  function getHeaderRow() {
+    return sheet.getRange(1, 1, 1, allCols);
+  }
+
+  function getColumnExceptHeader(column) {
+    return sheet.getRange(2, column, allRowsExceptHeader, 1);
+  }
+
+  function getColumnIncludingHeader(column) {
+    return sheet.getRange(1, column, sheet.getLastRow(), 1);
+  }
 
   // 1. Freeze panes
   sheet.setFrozenRows(1);
   sheet.setFrozenColumns(2);
 
   // 2. Bold formatting
-  getThisRange([
-    'A1:T1',  // Header Row
-    'A2:A',   // Registration
-    'E2:E',   // Preferred Name
-    'K2:L',   // Payment Method + Interac Ref Number
-    'O2:P',   // Collection Date + Collector
-    'T2:T',   // Member ID
-  ]).setFontWeight('bold');
+  getHeaderRow().setFontWeight('bold');
+  var columns = [
+    SEMESTER_COLS.REGISTRATION_DATE,
+    SEMESTER_COLS.PREFERRED_NAME,
+    SEMESTER_COLS.PAYMENT_METHOD,
+    SEMESTER_COLS.INTERAC_REF,
+    SEMESTER_COLS.COLLECTION_DATE,
+    SEMESTER_COLS.COLLECTED_BY,
+    SEMESTER_COLS.MEMBER_ID];
+  for (const col of columns) {
+    console.log(col);
+    getColumnExceptHeader(col).setFontWeight('bold');
+  }
 
   // 3. Font size adjustments
-  getThisRange('A1:T1').setFontSize(11);  // Header row to size 11
+  getHeaderRow().setFontSize(11);
+  columns = [
+    SEMESTER_COLS.PREFERRED_NAME,
+    SEMESTER_COLS.FEE_PAID,
+    SEMESTER_COLS.ATTENDANCE_STATUS
+  ];
+  for (const col of columns) {
+    getHeaderCell(col).setFontSize(10);
+  }
+  getColumnExceptHeader(SEMESTER_COLS.MEMBER_ID).setFontSize(10);
+  getHeaderCell(SEMESTER_COLS.IS_INTERNAL_COLLECTED).setFontSize(9);
+  getColumnIncludingHeader(SEMESTER_COLS.PAYMENT_METHOD).setFontSize(8);
 
-  getThisRange([
-    'E1',   // Preferred Name (Header Cell)
-    'T2:T', // Member ID
-    'N1',   // Fee Paid (Header Cell)
-    'S1',   // Attendance Status (Header Cell)
-  ]).setFontSize(10);
-
-  getThisRange(['Q1', 'T2:T']).setFontSize(9);  // Given to Internal (Header Cell) + Member ID
-  getThisRange('K1:L1').setFontSize(8);  // Payment Method headers
-
-  // 4. Font family adjustment
-  getThisRange('T2:T').setFontFamily('Google Sans Mono');
+  // 4. Font family adjustment for member ID
+  getColumnExceptHeader(SEMESTER_COLS.MEMBER_ID).setFontFamily('Google Sans Mono');
 
   // 5. Format collection date
-  getThisRange('A2:A').setNumberFormat('yyyy-MM-dd hh:mm:ss');
-  getThisRange('O2:O').setNumberFormat('mmm d, yyyy');
+  getColumnExceptHeader(SEMESTER_COLS.REGISTRATION_DATE).setNumberFormat('yyyy-MM-dd hh:mm:ss');
+  getColumnExceptHeader(SEMESTER_COLS.COLLECTION_DATE).setNumberFormat('mmm d, yyyy');
 
   // 6. Text wrapping set to 'Clip' (for Referral + Waiver + Payment Choice)
-  getThisRange(['I2:I', 'J1:J', 'K2:K']).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+  columns = [
+    SEMESTER_COLS.REFERRAL,
+    SEMESTER_COLS.WAIVER,
+    SEMESTER_COLS.PAYMENT_METHOD
+  ]
+  for (const col of columns) {
+    getColumnExceptHeader(col).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+  }
 
   // 7. Horizontal and vertical alignment
-  getThisRange([
-    'L2:L',   // Interac Ref
-    'N2:Q',   // Fee Paid, ..., Given to Internal
-    'S1:T',   // Attendance Status + Member ID
-  ]).setHorizontalAlignment('center')
-    .setVerticalAlignment('middle');
-
-  getThisRange(['A2:A', 'I1']).setHorizontalAlignment('right');   // Align right
+  columns = [
+    SEMESTER_COLS.INTERAC_REF,
+    SEMESTER_COLS.FEE_PAID,
+    SEMESTER_COLS.COLLECTION_DATE,
+    SEMESTER_COLS.COLLECTED_BY,
+    SEMESTER_COLS.IS_INTERNAL_COLLECTED,
+    SEMESTER_COLS.ATTENDANCE_STATUS,
+    SEMESTER_COLS.MEMBER_ID
+  ]
+  for (const col of columns) {
+    getColumnExceptHeader(col).setHorizontalAlignment('center').setVerticalAlignment('middle');
+  }
+  getColumnExceptHeader(SEMESTER_COLS.REGISTRATION_DATE).setHorizontalAlignment('right');
 
   // 8. Column width mapping
   const sizeMap = {
-    [REGISTRATION_DATE_COL]: 140,
-    [EMAIL_COL]: 245,
-    [FIRST_NAME_COL]: 115,
-    [LAST_NAME_COL]: 115,
-    [PREFERRED_NAME_COL]: 120,
-    [YEAR_COL]: 90,
-    [PROGRAM_COL]: 240,
-    [DESCRIPTION_COL]: 400,
-    [REFERRAL_COL]: 145,
-    [WAIVER_COL]: 185,
-    [PAYMENT_METHOD_COL]: 155,
-    [INTERAC_REF_COL]: 155,
-    [IS_FEE_PAID_COL]: 75,
-    [COLLECTION_DATE_COL]: 150,
-    [COLLECTION_PERSON_COL]: 160,
-    [IS_INTERNAL_COLLECTED_COL]: 65,
-    [COMMENTS_COL]: 255,
-    [ATTENDANCE_STATUS_COL]: 125,
-    [MEMBER_ID_COL]: 140,
+    [SEMESTER_COLS.REGISTRATION_DATE]: 140,
+    [SEMESTER_COLS.EMAIL]: 245,
+    [SEMESTER_COLS.FIRST_NAME]: 115,
+    [SEMESTER_COLS.LAST_NAME]: 115,
+    [SEMESTER_COLS.YEAR]: 120,
+    [SEMESTER_COLS.YEAR]: 90,
+    [SEMESTER_COLS.PROGRAM]: 240,
+    [SEMESTER_COLS.DESCRIPTION]: 400,
+    [SEMESTER_COLS.REFERRAL]: 145,
+    [SEMESTER_COLS.WAIVER]: 185,
+    [SEMESTER_COLS.PAYMENT_METHOD]: 155,
+    [SEMESTER_COLS.INTERAC_REF]: 155,
+    [SEMESTER_COLS.FEE_PAID]: 75,
+    [SEMESTER_COLS.COLLECTION_DATE]: 150,
+    [SEMESTER_COLS.COLLECTED_BY]: 160,
+    [SEMESTER_COLS.IS_INTERNAL_COLLECTED]: 65,
+    [SEMESTER_COLS.COMMENTS]: 255,
+    [SEMESTER_COLS.ATTENDANCE_STATUS]: 125,
+    [SEMESTER_COLS.MEMBER_ID]: 140,
   };
 
   // Resize columns based on `sizeMap`
@@ -206,14 +239,14 @@ function addCheckboxSemester_(row) {
   const sheet = SEMESTER_SHEET;
 
   // Add checkboxes to target columns
-  [IS_FEE_PAID_COL,
-    IS_INTERNAL_COLLECTED_COL,
-    ATTENDANCE_STATUS_COL
+  [SEMESTER_COLS.FEE_PAID,
+    SEMESTER_COLS.IS_INTERNAL_COLLECTED,
+    SEMESTER_COLS.ATTENDANCE_STATUS
   ].forEach(col => sheet.getRange(row, col).insertCheckboxes());
 
   // Copy the list item  in 'Collection Person' col from first entry
-  //var collectorItem = sheet.getRange(5, COLLECTION_PERSON_COL).getDataValidation();
-  //var targetCell = sheet.getRange(row, COLLECTION_PERSON_COL);
+  //var collectorItem = sheet.getRange(5, SEMESTER_COLS.COLLECTED_BY).getDataValidation();
+  //var targetCell = sheet.getRange(row, SEMESTER_COLS.COLLECTED_BY);
 
   // Set the collector item
   //targetCell.setDataValidation(collectorItem);
@@ -237,12 +270,12 @@ function fixRowCaseSemester_(row = getLastSubmissionInSemester()) {
   const sheet = SEMESTER_SHEET;
 
   // Set to lower case
-  const rangeToLowerCase = sheet.getRange(row, EMAIL_COL);
+  const rangeToLowerCase = sheet.getRange(row, SEMESTER_COLS.EMAIL);
   const rawValue = rangeToLowerCase.getValue().toString();
   rangeToLowerCase.setValue(rawValue.toLowerCase());
 
   // Set to Capitalized (first letter of word is UPPER)
-  const rangeToCapitalize = sheet.getRange(row, FIRST_NAME_COL, 1, 5);
+  const rangeToCapitalize = sheet.getRange(row, SEMESTER_COLS.FIRST_NAME, 1, 5);
 
   // Capitalize each value in array
   const capitalizedValues = rangeToCapitalize.getValues()[0].map(
@@ -410,11 +443,11 @@ function cleanLastRowMaster() {
   const lastRow = sheet.getLastRow();
 
   // STEP 1: Trim white space from `Email` col to `Referral` col
-  const rangeToTrim = sheet.getRange(lastRow, MASTER_EMAIL_COL, 1, 9);
+  const rangeToTrim = sheet.getRange(lastRow, MASTER_COLS.EMAIL, 1, 9);
   rangeToTrim.trimWhitespace();
 
   // STEP 2: Capitalize selected value
-  const rangeToCapitalize = sheet.getRange(lastRow, MASTER_FIRST_NAME_COL, 1, 5);
+  const rangeToCapitalize = sheet.getRange(lastRow, MASTER_COLS.FIRST_NAME, 1, 5);
   var valuesToCapitalize = rangeToCapitalize.getValues()[0]; // Get all the values as 1D arr
 
   valuesToCapitalize.forEach((cell, colIndex) => {
@@ -446,7 +479,7 @@ function formatFeeCollection_(row = MASTER_SHEET.getLastRow()) {
   const sheet = MASTER_SHEET;
 
   // STEP 1: Check for current fee status to flag for later
-  const rangeFeeStatus = sheet.getRange(row, MASTER_FEE_STATUS);
+  const rangeFeeStatus = sheet.getRange(row, MASTER_COLS.FEE_PAID);
   const feeStatus = rangeFeeStatus.getValue().toString();
 
   const regex = new RegExp('unpaid', "i"); // Case insensitive
@@ -459,7 +492,7 @@ function formatFeeCollection_(row = MASTER_SHEET.getLastRow()) {
   if (isUnpaid) return;
 
   // STEP 3: Format collection date correctly;
-  const rangeCollectionDate = sheet.getRange(row, MASTER_COLLECTION_DATE);
+  const rangeCollectionDate = sheet.getRange(row, MASTER_COLS.COLLECTION_DATE);
   const collectionDate = rangeCollectionDate.getValue();   // Format is yyyy-mm-dd hh:mm
 
   const formattedDate = Utilities.formatDate(collectionDate, TIMEZONE, 'yyyy-MM-dd');
@@ -468,7 +501,7 @@ function formatFeeCollection_(row = MASTER_SHEET.getLastRow()) {
   // STEP 4: Append semester code if collection date non-empty
   if (!collectionDate) return;
 
-  const rangePaymentHistory = sheet.getRange(row, MASTER_PAYMENT_HIST);
+  const rangePaymentHistory = sheet.getRange(row, MASTER_COLS.PAYMENT_HISTORY);
   const semCode = getSemesterCode_(SHEET_NAME);   // Get semCode from semester sheet
   rangePaymentHistory.setValue(semCode);
 }
@@ -488,7 +521,7 @@ function formatFeeCollection_(row = MASTER_SHEET.getLastRow()) {
 
 function insertRegistrationSem_(row = MASTER_SHEET.getLastRow()) {
   var sheet = MASTER_SHEET;
-  const rangeLatestRegSem = sheet.getRange(row, MASTER_LAST_REG_SEM);
+  const rangeLatestRegSem = sheet.getRange(row, MASTER_COLS.LATEST_REG_SEMESTER);
 
   const semCode = getSemesterCode_(SHEET_NAME);   // Get semCode from `MAIN_SHEET`
   rangeLatestRegSem.setValue(semCode);
@@ -526,9 +559,9 @@ function encodeFromInput_(input) {
 function encodeRowSemester_(row = getLastSubmissionInSemester()) {
   const sheet = SEMESTER_SHEET;
 
-  const email = sheet.getRange(row, EMAIL_COL).getValue();
+  const email = sheet.getRange(row, SEMESTER_COLS.EMAIL).getValue();
   const memberID = MD5(email);
-  sheet.getRange(row, MEMBER_ID_COL).setValue(memberID);
+  sheet.getRange(row, SEMESTER_COLS.MEMBER_ID).setValue(memberID);
 }
 
 

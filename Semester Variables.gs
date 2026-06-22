@@ -48,13 +48,6 @@ const MASTER_NAME = 'MASTER';
 const MASTER_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(MASTER_NAME);
 
 /**
- * Number of (relevant???) columns in the master sheet
- * @const {number}
- */
-const MASTER_COL_SIZE = 20;   // Range 'A:T' in 'MASTER'
-
-
-/**
  * Current timezone
  * @const {string}
  */
@@ -119,152 +112,152 @@ const MEMBERSHIP_DURATION = 1;
  */
 const WAIVER_DRIVE_ID = '1lNAvGMsm-ixa7rAQHqTdd_gV-W4WNwpOdx4Zx7S_AZ8_6EQ8ammSEwy3A3xzbPsPp7eUnvnf';
 
+/**
+ * Maps column letters to numbers (1-indexed)
+ * @const {Object}
+ */
+const COL = {
+  A: 1,
+  B: 2,
+  C: 3,
+  D: 4,
+  E: 5,
+  F: 6,
+  G: 7,
+  H: 8,
+  I: 9,
+  J: 10,
+  K: 11,
+  L: 12,
+  M: 13,
+  N: 14,
+  O: 15,
+  P: 16,
+  Q: 17,
+  R: 18,
+  S: 19,
+  T: 20,
+  U: 21,
+  V: 22,
+  W: 23,
+  X: 24,
+  Y: 25,
+  Z: 26
+}
 
 /** 
- * LATEST COLUMN MAPPING FOR SEMESTER SHEET (S26) 
+ * LATEST COLUMN MAPPING FOR SEMESTER SHEET (S26)
+ * If REMOVING A CONSTANT, ENSURE IT IS NOT USED IN THE SCRIPTS!!
  * @const {Object}
  */
 const SEMESTER_COLS = {
-  registrationDate: 1,
-  email: 2,
-  firstName: 3,
-  lastName: 4,
-  preferredName: 5,
-  year: 6,
-  program: 7,
-  description: 8,
-  optedIntoNewsletter: 9,
-  optedIntoEmails: 10,
-  referral: 11,
-  waiver: 12,
-  paymentMethod: 13,
-  promo: 14,
-  interacRef: 15,
-  feeAmount: 16,
-  feePaid: 17,
-  collectionDate: 18,
-  collectedBy: 19,
-  isInternalCollected: 20,
-  comments: 21,
-  totalRuns: 22,
-  totalPoints: 23,
-  attendanceStatus: 24,
-  memberId: 25
+  REGISTRATION_DATE: COL.A,
+  EMAIL: COL.B,
+  FIRST_NAME: COL.C,
+  LAST_NAME: COL.D,
+  PREFERRED_NAME: COL.E,
+  YEAR: COL.F,
+  PROGRAM: COL.G,
+  DESCRIPTION: COL.H,
+  OPTED_INTO_NEWSLETTER: COL.I,
+  OPTED_INTO_EMAILS: COL.J,
+  REFERRAL: COL.K,
+  WAIVER: COL.L,
+  PAYMENT_METHOD: COL.M,
+  PROMO: COL.N,
+  INTERAC_REF: COL.O,
+  FEE_AMOUNT: COL.P,
+  FEE_PAID: COL.Q,
+  COLLECTION_DATE: COL.R,
+  COLLECTED_BY: COL.S,
+  IS_INTERNAL_COLLECTED: COL.T,
+  COMMENTS: COL.U,
+  TOTAL_RUNS: COL.V,
+  TOTAL_POINTS: COL.W,
+  ATTENDANCE_STATUS: COL.X,
+  MEMBER_ID: COL.Y
 }
 
 
 /** 
- * LATEST COLUMN MAPPING FOR MASTER SHEET (S26) 
+ * LATEST COLUMN MAPPING FOR MASTER SHEET (S26)
+ * If REMOVING A CONSTANT, ENSURE IT IS NOT USED IN THE SCRIPTS!!
  * @const {Object}
  */            
 const MASTER_COLS = {
-  email: 1,            
-  firstName: 2,            
-  lastName: 3,            
-  preferredName: 4,            
-  year: 5,            
-  program: 6,            
-  waiver: 7,            
-  description: 8,            
-  referral: 9,            
-  latestRegistration: 10,            
-  latestSemester: 11,            
-  regHistory: 12,            
-  emptyCol: 13,            
-  feePaid: 14,               // Do not modify - Contains formula
-  feeExpiration: 15,               // Do not modify - Contains formula
-  collectedBy: 16,               // Do not modify - Contains formula
-  collectionDate: 17,            
-  isInternalCollected: 18,            
-  paymentHistory: 19,            
-  comments: 20,            
-  attendanceStatus: 21,
-  memberId: 22            
+  EMAIL: COL.A,
+  FIRST_NAME: COL.B,
+  LAST_NAME: COL.C,
+  PREFERRED_NAME: COL.D,
+  YEAR: COL.E,
+  PROGRAM: COL.F,
+  WAIVER: COL.G,
+  DESCRIPTION: COL.H,
+  REFERRAL: COL.I,
+  LATEST_REG_DATE: COL.J,
+  LATEST_REG_SEMESTER: COL.K,
+  REG_HISTORY: COL.L,
+  EMPTY: COL.M,
+  FEE_PAID: COL.N,               // Do not modify - Contains formula
+  FEE_EXPIRATION: COL.O,         // Do not modify - Contains formula
+  COLLECTED_BY: COL.P,           // Do not modify - Contains formula
+  COLLECTION_DATE: COL.Q,
+  IS_INTERNAL_COLLECTED: COL.R,
+  PAYMENT_HISTORY: COL.S,
+  COMMENTS: COL.T,
+  ATTENDANCE_STATUS: COL.U,
+  MEMBER_ID: COL.V
 }
-
-// Semester sheet constants
-// Please update any changes made in active sheet
-const REGISTRATION_DATE_COL = 1;      // Column 'A'
-const EMAIL_COL = 2;                  // Column 'B'
-const FIRST_NAME_COL = 3;             // Column 'C'
-const LAST_NAME_COL = 4;              // Column 'D'
-const PREFERRED_NAME_COL = 5;         // Column 'E'
-const YEAR_COL = 6;                   // Column 'F'
-const PROGRAM_COL = 7;                // Column 'G'
-const DESCRIPTION_COL = 8;            // Column 'H'
-const REFERRAL_COL = 11;               // Column K
-const WAIVER_COL = 12;                // Column L
-const PAYMENT_METHOD_COL = 13;        // Column M
-const INTERAC_REF_COL = 15;          // Column O
-const IS_FEE_PAID_COL = 17;           // Column Q
-const COLLECTION_DATE_COL = 18;       // Column R
-const COLLECTION_PERSON_COL = 19;       // Column S
-const IS_INTERNAL_COLLECTED_COL = 20;   // Column T
-const COMMENTS_COL = 21;                // Column U
-const ATTENDANCE_STATUS_COL = 24;       // Column X
-const MEMBER_ID_COL = 25;               // Column Y
-
-
-// MASTER SHEET CONSTANTS
-const MASTER_EMAIL_COL = 1;
-const MASTER_FIRST_NAME_COL = 2;
-const MASTER_LAST_NAME_COL = 3;
-const MASTER_LAST_REG_SEM = 11;
-const MASTER_FEE_STATUS = 14;   // Do not modify - Contains formula
-const MASTER_FEE_EXPIRATION = 15;   // Do not modify - Contains formula
-const MASTER_FEE_COLLECTOR = 16;  // Do not modify - Contains formula
-const MASTER_COLLECTION_DATE = 17;
-const MASTER_IS_INTERNAL_COLLECTED = 18;
-const MASTER_PAYMENT_HIST = 19;
-const MASTER_MEMBER_ID_COL = 22;
-
 
 /**
  * MAPPING FROM FILLOUT REGISTRATION OBJ TO SEMESTER SHEET
  * @const {Object}
  */ 
 const IMPORT_MAP = {
-  'timestamp': REGISTRATION_DATE_COL,
-  'email': EMAIL_COL,
-  'firstName': FIRST_NAME_COL,
-  'lastName': LAST_NAME_COL,
-  'preferredName': PREFERRED_NAME_COL,
-  'year': YEAR_COL,
-  'program': PROGRAM_COL,
-  'memberDescription': DESCRIPTION_COL,
-  'referral': REFERRAL_COL,
-  'waiver': WAIVER_COL,
-  'paymentMethod': PAYMENT_METHOD_COL,
-  'interacRef': INTERAC_REF_COL,
-  'comments': COMMENTS_COL,
+  'timestamp': SEMESTER_COLS.REGISTRATION_DATE,
+  'email': SEMESTER_COLS.EMAIL,
+  'firstName': SEMESTER_COLS.FIRST_NAME,
+  'lastName': SEMESTER_COLS.LAST_NAME,
+  'preferredName': SEMESTER_COLS.YEAR,
+  'year': SEMESTER_COLS.YEAR,
+  'program': SEMESTER_COLS.PROGRAM,
+  'memberDescription': SEMESTER_COLS.DESCRIPTION,
+  'referral': SEMESTER_COLS.REFERRAL,
+  'waiver': SEMESTER_COLS.WAIVER,
+  'paymentAmount': SEMESTER_COLS.FEE_AMOUNT,
+  'paymentMethod': SEMESTER_COLS.PAYMENT_METHOD,
+  'interacRef': SEMESTER_COLS.INTERAC_REF,
+  'comments': SEMESTER_COLS.COMMENTS,
+  'automatedEmailConsent': SEMESTER_COLS.OPTED_INTO_EMAILS
 }
 
 
 /**
- * Fields in array from processing last row in semester sheet (0-indexed)
+ * Fields in array from processing last row in semester sheet (semester columns but 0-indexed)
+ * NOT ALL FIELDS ARE IN THIS MAPPING, only the ones needed to move to master sheet
  * @const {Object}
  */
 const PROCESSED_ARR = {
-  LAST_REGISTRATION: 0,
-  EMAIL: 1,
-  FIRST_NAME: 2,
-  LAST_NAME: 3,
-  PREFERRED_NAME: 4,
-  YEAR: 5,
-  PROGRAM: 6,
-  MEMBER_DESCR: 7,
-  REFERRAL: 8,
-  WAIVER: 9,
-  EMPTY: 12,
-  FEE_PAID_HIST: 13,
-  COLLECTION_DATE: 14,
-  COLLECTED_BY: 15,
-  GIVEN_TO_INTERNAL: 16,
-  COMMENTS: 17,
-  ATTENDANCE_STATUS: 18,
-  MEMBER_ID: 19,
-  LAST_REG_CODE: 20,
-  REGISTRATION_HIST: 21
+  LATEST_REG_DATE: SEMESTER_COLS.REGISTRATION_DATE - 1,
+  EMAIL: SEMESTER_COLS.EMAIL - 1,
+  FIRST_NAME: SEMESTER_COLS.FIRST_NAME - 1,
+  LAST_NAME: SEMESTER_COLS.LAST_NAME - 1,
+  PREFERRED_NAME: SEMESTER_COLS.PREFERRED_NAME - 1,
+  YEAR: SEMESTER_COLS.YEAR - 1,
+  PROGRAM: SEMESTER_COLS.PROGRAM - 1,
+  DESCRIPTION: SEMESTER_COLS.DESCRIPTION - 1,
+  REFERRAL: SEMESTER_COLS.REFERRAL - 1,
+  WAIVER: SEMESTER_COLS.WAIVER - 1,
+  FEE_PAID_SEM: SEMESTER_COLS.FEE_PAID - 1,
+  COLLECTION_DATE: SEMESTER_COLS.COLLECTION_DATE - 1,
+  COLLECTED_BY: SEMESTER_COLS.COLLECTED_BY - 1,
+  IS_INTERNAL_COLLECTED: SEMESTER_COLS.IS_INTERNAL_COLLECTED - 1,
+  COMMENTS: SEMESTER_COLS.COMMENTS - 1,
+  ATTENDANCE_STATUS: SEMESTER_COLS.ATTENDANCE_STATUS - 1,
+  MEMBER_ID: SEMESTER_COLS.MEMBER_ID - 1,
+  LATEST_REG_SEM: Object.entries(SEMESTER_COLS).length,
+  REG_HISTORY: Object.entries(SEMESTER_COLS).length + 1,
+  EMPTY: -1       // Currently no empty columns
 };
 
 /**
@@ -332,20 +325,20 @@ function GET_COL_MAP_(sheet) {
   if (!SHEET_COL_MAP) {
     SHEET_COL_MAP = {
       [SHEET_NAME]: {
-        emailCol: EMAIL_COL,
-        memberIdCol: MEMBER_ID_COL,
-        feeStatus: IS_FEE_PAID_COL,   // Boolean value
-        collectionDate: COLLECTION_DATE_COL,
-        collector: COLLECTION_PERSON_COL,
-        isInternalCollected: IS_INTERNAL_COLLECTED_COL,
+        emailCol: SEMESTER_COLS.EMAIL,
+        memberIdCol: SEMESTER_COLS.MEMBER_ID,
+        feeStatus: SEMESTER_COLS.FEE_PAID,   // Boolean value
+        collectionDate: SEMESTER_COLS.COLLECTION_DATE,
+        collector: SEMESTER_COLS.COLLECTED_BY,
+        isInternalCollected: SEMESTER_COLS.IS_INTERNAL_COLLECTED,
       },
       [MASTER_NAME]: {
-        emailCol: MASTER_EMAIL_COL,
-        memberIdCol: MASTER_MEMBER_ID_COL,
-        feeStatus: MASTER_PAYMENT_HIST,   // String with semester code(s)
-        collectionDate: MASTER_COLLECTION_DATE,
-        collector: MASTER_FEE_COLLECTOR,
-        isInternalCollected: MASTER_IS_INTERNAL_COLLECTED,
+        emailCol: MASTER_COLS.EMAIL,
+        memberIdCol: MASTER_COLS.MEMBER_ID,
+        feeStatus: MASTER_COLS.PAYMENT_HISTORY,   // String with semester code(s)
+        collectionDate: MASTER_COLS.COLLECTION_DATE,
+        collector: MASTER_COLS.COLLECTED_BY,
+        isInternalCollected: MASTER_COLS.IS_INTERNAL_COLLECTED,
       },
     };
   }
