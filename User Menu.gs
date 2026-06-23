@@ -2,8 +2,10 @@
  * Users authorized to use the McRUN menu.
  * 
  * Prevents unwanted data overwrite in Gsheet.
+ * 
+ * @const {string[]}
  */
-const PERM_USER_ = [
+const ADMINS_ = [
   'mcrunningclub@ssmu.ca',
   'ademetriou8@gmail.com',
   'andreysebastian10.g@gmail.com',
@@ -143,7 +145,7 @@ function confirmAndRunUserChoice_(functionName, sheetName, additionalMsg = "", f
   const userEmail = getCurrentUserEmail_();
 
   // Check if authorized user to prevent illegal executi on
-  if (!PERM_USER_.includes(userEmail)) {
+  if (!ADMINS_.includes(userEmail)) {
     const warningMsgHeader = "🛑 You are not authorized 🛑"
     const warningMsgBody = "Please contact the exec team if you believe this is an error.";
 

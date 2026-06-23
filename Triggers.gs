@@ -14,16 +14,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+/**
+ * Name of fee payment check trigger
+ * @const {string}
+ */
 const TRIGGER_FUNC = runFeeChecker.name;
+
+/**
+ * ID of fee payment check trigger
+ * @const {string}
+ */
 const TRIGGER_BASE_ID = 'feeCheckTrigger';
+
+/**
+ * Max number of times to check for fee payment
+ * @const {number}
+ */
 const FEE_MAX_CHECKS = 3;
-const TRIGGER_FREQUENCY = 5;  // Minutes
+
+/**
+ * Trigger frequency in minutes
+ * @const {number}
+ */
+const TRIGGER_FREQUENCY = 5;
 
 
 /**
- * Handler function for time-based trigger to check fee payment.
- * 
- * No arguments allowed since trigger does not accept any.
+ * Create time-based trigger to check fee payment.
  * 
  * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
  * @date  May 20, 2025
@@ -47,7 +64,7 @@ function createNewFeeTrigger_(row, feeDetails) {
   });
 
   // Label trigger key with member name, and log trigger data
-  const key = TRIGGER_BASE_ID + (feeDetails.memberName).replace(' ', '');
+  const key = TRIGGER_BASE_ID + " " + (feeDetails.memberName).replace(' ', '');
   
   scriptProperties.setProperty(key, triggerData);
   Logger.log(`Created new trigger '${key}', running every ${TRIGGER_FREQUENCY} min.\n\n${triggerData}`);
@@ -56,6 +73,9 @@ function createNewFeeTrigger_(row, feeDetails) {
 
 /**
  * Handler function for time-based trigger to check fee payment.
+ * 
+ * Includes helper functions to check for payment, increment the
+ * number of times checked, and clean up/delete the trigger.
  * 
  * No arguments allowed since trigger does not accept any.
  * Workaround: store member details in script properties.
@@ -77,17 +97,17 @@ function runFeeChecker() {
     console.log(`Trigger Data: ${allProps[key]}`);
 
     // First check memberRow and update 'triggerData' if needed
-    memberRow = checkMemberRow(feeDetails.email, memberRow);
+    memberRow = checkMemberRow_(feeDetails.email, memberRow);
     triggerData.memberRow = memberRow;
     
-    if (isPaymentFound(memberRow)) {
+    if (isPaymentFound_(memberRow)) {
       // If found, clean up trigger and data in script properties
       cleanUpTrigger(key, triggerId);
       Logger.log(`✅ Payment found for member '${feeDetails.memberName}' after ${tries} tries`);
     }
     else if (tries < FEE_MAX_CHECKS) {
       // Limit not reach, check again and increment 'tries'
-      incrementTries(key, triggerData);
+      incrementTries_(key, triggerData);
       const isPaid = isPaid_(memberRow, feeDetails);
       Logger.log(`Payment verification for member '${feeDetails.memberName}' returned: ${isPaid}`);
       
@@ -106,14 +126,14 @@ function runFeeChecker() {
   }
 
   /** Helper: check if payment already found */
-  function isPaymentFound(memberRow) {
+  function isPaymentFound_(memberRow) {
     const sheet = SEMESTER_SHEET;
     const currentFeeValue = sheet.getRange(memberRow, SEMESTER_COLS.FEE_PAID).getValue().toString();
     return parseBool_(currentFeeValue.trim());
   }
 
   /** Helper: validate memberRow, else return updated row */
-  function checkMemberRow(memberEmail, memberRow) {
+  function checkMemberRow_(memberEmail, memberRow) {
     const sheet = SEMESTER_SHEET;
     const currentEmail = sheet.getRange(memberRow, SEMESTER_COLS.EMAIL).getValue();
 
@@ -125,7 +145,7 @@ function runFeeChecker() {
   }
 
   /** Helper: increment tries and log data */
-  function incrementTries(key, triggerData) {
+  function incrementTries_(key, triggerData) {
     Logger.log(`Fee payment check #${triggerData.tries} for member ${triggerData.feeDetails.memberName}`);
     triggerData.tries++;
     scriptProperties.setProperty(key, JSON.stringify(triggerData));
@@ -133,7 +153,7 @@ function runFeeChecker() {
 
   /** Helper: remove trigger and data in script properties */
   function cleanUpTrigger(key, triggerId) {
-    deleteTriggerById(triggerId);
+    deleteTriggerById_(triggerId);
     scriptProperties.deleteProperty(key);
   }
 
@@ -145,7 +165,7 @@ function runFeeChecker() {
    *
    * @param {string} triggerId - The unique ID of the trigger to delete.
    */
-  function deleteTriggerById(triggerId) {
+  function deleteTriggerById_(triggerId) {
     const triggers = ScriptApp.getProjectTriggers();
 
     for (let trigger of triggers) {
