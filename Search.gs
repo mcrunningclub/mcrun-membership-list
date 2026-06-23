@@ -197,6 +197,16 @@ function findMemberByBinarySearch(email, sheet, startRow = 2, endRow = sheet.get
     return null;
   }
 
+  if (startRow === endRow) {
+    const emailAtRow = sheet.getRange(startRow, emailCol).getValue();
+    if (emailAtRow === email) {
+      return startRow;
+    }
+    else {
+      return null;
+    }
+  }
+
   // Find the middle point between the start and end indexes
   const mid = Math.floor((startRow + endRow) / 2);
 
@@ -214,7 +224,7 @@ function findMemberByBinarySearch(email, sheet, startRow = 2, endRow = sheet.get
 
     // If the email at the middle row is alphabetically larger, search the left half.
   } else {
-    return findMemberByBinarySearch(email, sheet, startRow, mid - 1);
+    return findMemberByBinarySearch(email, sheet, startRow, mid);
   }
 }
 

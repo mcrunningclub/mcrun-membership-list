@@ -157,8 +157,8 @@ function formatSemester() {
   for (const col of columns) {
     getHeaderCell(col).setFontSize(10);
   }
-  getColumnExceptHeader(SEMESTER_COLS.MEMBER_ID).setFontSize(10);
   getHeaderCell(SEMESTER_COLS.IS_INTERNAL_COLLECTED).setFontSize(9);
+  getColumnExceptHeader(SEMESTER_COLS.MEMBER_ID).setFontSize(9);
   getColumnIncludingHeader(SEMESTER_COLS.PAYMENT_METHOD).setFontSize(8);
 
   // 4. Font family adjustment for member ID
@@ -180,6 +180,8 @@ function formatSemester() {
 
   // 7. Horizontal and vertical alignment
   columns = [
+    SEMESTER_COLS.OPTED_INTO_NEWSLETTER,
+    SEMESTER_COLS.OPTED_INTO_EMAILS,
     SEMESTER_COLS.INTERAC_REF,
     SEMESTER_COLS.FEE_PAID,
     SEMESTER_COLS.COLLECTION_DATE,
@@ -189,7 +191,7 @@ function formatSemester() {
     SEMESTER_COLS.MEMBER_ID
   ]
   for (const col of columns) {
-    getColumnExceptHeader(col).setHorizontalAlignment('center').setVerticalAlignment('middle');
+    getColumnExceptHeader(col).setHorizontalAlignment('center');
   }
   getColumnExceptHeader(SEMESTER_COLS.REGISTRATION_DATE).setHorizontalAlignment('right');
 

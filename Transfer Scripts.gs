@@ -461,12 +461,3 @@ function copyMasterRowToSemester(row) {
 function notifyNewAppSubmission(row) {
   throw new Error('Function not implemented.');
 }
-
-function test() {
-      const importSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetById(IMPORT_SHEET_ID);
-      const newRow = importSheet.getLastRow();
-      const newRegistration = importSheet.getRange(newRow, 1).getValue();
-
-      const lastRow = copyFilloutRegToSemester_(newRegistration);
-      onFormSubmit(lastRow);
-}

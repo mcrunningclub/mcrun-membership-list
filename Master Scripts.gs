@@ -51,7 +51,7 @@ function addLastSubmissionToMaster_(lastRow = getLastSubmissionInSemester()) {
 
 function addPaidSemesterToMaster_(memberRow, semesterSheetName) {
   const sheet = MASTER_SHEET;
-  const paymentHistoryCol = MASTER_PAYMENT_HIST;
+  const paymentHistoryCol = MASTER_COLS.PAYMENT_HISTORY;
   const semesterCode = getSemesterCode_(semesterSheetName); // Get the semester code based on the sheet name
 
   const rangePaymentHistory = sheet.getRange(memberRow, paymentHistoryCol);
