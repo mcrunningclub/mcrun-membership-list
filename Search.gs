@@ -157,8 +157,8 @@ function findMemberByIteration(email, sheet, startRow = 2, endRow = sheet.getLas
   const thisEmailCol = GET_COL_MAP_(sheetName).emailCol;    // Get email col index of `sheet`
 
   for (var row = startRow; row <= endRow; row++) {
-    let email = sheet.getRange(row, thisEmailCol).getValue();
-    if (email === email) return row;    // Exit loop and return value;
+    let emailAtRow = sheet.getRange(row, thisEmailCol).getValue();
+    if (emailAtRow.localeCompare(email) === 0) return row;    // Exit loop and return value;
   }
 
   return null;
@@ -199,7 +199,7 @@ function findMemberByBinarySearch(email, sheet, startRow = 2, endRow = sheet.get
 
   if (startRow === endRow) {
     const emailAtRow = sheet.getRange(startRow, emailCol).getValue();
-    if (emailAtRow === email) {
+    if (emailAtRow.localeCompare(email) === 0) {
       return startRow;
     }
     else {
@@ -214,12 +214,12 @@ function findMemberByBinarySearch(email, sheet, startRow = 2, endRow = sheet.get
   const emailAtMid = sheet.getRange(mid, emailCol).getValue();
 
   // Compare the target email with the middle email
-  if (emailAtMid === email) {
+  if (emailAtMid.localeCompare(email) === 0) {
     return mid;  // If the email matches, return the row index (1-indexed)
 
     // If the email at the middle row is alphabetically smaller, search the right half.
     // Note: use localeString() to ensure string comparison matches GSheet.
-  } else if (emailAtMid.localeCompare(email) === -1) {
+  } else if (emailAtMid.localeCompare(email) < 0) {
     return findMemberByBinarySearch(email, sheet, mid + 1, endRow);
 
     // If the email at the middle row is alphabetically larger, search the left half.
