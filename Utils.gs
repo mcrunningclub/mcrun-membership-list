@@ -106,3 +106,20 @@ function getCurrentUserEmail_() {
 function parseBool_(val) {
   return val === true || val === "true";
 }
+
+
+/**
+ * Activate the sheet `sheetName` in Google Spreadsheet.
+ * 
+ * Changes view to `sheetName`.
+ * 
+ * @param {string} sheetName  Name of target sheet.
+ * 
+ * @author [Andrey Gonzalez](<andrey.gonzalez@mail.mcgill.ca>)
+ * @date  Nov 21, 2024
+ * @update  Nov 21, 2024
+ */
+
+function changeSheetView_(sheetName) {
+  SpreadsheetApp.getActive().getSheetByName(sheetName).activate();
+}

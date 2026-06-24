@@ -359,3 +359,27 @@ function GET_COL_MAP_(sheet) {
 
   return SHEET_COL_MAP[sheet] || null;
 }
+
+/**
+ * Name of fee payment check trigger
+ * @const {string}
+ */
+const TRIGGER_FUNC = runFeeChecker.name;
+
+/**
+ * ID of fee payment check trigger
+ * @const {string}
+ */
+const TRIGGER_BASE_ID = 'feeCheckTrigger';
+
+/**
+ * Max number of times to check for fee payment
+ * @const {number}
+ */
+const FEE_MAX_CHECKS = 3;
+
+/**
+ * Trigger frequency in minutes
+ * @const {number}
+ */
+const TRIGGER_FREQUENCY = 5;
