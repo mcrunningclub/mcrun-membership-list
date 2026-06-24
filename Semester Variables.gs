@@ -1,4 +1,18 @@
 /**
+ * Users authorized to use the McRUN menu.
+ * 
+ * Prevents unwanted data overwrite in Gsheet.
+ * 
+ * @const {string[]}
+ */
+const ADMINS_ = [
+  'mcrunningclub@ssmu.ca',
+  'ademetriou8@gmail.com',
+  'andreysebastian10.g@gmail.com',
+  'monaliu832@gmail.com',
+];
+
+/**
  * Sheet name corresponding to current semester
  * 
  * MUST UPDATE EVERY SEMESTER!

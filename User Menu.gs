@@ -1,19 +1,4 @@
 /**
- * Users authorized to use the McRUN menu.
- * 
- * Prevents unwanted data overwrite in Gsheet.
- * 
- * @const {string[]}
- */
-const ADMINS_ = [
-  'mcrunningclub@ssmu.ca',
-  'ademetriou8@gmail.com',
-  'andreysebastian10.g@gmail.com',
-  'monaliu832@gmail.com',
-];
-
-
-/**
  * Logs user attempting to use custom McRUN menu.
  * 
  * If input empty, then extract email using `getCurrentUserEmail_()`.
@@ -187,7 +172,7 @@ function confirmAndRunUserChoice_(functionName, sheetName, additionalMsg = "", f
 
 
 /**
- * Returns true if row is int and found in `sheet`.
+ * Returns true if row is int and found in given sheet.
  *
  * Helper function for UI functions for McRUN menu.
  *
@@ -210,35 +195,45 @@ function isValidRow_(row, sheet = SEMESTER_SHEET) {
 
 
 /** 
- * Scripts for `MAIN_SHEET` menu items.
- * 
- * Extracting function name using `name` property to allow for refactoring.
+ * Scripts for semester sheet menu items: sort by name
  */
-
 function sortByNameUI_() {
   const functionName = sortSemesterByName.name;
   const sheetName = SHEET_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }
 
+/** 
+ * Scripts for semester sheet menu items: run submit form function
+ */
 function onFormSubmitUI_() {
   const functionName = onFormSubmit.name;
   const sheetName = SHEET_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }
 
+/** 
+ * Scripts for semester sheet menu items: format sheet
+ */
 function prettifyMainUI_() {
   const functionName = formatSemester.name;
   const sheetName = SHEET_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }
 
+/** 
+ * Scripts for semester sheet menu items: encode last row
+ */
 function encodeLastRowUI_() {
   const functionName = encodeRowSemester_.name;
   const sheetName = SHEET_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }
 
+/** 
+ * Scripts for semester sheet menu items: ask for row and find waiver for
+ * that member
+ */
 function findWaiverLinkUI_() {
   const ui = SpreadsheetApp.getUi();
   const headerMsg = "Which row do you want to search for a waiver link?";
@@ -271,6 +266,9 @@ function findWaiverLinkUI_() {
   confirmAndRunUserChoice_(functionName, sheetName, customMsg, rowNumber);
 }
 
+/** 
+ * Scripts for semester sheet menu items: ask for text and encode it
+ */
 function createMemberIDFromInputUI_() {
   const ui = SpreadsheetApp.getUi();
   const headerMsg = "Enter the text to encode";
@@ -299,11 +297,8 @@ function createMemberIDFromInputUI_() {
 
 
 /** 
- * Scripts for `MASTER_SHEET` menu items.
- * 
- * Extracting function name using `name` property to allow for refactoring.
+ * Scripts for master sheet menu items: overwrite master sheet with a new one
  */
-
 function createMasterUI_() {
   const ui = SpreadsheetApp.getUi();
   const headerMsg = "Do you want to consolidate member registrations?";
@@ -325,18 +320,27 @@ function createMasterUI_() {
   logMenuAttempt_();    // log attempt
 }
 
+/** 
+ * Scripts for master sheet menu items: format sheet
+ */
 function prettifyMasterUI_() {
   const functionName = formatMaster_.name;
   const sheetName = MASTER_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }
 
+/** 
+ * Scripts for master sheet menu items: add last submission from semester sheet
+ */
 function addLastSubmissionToMasterUI_() {
   const functionName = addLastSubmissionToMaster_.name;
   const sheetName = MASTER_NAME;
   confirmAndRunUserChoice_(functionName, sheetName);
 }
 
+/** 
+ * Scripts for master sheet menu items: sort by email
+ */
 function sortMasterByEmailUI_() {
   const functionName = sortMasterByEmail.name;
   const sheetName = MASTER_NAME;
