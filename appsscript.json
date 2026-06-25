@@ -1,22 +1,22 @@
 {
   "timeZone": "America/Toronto",
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
   "dependencies": {
     "enabledAdvancedServices": [
       {
         "userSymbol": "Gmail",
-        "version": "v1",
-        "serviceId": "gmail"
+        "serviceId": "gmail",
+        "version": "v1"
       }
     ],
     "libraries": [
       {
         "userSymbol": "NewMemberCommunications",
-        "version": "0",
         "libraryId": "14I9RmRD6JYIkklRi8CtNFiktS3wdPyYvnQ4TUrx-sRj75LD2M65kAMIh",
-        "developmentMode": true
+        "version": "15",
+        "developmentMode": false
       }
     ]
-  },
-  "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "V8"
+  }
 }
